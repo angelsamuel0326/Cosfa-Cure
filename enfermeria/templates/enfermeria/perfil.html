@@ -1,0 +1,1057 @@
+{% extends 'enfermeria/base.html' %}
+{% block title %}Mi Perfil — COSFA CURE{% endblock %}
+{% block page_title %}Mi Perfil{% endblock %}
+
+{% block content %}
+<style>
+@keyframes pulse-green{0%,100%{box-shadow:0 0 0 0 rgba(34,197,94,.5)}50%{box-shadow:0 0 0 5px rgba(34,197,94,0)}}
+/* ── Perfil Page ─────────────────────────────────────────────── */
+.perfil-grid {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 22px;
+  max-width: 1160px;
+}
+@media (max-width: 800px) { .perfil-grid { grid-template-columns: 1fr; } }
+
+.perfil-card {
+  background: white;
+  border-radius: 18px;
+  box-shadow: 0 2px 20px rgba(15,36,68,.08);
+  overflow: hidden;
+  min-height: 520px;
+}
+
+/* Avatar card */
+.avatar-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 36px 24px 28px;
+  text-align: center;
+}
+.avatar-wrap {
+  position: relative;
+  margin-bottom: 18px;
+}
+.avatar-img {
+  width: 110px; height: 110px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid var(--teal);
+  box-shadow: 0 0 0 6px rgba(14,165,160,.12), 0 8px 24px rgba(15,36,68,.18);
+  transition: box-shadow .3s;
+}
+.avatar-initials {
+  width: 110px; height: 110px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--teal), #1a3a6e);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2.4rem; font-weight: 800; color: white;
+  border: 4px solid var(--teal);
+  box-shadow: 0 0 0 6px rgba(14,165,160,.12), 0 8px 24px rgba(15,36,68,.18);
+}
+.avatar-edit-btn {
+  position: absolute; bottom: 4px; right: 4px;
+  width: 32px; height: 32px;
+  background: var(--teal); border: 3px solid white;
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  color: white; font-size: .8rem; cursor: pointer;
+  transition: transform .2s, background .2s;
+  box-shadow: 0 2px 8px rgba(14,165,160,.4);
+}
+.avatar-edit-btn:hover { transform: scale(1.15); background: #0d8c88; }
+
+.perfil-name {
+  font-family: 'Sora', sans-serif; font-size: 1.2rem; font-weight: 800;
+  color: var(--navy); margin: 0 0 4px;
+}
+.perfil-username {
+  font-size: .8rem; color: #64748b; margin: 0 0 14px;
+}
+.perfil-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: linear-gradient(135deg, rgba(14,165,160,.1), rgba(14,165,160,.2));
+  color: var(--teal); border: 1px solid rgba(14,165,160,.3);
+  border-radius: 20px; padding: 5px 14px; font-size: .72rem; font-weight: 700;
+  letter-spacing: .5px;
+}
+.perfil-badge i { font-size: .85rem; }
+
+.perfil-stats {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 10px; margin-top: 22px; width: 100%;
+}
+.stat-mini {
+  background: #f8fafc; border-radius: 12px; padding: 12px;
+  text-align: center;
+}
+.stat-mini .s-num { font-size: 1.3rem; font-weight: 800; color: var(--navy); font-family: 'Sora', sans-serif; }
+.stat-mini .s-lbl { font-size: .65rem; color: #94a3b8; text-transform: uppercase; letter-spacing: .5px; font-weight: 600; }
+
+/* Tabs */
+.perfil-tabs { display: flex; border-bottom: 2px solid #f1f5f9; padding: 0 24px; }
+.p-tab {
+  padding: 16px 20px 14px; font-size: .82rem; font-weight: 600;
+  color: #94a3b8; cursor: pointer; border-bottom: 2px solid transparent;
+  margin-bottom: -2px; transition: all .2s; display: flex; align-items: center; gap: 7px;
+  text-decoration: none;
+}
+.p-tab:hover { color: var(--navy); }
+.p-tab.active { color: var(--teal); border-bottom-color: var(--teal); }
+.p-tab-danger { color: #dc2626; }
+.p-tab-danger:hover { color: #b91c1c; }
+.p-tab-success { color: #0f766e; }
+.p-tab-success:hover { color: #0d6b63; }
+
+.tab-pane { display: none; padding: 28px 24px 24px; }
+.tab-pane.active { display: block; }
+
+/* Form elements */
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 600px) { .form-row { grid-template-columns: 1fr; } }
+
+.field-group { margin-bottom: 18px; }
+.field-group label {
+  display: block; font-size: .72rem; font-weight: 700;
+  color: #64748b; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 7px;
+}
+.field-group input[type=text],
+.field-group input[type=email],
+.field-group input[type=password] {
+  width: 100%; padding: 10px 14px;
+  border: 1.5px solid #e2e8f0; border-radius: 11px;
+  font-size: .88rem; color: var(--navy); background: #f8fafc;
+  transition: border-color .2s, box-shadow .2s; outline: none;
+  box-sizing: border-box;
+}
+.field-group input:focus {
+  border-color: var(--teal);
+  box-shadow: 0 0 0 3px rgba(14,165,160,.12);
+  background: white;
+}
+
+.save-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: linear-gradient(135deg, var(--teal), #0d8c88);
+  color: white; border: none; padding: 11px 26px;
+  border-radius: 11px; font-size: .88rem; font-weight: 700;
+  cursor: pointer; transition: all .2s;
+  box-shadow: 0 4px 14px rgba(14,165,160,.35);
+}
+.save-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(14,165,160,.45); }
+
+/* Photo upload area */
+.photo-drop {
+  border: 2px dashed #cbd5e1; border-radius: 14px;
+  padding: 32px; text-align: center; cursor: pointer;
+  transition: all .2s; background: #f8fafc;
+  position: relative;
+}
+.photo-drop:hover, .photo-drop.drag { border-color: var(--teal); background: rgba(14,165,160,.04); }
+.photo-drop input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+.photo-drop .pd-icon { font-size: 2.4rem; margin-bottom: 10px; opacity: .5; }
+.photo-drop .pd-label { font-size: .85rem; color: #64748b; font-weight: 600; }
+.photo-drop .pd-sub { font-size: .72rem; color: #94a3b8; margin-top: 4px; }
+#foto-preview { width: 100%; max-height: 200px; object-fit: cover; border-radius: 10px; margin-top: 14px; display: none; }
+
+.section-header {
+  font-family: 'Sora', sans-serif; font-size: .92rem; font-weight: 800;
+  color: var(--navy); margin: 0 0 18px; display: flex; align-items: center; gap: 8px;
+}
+.section-header i { color: var(--teal); }
+</style>
+
+<div class="perfil-grid">
+  <!-- Left: Avatar card -->
+  <div class="perfil-card avatar-card">
+    <div class="avatar-wrap">
+      {% if perfil.foto %}
+        <img src="{{ perfil.foto.url }}" alt="Avatar" class="avatar-img" id="sidebar-avatar-display">
+      {% else %}
+        <div class="avatar-initials" id="sidebar-avatar-display">
+          {{ request.user.first_name|slice:":1"|upper|default:request.user.username|slice:":1"|upper }}
+        </div>
+      {% endif %}
+      <label class="avatar-edit-btn" for="foto-input-quick" title="Cambiar foto">
+        <i class="bi bi-camera-fill"></i>
+      </label>
+    </div>
+    <h2 class="perfil-name">{{ request.user.get_full_name|default:request.user.username }}</h2>
+    <p class="perfil-username">@{{ request.user.username }}</p>
+    <span class="perfil-badge"><i class="bi bi-shield-check-fill"></i> {{ perfil.cargo|default:"Enfermera Escolar" }}</span>
+
+    <div class="perfil-stats">
+      <div class="stat-mini">
+        <div class="s-num">{{ request.user.date_joined|date:"Y" }}</div>
+        <div class="s-lbl">Año ingreso</div>
+      </div>
+      <div class="stat-mini">
+        <div class="s-num" style="font-size:.9rem">{{ request.user.last_login|date:"d/m"|default:"—" }}</div>
+        <div class="s-lbl">Último acceso</div>
+      </div>
+    </div>
+
+    <!-- Quick photo form -->
+    <form method="post" enctype="multipart/form-data" id="quick-photo-form" style="display:none">
+      {% csrf_token %}
+      <input type="hidden" name="accion" value="foto">
+      <input type="file" name="foto" id="foto-input-quick" accept="image/*" onchange="document.getElementById('quick-photo-form').submit()">
+    </form>
+  </div>
+
+  <!-- Right: Tabs card -->
+  <div class="perfil-card">
+    <div class="perfil-tabs">
+      <a class="p-tab {% if tab_activo == 'datos' %}active{% endif %}" href="?tab=datos">
+        <i class="bi bi-person-fill"></i> Mis Datos
+      </a>
+      <a class="p-tab {% if tab_activo == 'foto' %}active{% endif %}" href="?tab=foto">
+        <i class="bi bi-camera-fill"></i> Foto de Perfil
+      </a>
+      <a class="p-tab {% if tab_activo == 'seguridad' %}active{% endif %}" href="?tab=seguridad">
+        <i class="bi bi-lock-fill"></i> Seguridad
+      </a>
+      {% if usuario_es_admin %}
+      <a class="p-tab {% if tab_activo == 'usuarios' %}active{% endif %}" href="?tab=usuarios">
+        <i class="bi bi-people-fill"></i> Usuarios
+      </a>
+      {% endif %}
+      <a class="p-tab p-tab-danger {% if tab_activo == 'cierre' %}active{% endif %}" href="?tab=cierre">
+        <i class="bi bi-trash3-fill"></i> Cierre de Año
+      </a>
+      <a class="p-tab p-tab-success {% if tab_activo == 'backup' %}active{% endif %}" href="?tab=backup">
+        <i class="bi bi-database-fill-down"></i> Backup BD
+      </a>
+    </div>
+
+    <!-- Tab: Datos personales -->
+    <div class="tab-pane {% if tab_activo == 'datos' %}active{% endif %}" id="tab-datos">
+      <p class="section-header"><i class="bi bi-person-badge-fill"></i> Información Personal</p>
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="accion" value="datos">
+        <div class="form-row">
+          <div class="field-group">
+            <label>Nombre</label>
+            <input type="text" name="first_name" value="{{ request.user.first_name }}" placeholder="Tu nombre">
+          </div>
+          <div class="field-group">
+            <label>Apellido</label>
+            <input type="text" name="last_name" value="{{ request.user.last_name }}" placeholder="Tu apellido">
+          </div>
+        </div>
+        <div class="field-group">
+          <label>Nombre de usuario</label>
+          <input type="text" value="{{ request.user.username }}" disabled style="opacity:.6;cursor:not-allowed">
+        </div>
+        <div class="field-group">
+          <label>Correo electrónico</label>
+          <input type="email" name="email" value="{{ request.user.email }}" placeholder="correo@colegio.edu.co">
+        </div>
+        <div class="form-row">
+          <div class="field-group">
+            <label>Cargo</label>
+            <input type="text" name="cargo" value="{{ perfil.cargo }}" placeholder="Ej: Enfermera Escolar">
+          </div>
+          <div class="field-group">
+            <label>Teléfono de contacto</label>
+            <input type="text" name="telefono" value="{{ perfil.telefono }}" placeholder="Ej: 300 123 4567">
+          </div>
+        </div>
+        <button type="submit" class="save-btn">
+          <i class="bi bi-check2-circle"></i> Guardar Cambios
+        </button>
+      </form>
+    </div>
+
+    <!-- Tab: Foto -->
+    <div class="tab-pane {% if tab_activo == 'foto' %}active{% endif %}" id="tab-foto">
+      <p class="section-header"><i class="bi bi-image-fill"></i> Foto de Perfil</p>
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="hidden" name="accion" value="foto">
+        <div class="photo-drop" id="photo-drop" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="handleDrop(event)">
+          <input type="file" name="foto" id="foto-input" accept="image/png,image/jpeg,image/webp" onchange="previewFoto(this)">
+          <div class="pd-icon">📸</div>
+          <div class="pd-label">Haz clic o arrastra tu foto aquí</div>
+          <div class="pd-sub">PNG, JPG o WEBP · Máx. 5 MB</div>
+        </div>
+        <img id="foto-preview" src="" alt="Preview">
+        <div style="margin-top:18px">
+          <button type="submit" class="save-btn" id="foto-submit-btn" style="display:none">
+            <i class="bi bi-cloud-upload-fill"></i> Subir Foto
+          </button>
+        </div>
+      </form>
+      {% if perfil.foto %}
+      <div style="margin-top:18px;padding:14px;background:#f0fafa;border-radius:12px;display:flex;align-items:center;gap:12px;border:1px solid #ccefef">
+        <img src="{{ perfil.foto.url }}?v={{ perfil.pk }}"
+             alt="Foto actual"
+             id="foto-actual-img"
+             style="width:52px;height:52px;border-radius:50%;object-fit:cover;border:2px solid var(--teal);flex-shrink:0"
+             onerror="this.style.display='none';document.getElementById('foto-actual-fallback').style.display='flex'">
+        <div id="foto-actual-fallback" style="display:none;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--teal),#1a3a6e);align-items:center;justify-content:center;font-size:1.1rem;font-weight:800;color:white;flex-shrink:0">
+          {{ request.user.first_name|slice:":1"|upper|default:request.user.username|slice:":1"|upper }}
+        </div>
+        <div>
+          <div style="font-size:.83rem;font-weight:700;color:var(--navy)">Foto actual</div>
+          <div style="font-size:.72rem;color:#64748b">Se mostrará en el sistema</div>
+        </div>
+      </div>
+      {% else %}
+      <div style="margin-top:18px;padding:12px 14px;background:#f8fafc;border-radius:12px;border:1px solid #e2e8f0;font-size:.8rem;color:#94a3b8;display:flex;align-items:center;gap:8px">
+        <i class="bi bi-image" style="font-size:1rem"></i>
+        Aún no has subido una foto de perfil.
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Tab: Seguridad -->
+    <div class="tab-pane {% if tab_activo == 'seguridad' %}active{% endif %}" id="tab-seguridad">
+      <p class="section-header"><i class="bi bi-shield-lock-fill"></i> Cambiar Contraseña</p>
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="accion" value="password">
+        <div class="field-group">
+          <label>Contraseña actual</label>
+          <input type="password" name="current_password" placeholder="••••••••" required>
+        </div>
+        <div class="field-group">
+          <label>Nueva contraseña</label>
+          <input type="password" name="new_password1" placeholder="••••••••" required minlength="6">
+        </div>
+        <div class="field-group">
+          <label>Confirmar nueva contraseña</label>
+          <input type="password" name="new_password2" placeholder="••••••••" required minlength="6">
+        </div>
+        <div style="background:rgba(14,165,160,.06);border:1px solid rgba(14,165,160,.2);border-radius:10px;padding:12px 14px;margin-bottom:18px;font-size:.78rem;color:#0d8c88">
+          <i class="bi bi-info-circle-fill"></i> Mínimo 6 caracteres. Tu sesión se mantendrá activa al cambiar la contraseña.
+        </div>
+        <button type="submit" class="save-btn" style="background:linear-gradient(135deg,#1a3a6e,#0f2444)">
+          <i class="bi bi-key-fill"></i> Cambiar Contraseña
+        </button>
+      </form>
+
+      {% if usuario_es_admin %}
+      <!-- ══════════════════════════════════════════
+           CONTRASEÑA DE ADMINISTRADOR — Rediseñado
+           ══════════════════════════════════════════ -->
+      <div style="margin-top:32px;padding-top:28px;border-top:1.5px dashed var(--border)">
+
+        <!-- Título de sección -->
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">
+          <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#0f2444,#1a3a6e);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <i class="bi bi-shield-lock-fill" style="color:#fde68a;font-size:.95rem"></i>
+          </div>
+          <div>
+            <p class="section-header" style="margin:0">Contraseña de Administrador</p>
+            <p style="font-size:.74rem;color:var(--muted);margin:0">Código de 6 dígitos para el acceso administrativo</p>
+          </div>
+        </div>
+
+        <!-- Info card con clave actual -->
+        <div style="background:linear-gradient(135deg,rgba(15,36,68,.04),rgba(14,165,160,.03));border:1.5px solid rgba(14,165,160,.18);border-radius:14px;padding:16px 20px;margin-bottom:20px">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+            <div style="display:flex;align-items:flex-start;gap:10px;flex:1;min-width:200px">
+              <i class="bi bi-info-circle-fill" style="color:var(--teal);margin-top:2px;flex-shrink:0"></i>
+              <p style="font-size:.8rem;color:#0d5e5b;line-height:1.65;margin:0">
+                Este es el <strong>código secreto de 6 dígitos</strong> que otros usuarios ingresan en el login para obtener rol de administrador.
+              </p>
+            </div>
+            <!-- Clave actual -->
+            <div style="flex-shrink:0;text-align:center">
+              <p style="font-size:.65rem;font-weight:700;color:var(--muted);letter-spacing:.8px;text-transform:uppercase;margin-bottom:4px">Clave actual</p>
+              <div id="admin-pin-display" style="font-family:'Sora',sans-serif;font-size:1.6rem;font-weight:800;color:var(--navy);letter-spacing:8px;background:#fff;border:1.5px solid var(--border);border-radius:10px;padding:6px 14px;cursor:pointer;transition:all .2s;position:relative;min-width:130px;text-align:center" title="Clic para mostrar/ocultar" onclick="togglePinDisplay(this)">
+                <span id="pin-hidden">● ● ● ● ● ●</span>
+                <span id="pin-visible" style="display:none">{{ clave_admin_actual }}</span>
+              </div>
+              <p style="font-size:.63rem;color:var(--muted);margin-top:4px;display:flex;align-items:center;justify-content:center;gap:4px">
+                <i class="bi bi-eye" style="font-size:.7rem"></i> Clic para revelar
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Formulario cambiar clave -->
+        <form method="post" id="form-admin-pin" onsubmit="return validarPinAdmin(event)" style="margin-bottom:14px">
+          {% csrf_token %}
+          <input type="hidden" name="accion" value="cambiar_clave_admin">
+
+          <p style="font-size:.72rem;font-weight:700;color:var(--muted);letter-spacing:.7px;text-transform:uppercase;margin-bottom:12px">
+            <i class="bi bi-pencil-square" style="margin-right:4px"></i>Cambiar clave
+          </p>
+
+          <!-- Inputs tipo OTP -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+            <!-- Nueva clave -->
+            <div>
+              <label style="font-size:.74rem;font-weight:600;color:var(--navy);display:block;margin-bottom:8px">
+                <i class="bi bi-key-fill" style="color:var(--teal)"></i> Nueva clave (6 dígitos)
+              </label>
+              <div style="display:flex;gap:5px;justify-content:flex-start" id="otp-new-wrap">
+                <input type="text" class="otp-box" name="nueva_clave_admin" id="otp-new-hidden" style="display:none">
+                <input type="text" class="otp-box-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" style="width:38px;height:44px;border:1.5px solid var(--border);border-radius:10px;font-family:'Sora',sans-serif;font-size:1.1rem;font-weight:700;color:var(--navy);text-align:center;outline:none;background:#f8fbff;transition:all .2s">
+                <input type="text" class="otp-box-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" style="width:38px;height:44px;border:1.5px solid var(--border);border-radius:10px;font-family:'Sora',sans-serif;font-size:1.1rem;font-weight:700;color:var(--navy);text-align:center;outline:none;background:#f8fbff;transition:all .2s">
+                <input type="text" class="otp-box-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" style="width:38px;height:44px;border:1.5px solid var(--border);border-radius:10px;font-family:'Sora',sans-serif;font-size:1.1rem;font-weight:700;color:var(--navy);text-align:center;outline:none;background:#f8fbff;transition:all .2s">
+                <input type="text" class="otp-box-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" style="width:38px;height:44px;border:1.5px solid var(--border);border-radius:10px;font-family:'Sora',sans-serif;font-size:1.1rem;font-weight:700;color:var(--navy);text-align:center;outline:none;background:#f8fbff;transition:all .2s">
+                <input type="text" class="otp-box-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" style="width:38px;height:44px;border:1.5px solid var(--border);border-radius:10px;font-family:'Sora',sans-serif;font-size:1.1rem;font-weight:700;color:var(--navy);text-align:center;outline:none;background:#f8fbff;transition:all .2s">
+                <input type="text" class="otp-box-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" style="width:38px;height:44px;border:1.5px solid var(--border);border-radius:10px;font-family:'Sora',sans-serif;font-size:1.1rem;font-weight:700;color:var(--navy);text-align:center;outline:none;background:#f8fbff;transition:all .2s">
+              </div>
+            </div>
+            <!-- Confirmar clave -->
+            <div>
+              <label style="font-size:.74rem;font-weight:600;color:var(--navy);display:block;margin-bottom:8px">
+                <i class="bi bi-shield-check" style="color:var(--teal)"></i> Confirmar clave
+              </label>
+              <div style="display:flex;gap:5px;justify-content:flex-start" id="otp-confirm-wrap">
+                <input type="text" class="otp-box" name="confirmar_clave_admin" id="otp-confirm-hidden" style="display:none">
+                <input type="text" class="otp-box-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" style="width:38px;height:44px;border:1.5px solid var(--border);border-radius:10px;font-family:'Sora',sans-serif;font-size:1.1rem;font-weight:700;color:var(--navy);text-align:center;outline:none;background:#f8fbff;transition:all .2s">
+                <input type="text" class="otp-box-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" style="width:38px;height:44px;border:1.5px solid var(--border);border-radius:10px;font-family:'Sora',sans-serif;font-size:1.1rem;font-weight:700;color:var(--navy);text-align:center;outline:none;background:#f8fbff;transition:all .2s">
+                <input type="text" class="otp-box-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" style="width:38px;height:44px;border:1.5px solid var(--border);border-radius:10px;font-family:'Sora',sans-serif;font-size:1.1rem;font-weight:700;color:var(--navy);text-align:center;outline:none;background:#f8fbff;transition:all .2s">
+                <input type="text" class="otp-box-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" style="width:38px;height:44px;border:1.5px solid var(--border);border-radius:10px;font-family:'Sora',sans-serif;font-size:1.1rem;font-weight:700;color:var(--navy);text-align:center;outline:none;background:#f8fbff;transition:all .2s">
+                <input type="text" class="otp-box-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" style="width:38px;height:44px;border:1.5px solid var(--border);border-radius:10px;font-family:'Sora',sans-serif;font-size:1.1rem;font-weight:700;color:var(--navy);text-align:center;outline:none;background:#f8fbff;transition:all .2s">
+                <input type="text" class="otp-box-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" style="width:38px;height:44px;border:1.5px solid var(--border);border-radius:10px;font-family:'Sora',sans-serif;font-size:1.1rem;font-weight:700;color:var(--navy);text-align:center;outline:none;background:#f8fbff;transition:all .2s">
+              </div>
+            </div>
+          </div>
+
+          <!-- Match indicator -->
+          <div id="admin-match-msg" style="font-size:.76rem;min-height:18px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:5px"></div>
+
+          <button type="submit" class="save-btn" style="background:linear-gradient(135deg,#0f2444,#1a3a6e);margin-bottom:0">
+            <i class="bi bi-shield-fill-check"></i> Guardar nueva clave admin
+          </button>
+        </form>
+
+        <!-- Restablecer -->
+        <form method="post" onsubmit="return confirmarRestablecer(event)">
+          {% csrf_token %}
+          <input type="hidden" name="accion" value="restablecer_clave_admin">
+          <button type="submit"
+            style="display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border-radius:10px;border:1.5px solid #f59e0b;background:rgba(245,158,11,.07);color:#92400e;font-size:.78rem;font-weight:700;cursor:pointer;transition:all .2s"
+            onmouseover="this.style.background='rgba(245,158,11,.15)'" onmouseout="this.style.background='rgba(245,158,11,.07)'">
+            <i class="bi bi-arrow-counterclockwise"></i> Restablecer clave a la original
+            {% if clave_admin_default and clave_admin_default != '——' %}
+              <span style="background:rgba(245,158,11,.25);border-radius:6px;padding:1px 8px;font-family:'Sora',sans-serif;letter-spacing:3px">{{ clave_admin_default }}</span>
+            {% endif %}
+          </button>
+          <p style="font-size:.68rem;color:var(--muted);margin-top:6px;margin-left:2px">
+            <i class="bi bi-info-circle" style="margin-right:3px"></i>
+            {% if clave_admin_default and clave_admin_default != '——' %}
+              Volverá a la primera clave que configuraste: <strong style="color:var(--navy);letter-spacing:2px">{{ clave_admin_default }}</strong>
+            {% else %}
+              No hay clave original registrada todavía.
+            {% endif %}
+          </p>
+        </form>
+
+      </div>
+
+      <script>
+      (function(){
+        // ── Toggle mostrar/ocultar PIN actual
+        window.togglePinDisplay = function(el){
+          var h=document.getElementById('pin-hidden'), v=document.getElementById('pin-visible');
+          if(v.style.display==='none'){
+            v.style.display='inline'; h.style.display='none';
+            el.style.color='var(--teal)';
+          } else {
+            v.style.display='none'; h.style.display='inline';
+            el.style.color='var(--navy)';
+          }
+        };
+
+        // ── OTP helper
+        function initOTP(wrapId, hiddenId){
+          var wrap   = document.getElementById(wrapId);
+          var hidden = document.getElementById(hiddenId);
+          var digits = wrap.querySelectorAll('.otp-box-digit');
+          digits.forEach(function(inp,i){
+            inp.addEventListener('focus',function(){ this.style.borderColor='var(--teal)'; this.style.boxShadow='0 0 0 3px rgba(14,165,160,.12)'; });
+            inp.addEventListener('blur',function(){ this.style.borderColor=this.value?'rgba(14,165,160,.4)':'var(--border)'; this.style.boxShadow='none'; });
+            inp.addEventListener('input',function(){
+              this.value=this.value.replace(/[^0-9]/g,'').slice(-1);
+              if(this.value && i<digits.length-1) digits[i+1].focus();
+              syncHidden(); updateMatch();
+            });
+            inp.addEventListener('keydown',function(e){
+              if(e.key==='Backspace'&&!this.value&&i>0){ digits[i-1].focus(); syncHidden(); updateMatch(); }
+            });
+            inp.addEventListener('paste',function(e){
+              e.preventDefault();
+              var txt=(e.clipboardData||window.clipboardData).getData('text').replace(/\D/g,'').slice(0,6);
+              txt.split('').forEach(function(c,j){ if(digits[j]){ digits[j].value=c; } });
+              digits[Math.min(txt.length,digits.length-1)].focus();
+              syncHidden(); updateMatch();
+            });
+          });
+          function syncHidden(){
+            hidden.value = Array.from(digits).map(function(d){return d.value;}).join('');
+          }
+          return function(){ return hidden.value; };
+        }
+
+        var getNew  = initOTP('otp-new-wrap',    'otp-new-hidden');
+        var getConf = initOTP('otp-confirm-wrap', 'otp-confirm-hidden');
+
+        function updateMatch(){
+          var vN=getNew(), vC=getConf();
+          var msg=document.getElementById('admin-match-msg');
+          if(!vC||vC.length<6){ msg.innerHTML=''; return; }
+          if(vN===vC){
+            msg.innerHTML='<i class="bi bi-check-circle-fill" style="color:#16a34a"></i><span style="color:#16a34a">Los códigos coinciden</span>';
+          } else {
+            msg.innerHTML='<i class="bi bi-x-circle-fill" style="color:#dc2626"></i><span style="color:#dc2626">Los códigos no coinciden</span>';
+          }
+        }
+
+        window.validarPinAdmin = function(e){
+          var vN=getNew(), vC=getConf();
+          if(vN.length!==6){ alert('Ingresa los 6 dígitos de la nueva clave.'); return false; }
+          if(vN!==vC){ alert('Los códigos no coinciden.'); return false; }
+          return true;
+        };
+
+        window.confirmarRestablecer = function(e){
+          var def_key = '{{ clave_admin_default }}';
+          var msg = def_key && def_key !== '——'
+            ? '¿Restablecer la clave admin a la clave original (' + def_key + ')? La clave actual se reemplazará.'
+            : '¿Restablecer la clave de administrador? No se encontró una clave original guardada.';
+          return confirm(msg);
+        };
+      })();
+      </script>
+      {% endif %}
+
+    </div>
+    <!-- Tab: Gestión de Usuarios (solo admin) -->
+    {% if usuario_es_admin %}
+    <div class="tab-pane {% if tab_activo == 'usuarios' %}active{% endif %}" id="tab-usuarios">
+      <p class="section-header"><i class="bi bi-people-fill"></i> Gestión de Usuarios</p>
+
+      {% if not lista_usuarios %}
+      <div style="text-align:center;padding:40px 20px;color:var(--text-muted)">
+        <i class="bi bi-people" style="font-size:2.5rem;opacity:.3"></i>
+        <p style="margin-top:12px;font-size:.88rem">No hay otros usuarios registrados aún.</p>
+      </div>
+      {% else %}
+      <div style="overflow-x:auto;border-radius:14px;border:1.5px solid var(--border);box-shadow:0 2px 12px rgba(15,36,68,.06)">
+        <table style="width:100%;min-width:860px;border-collapse:collapse;font-size:.88rem">
+          <thead>
+            <tr style="background:linear-gradient(135deg,#1e4d8c,#0e9ab0)">
+              <th style="padding:14px 18px;color:#fff;font-weight:800;font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;text-align:left;min-width:180px;text-shadow:0 1px 3px rgba(0,0,0,.4)">👤 Usuario</th>
+              <th style="padding:14px 18px;color:#fff;font-weight:800;font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;text-align:left;min-width:200px;text-shadow:0 1px 3px rgba(0,0,0,.4)">✉️ Correo</th>
+              <th style="padding:14px 18px;color:#fff;font-weight:800;font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;text-align:left;min-width:120px;text-shadow:0 1px 3px rgba(0,0,0,.4)">📅 Registrado</th>
+              <th style="padding:14px 18px;color:#fff;font-weight:800;font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;text-align:left;min-width:140px;text-shadow:0 1px 3px rgba(0,0,0,.4)">🕐 Última vez</th>
+              <th style="padding:14px 18px;color:#fff;font-weight:800;font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;text-align:center;min-width:140px;text-shadow:0 1px 3px rgba(0,0,0,.4)">🛡️ Rol</th>
+              <th style="padding:14px 18px;color:#fff;font-weight:800;font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;text-align:center;min-width:160px;text-shadow:0 1px 3px rgba(0,0,0,.4)">⚙️ Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for u in lista_usuarios %}
+            <tr style="border-bottom:1.5px solid var(--border);transition:background .15s" onmouseover="this.style.background='rgba(14,165,160,.06)'" onmouseout="this.style.background=''">
+              <td style="padding:16px 18px;font-weight:700;color:var(--navy)">
+                <div style="display:flex;align-items:center;gap:12px">
+                  {% if u.perfil and u.perfil.foto %}
+                  <img src="{{ u.perfil.foto.url }}" alt="{{ u.user.username }}"
+                       style="width:40px;height:40px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2px solid var(--teal);box-shadow:0 3px 10px rgba(14,165,160,.3)"
+                       onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                  <div style="display:none;width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--teal),var(--navy));align-items:center;justify-content:center;color:white;font-weight:800;font-size:.95rem;flex-shrink:0;box-shadow:0 3px 10px rgba(14,165,160,.3)">
+                    {{ u.user.username|slice:":1"|upper }}
+                  </div>
+                  {% else %}
+                  <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--teal),var(--navy));display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:.95rem;flex-shrink:0;box-shadow:0 3px 10px rgba(14,165,160,.3)">
+                    {{ u.user.username|slice:":1"|upper }}
+                  </div>
+                  {% endif %}
+                  <div>
+                    <div style="color:var(--navy);font-size:.92rem;font-weight:700">{{ u.user.username }}</div>
+                    {% if u.perfil and u.perfil.cargo %}<div style="font-size:.75rem;color:var(--text-muted);font-weight:400;margin-top:2px">{{ u.perfil.cargo }}</div>{% endif %}
+                  </div>
+                </div>
+              </td>
+              <td style="padding:16px 18px">
+                <span style="font-size:.85rem;color:#fff;background:linear-gradient(135deg,#0f2444,#0e6b8a);padding:5px 12px;border-radius:8px;border:1px solid #0ea5ca;font-family:monospace;font-weight:600;display:inline-flex;align-items:center;gap:6px;box-shadow:0 2px 6px rgba(14,116,144,.25)"><i class="bi bi-envelope-fill" style="opacity:.8"></i>{{ u.user.email|default:"—" }}</span>
+              </td>
+              <td style="padding:16px 18px;color:var(--text-muted);font-size:.85rem">{{ u.fecha }}</td>
+              <td style="padding:16px 18px">
+                {% if u.estado == 'online' %}
+                  <span style="display:inline-flex;align-items:center;gap:6px;background:rgba(34,197,94,.15);color:#16a34a;border:1.5px solid rgba(34,197,94,.4);border-radius:20px;padding:4px 12px;font-size:.78rem;font-weight:700">
+                    <span style="width:8px;height:8px;border-radius:50%;background:#22c55e;animation:pulse-green 1.5s infinite;display:inline-block"></span> En línea
+                  </span>
+                {% elif u.estado == 'reciente' %}
+                  <span style="display:inline-flex;align-items:center;gap:6px;color:#0ea5e9;font-size:.82rem;font-weight:600">
+                    <i class="bi bi-clock-history"></i> {{ u.ultima_vez }}
+                  </span>
+                {% elif u.estado == 'inactivo' %}
+                  <span style="display:inline-flex;align-items:center;gap:6px;color:var(--text-muted);font-size:.82rem">
+                    <i class="bi bi-clock"></i> {{ u.ultima_vez }}
+                  </span>
+                {% else %}
+                  <span style="color:var(--text-muted);font-size:.82rem;font-style:italic">Nunca</span>
+                {% endif %}
+              </td>
+              <td style="padding:16px 18px;text-align:center">
+                {% if u.rol == 'admin' %}
+                  <span style="display:inline-flex;align-items:center;gap:6px;background:rgba(14,165,160,.12);color:var(--teal);border:1.5px solid rgba(14,165,160,.3);border-radius:20px;padding:5px 14px;font-size:.78rem;font-weight:700">
+                    <i class="bi bi-shield-fill-check"></i> Administrador
+                  </span>
+                {% else %}
+                  <span style="display:inline-flex;align-items:center;gap:6px;background:rgba(100,116,139,.1);color:#64748b;border:1.5px solid rgba(100,116,139,.25);border-radius:20px;padding:5px 14px;font-size:.78rem;font-weight:700">
+                    <i class="bi bi-eye-fill"></i> Solo lectura
+                  </span>
+                {% endif %}
+              </td>
+              <td style="padding:16px 18px;text-align:center">
+                <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+                  {% if request.user.is_superuser %}
+                    {# Solo el superusuario puede gestionar roles y eliminar #}
+                    {% if u.user.is_superuser %}
+                      {# No se puede tocar al propio superusuario #}
+                      <span style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:9px;background:rgba(100,116,139,.12);color:#64748b;font-size:.78rem;font-weight:700;border:1.5px solid rgba(100,116,139,.25)" title="Administrador principal del sistema — intocable">
+                        <i class="bi bi-shield-lock-fill"></i> Protegido
+                      </span>
+                    {% else %}
+                      {% if u.rol == 'viewer' %}
+                      <form method="post" action="/perfil/usuarios/" style="display:inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="accion" value="hacer_admin">
+                        <input type="hidden" name="user_id" value="{{ u.user.pk }}">
+                        <button type="submit"
+                          style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:9px;border:none;background:linear-gradient(135deg,var(--teal),#0d8c88);color:white;font-size:.78rem;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(14,165,160,.3)"
+                          title="Dar permisos de administrador">
+                          <i class="bi bi-shield-plus"></i> Dar admin
+                        </button>
+                      </form>
+                      {% else %}
+                      <form method="post" action="/perfil/usuarios/" style="display:inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="accion" value="hacer_viewer">
+                        <input type="hidden" name="user_id" value="{{ u.user.pk }}">
+                        <button type="submit"
+                          style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:9px;border:none;background:linear-gradient(135deg,#f59e0b,#d97706);color:white;font-size:.78rem;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(245,158,11,.3)"
+                          title="Quitar permisos de administrador">
+                          <i class="bi bi-shield-minus"></i> Quitar admin
+                        </button>
+                      </form>
+                      {% endif %}
+                      <form method="post" action="/perfil/usuarios/" style="display:inline"
+                        onsubmit="return confirm('¿Eliminar al usuario {{ u.user.username }}? Esta acción no se puede deshacer.')">
+                        {% csrf_token %}
+                        <input type="hidden" name="accion" value="eliminar">
+                        <input type="hidden" name="user_id" value="{{ u.user.pk }}">
+                        <button type="submit"
+                          style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:9px;border:none;background:linear-gradient(135deg,#ef4444,#dc2626);color:white;font-size:.78rem;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(239,68,68,.3)"
+                          title="Eliminar usuario">
+                          <i class="bi bi-trash3-fill"></i>
+                        </button>
+                      </form>
+                    {% endif %}
+                  {% else %}
+                    {# Admins normales: solo lectura de la lista #}
+                    <span style="display:inline-flex;align-items:center;gap:6px;color:#94a3b8;font-size:.78rem;font-style:italic">
+                      <i class="bi bi-lock"></i> Sin permisos
+                    </span>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <p style="margin-top:12px;font-size:.74rem;color:var(--text-muted)">
+        <i class="bi bi-info-circle"></i>
+        <strong>Solo lectura:</strong> puede ver información pero no crear, editar ni eliminar registros.
+        <strong>Administrador:</strong> acceso completo.
+      </p>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Tab: Cierre de Año Escolar -->
+    <div class="tab-pane {% if tab_activo == 'cierre' %}active{% endif %}" id="tab-cierre">
+
+      <!-- Bloque informativo: ¿Qué hace esta función? -->
+      <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:1.2rem 1.4rem;margin-bottom:1.2rem">
+        <p style="margin:0 0 .8rem;font-weight:700;color:#991b1b;font-size:.92rem">
+          <i class="bi bi-question-circle-fill"></i> ¿Qué hace esta función?
+        </p>
+        <p style="margin:0 0 .9rem;color:#7f1d1d;font-size:.84rem;line-height:1.7">
+          Al finalizar el año escolar, esta opción elimina <strong>permanentemente</strong> todos los datos del
+          sistema: consultas, remisiones, seguimientos, historial de cambios, conversaciones del
+          chatbot y <strong>todos los estudiantes registrados</strong>.
+        </p>
+        <p style="margin:0 0 .4rem;font-size:.84rem;color:#166534">
+          <i class="bi bi-check-square-fill" style="color:#16a34a"></i>
+          <strong>Se conserva:</strong> el inventario de insumos/medicamentos.
+        </p>
+        <p style="margin:0;font-size:.84rem;color:#7f1d1d">
+          <i class="bi bi-x-square-fill" style="color:#dc2626"></i>
+          <strong>No se puede deshacer.</strong>
+          Se recomienda exportar los reportes en Excel antes de ejecutar esta acción.
+        </p>
+      </div>
+
+      <!-- Botón que abre el modal -->
+      <button onclick="abrirModalBorrado()"
+        style="background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;border:none;padding:.7rem 1.5rem;border-radius:8px;font-weight:700;font-size:.88rem;cursor:pointer;display:inline-flex;align-items:center;gap:.5rem">
+        <i class="bi bi-trash3-fill"></i> Seleccionar qué borrar…
+      </button>
+    </div>
+
+    <!-- ═══════════ MODAL DE BORRADO SELECTIVO ═══════════ -->
+    <div id="modal-borrado" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.55);backdrop-filter:blur(3px);align-items:center;justify-content:center">
+      <div style="background:#fff;border-radius:16px;padding:1.75rem 2rem;width:min(96vw,600px);max-height:92vh;overflow-y:auto;box-shadow:0 25px 60px rgba(0,0,0,.3)">
+
+        <!-- Header -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem">
+          <h2 style="margin:0;font-size:1.05rem;font-weight:800;color:#991b1b;display:flex;align-items:center;gap:.5rem">
+            <i class="bi bi-trash3-fill"></i> ¿Qué deseas eliminar?
+          </h2>
+          <button onclick="cerrarModalBorrado()" style="background:none;border:none;font-size:1.5rem;line-height:1;cursor:pointer;color:#6b7280;padding:.2rem .4rem">×</button>
+        </div>
+
+        <!-- Selección rápida -->
+        <div style="display:flex;gap:.5rem;margin-bottom:1.1rem;flex-wrap:wrap">
+          <button type="button" onclick="seleccionarTodos(true)"
+            style="font-size:.75rem;padding:.3rem .85rem;border-radius:20px;border:1.5px solid #dc2626;color:#dc2626;background:#fff;cursor:pointer;font-weight:700">
+            <i class="bi bi-check2-square"></i> Seleccionar todo
+          </button>
+          <button type="button" onclick="seleccionarTodos(false)"
+            style="font-size:.75rem;padding:.3rem .85rem;border-radius:20px;border:1.5px solid #9ca3af;color:#6b7280;background:#fff;cursor:pointer;font-weight:700">
+            <i class="bi bi-square"></i> Deseleccionar todo
+          </button>
+        </div>
+
+        <!-- Grid de tarjetas -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.7rem;margin-bottom:1.2rem" id="grid-categorias">
+
+          <div class="cb-card" data-key="estudiantes" onclick="toggleCard(this)">
+            <div class="cb-ico" style="background:#dbeafe;color:#1d4ed8"><i class="bi bi-people-fill"></i></div>
+            <div><div class="cb-t">Estudiantes</div><div class="cb-s">Todos los registros de alumnos</div></div>
+          </div>
+
+          <div class="cb-card" data-key="docentes" onclick="toggleCard(this)">
+            <div class="cb-ico" style="background:#f3e8ff;color:#7c3aed"><i class="bi bi-person-workspace"></i></div>
+            <div><div class="cb-t">Docentes</div><div class="cb-s">Lista de profesores registrados</div></div>
+          </div>
+
+          <div class="cb-card" data-key="consultas_est" onclick="toggleCard(this)">
+            <div class="cb-ico" style="background:#dcfce7;color:#16a34a"><i class="bi bi-heart-pulse-fill"></i></div>
+            <div><div class="cb-t">Consultas Estudiantes</div><div class="cb-s">Atenciones médicas de alumnos</div></div>
+          </div>
+
+          <div class="cb-card" data-key="consultas_doc" onclick="toggleCard(this)">
+            <div class="cb-ico" style="background:#fef9c3;color:#ca8a04"><i class="bi bi-clipboard2-pulse-fill"></i></div>
+            <div><div class="cb-t">Consultas Docentes</div><div class="cb-s">Atenciones médicas de profesores</div></div>
+          </div>
+
+          <div class="cb-card" data-key="remisiones" onclick="toggleCard(this)">
+            <div class="cb-ico" style="background:#ffedd5;color:#ea580c"><i class="bi bi-send-fill"></i></div>
+            <div><div class="cb-t">Remisiones</div><div class="cb-s">Remisiones y consentimientos</div></div>
+          </div>
+
+          <div class="cb-card" data-key="seguimientos" onclick="toggleCard(this)">
+            <div class="cb-ico" style="background:#e0f2fe;color:#0284c7"><i class="bi bi-activity"></i></div>
+            <div><div class="cb-t">Seguimientos</div><div class="cb-s">Seguimientos clínicos activos</div></div>
+          </div>
+
+          <div class="cb-card" data-key="inventario" onclick="toggleCard(this)">
+            <div class="cb-ico" style="background:#d1fae5;color:#059669"><i class="bi bi-capsule-pill"></i></div>
+            <div><div class="cb-t">Inventario</div><div class="cb-s">Medicamentos e insumos</div></div>
+          </div>
+
+          <div class="cb-card" data-key="historial" onclick="toggleCard(this)">
+            <div class="cb-ico" style="background:#f1f5f9;color:#475569"><i class="bi bi-journal-text"></i></div>
+            <div><div class="cb-t">Historial de cambios</div><div class="cb-s">Log de actividad del sistema</div></div>
+          </div>
+
+          <div class="cb-card" data-key="chatbot" onclick="toggleCard(this)">
+            <div class="cb-ico" style="background:#fce7f3;color:#be185d"><i class="bi bi-robot"></i></div>
+            <div><div class="cb-t">Chatbot</div><div class="cb-s">Sesiones y mensajes del asistente</div></div>
+          </div>
+
+          <div class="cb-card" data-key="notificaciones" onclick="toggleCard(this)">
+            <div class="cb-ico" style="background:#ede9fe;color:#6d28d9"><i class="bi bi-bell-fill"></i></div>
+            <div><div class="cb-t">Notificaciones</div><div class="cb-s">Alertas y avisos del sistema</div></div>
+          </div>
+
+        </div>
+
+        <!-- Aviso especial: Estudiantes -->
+        <div id="aviso-estudiantes" style="display:none;background:#fffbeb;border:1px solid #fcd34d;border-radius:10px;padding:1rem 1.1rem;margin-bottom:1rem">
+          <div style="display:flex;align-items:flex-start;gap:.65rem">
+            <i class="bi bi-exclamation-triangle-fill" style="color:#d97706;font-size:1.05rem;margin-top:.15rem;flex-shrink:0"></i>
+            <div>
+              <p style="margin:0 0 .3rem;font-weight:700;font-size:.84rem;color:#92400e">
+                Recomendación antes de eliminar estudiantes
+              </p>
+              <p style="margin:0;font-size:.79rem;color:#78350f;line-height:1.65">
+                Está a punto de eliminar <strong>permanentemente</strong> todos los registros de estudiantes.
+                Si su intención es realizar el <strong>cierre de año escolar</strong>, le recomendamos
+                no eliminarlos directamente. En su lugar, diríjase a <strong>Promoción de Año</strong>
+                para actualizar el grado escolar de cada alumno y conservar su historial clínico intacto.<br><br>
+                Si decide continuar, deberá <strong>ingresar nuevamente a todos los estudiantes</strong>
+                el próximo año. Le recomendamos
+                <strong><i class="bi bi-download"></i> descargar un backup</strong> desde la pestaña
+                <em>Backup BD</em> antes de proceder.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Campo de confirmación -->
+        <div id="bloque-confirmacion" style="display:none;background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:1rem;margin-bottom:1rem">
+          <p style="margin:0 0 .45rem;font-size:.82rem;color:#7f1d1d;font-weight:600">
+            Para confirmar, escribe exactamente:
+            <code style="background:#fee2e2;padding:.1rem .45rem;border-radius:4px">BORRAR TODO</code>
+          </p>
+          <input type="text" id="confirmacion-input" placeholder="Escribe BORRAR TODO aquí"
+            autocomplete="off"
+            style="width:100%;padding:.6rem .9rem;border:2px solid #fecaca;border-radius:8px;font-size:.88rem;outline:none;box-sizing:border-box"
+            oninput="validarTextoConfirmacion(this)">
+        </div>
+
+        <!-- Pie -->
+        <div style="display:flex;gap:.75rem;justify-content:flex-end;flex-wrap:wrap">
+          <button type="button" onclick="cerrarModalBorrado()"
+            style="padding:.65rem 1.2rem;border-radius:8px;border:1px solid #d1d5db;background:#fff;color:#374151;font-weight:600;cursor:pointer;font-size:.85rem">
+            Cancelar
+          </button>
+          <button type="button" id="btn-ejecutar-borrado" onclick="ejecutarBorrado()" disabled
+            style="padding:.65rem 1.4rem;border-radius:8px;border:none;background:#9ca3af;color:#fff;font-weight:700;cursor:not-allowed;font-size:.85rem;display:inline-flex;align-items:center;gap:.4rem;transition:background .2s">
+            <i class="bi bi-trash3-fill"></i> <span id="btn-label">Eliminar seleccionados</span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Formulario oculto -->
+    <form id="form-borrado-selectivo" method="post" action="{% url 'borrar_datos_anio' %}" style="display:none">
+      {% csrf_token %}
+      <input type="hidden" name="confirmacion" id="hidden-confirmacion">
+      <input type="hidden" name="categorias"   id="hidden-categorias">
+    </form>
+
+    <style>
+    .cb-card {
+      display:flex; align-items:center; gap:.75rem; padding:.85rem 1rem;
+      border:2px solid #e5e7eb; border-radius:12px; cursor:pointer;
+      transition:border-color .15s, background .15s; background:#fff; user-select:none;
+    }
+    .cb-card:hover  { border-color:#fca5a5; background:#fff5f5; }
+    .cb-card.sel    { border-color:#dc2626; background:#fef2f2; }
+    .cb-ico { width:2.3rem; height:2.3rem; border-radius:9px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .cb-ico i { font-size:1rem; }
+    .cb-t { font-weight:700; font-size:.82rem; color:#111827; }
+    .cb-s { font-size:.71rem; color:#6b7280; margin-top:.1rem; line-height:1.35; }
+    @media(max-width:420px){ #grid-categorias{ grid-template-columns:1fr !important; } }
+    </style>
+
+
+    <div class="tab-pane {% if tab_activo == 'backup' %}active{% endif %}" id="tab-backup">
+      <div style="margin-bottom:1.5rem">
+        <h3 style="font-size:.95rem;font-weight:700;color:#0f766e;margin:0 0 .6rem"><i class="bi bi-database-fill-down"></i> Descargar copia de seguridad</h3>
+        <p style="font-size:.82rem;color:#475569;margin:0 0 1rem;line-height:1.6">
+          Descarga un archivo <code>.sqlite3</code> con toda la base de datos (estudiantes, consultas, remisiones, inventario, usuarios).
+          Guárdalo en un lugar seguro.<br>
+          <strong>Se recomienda hacer un backup antes de cada cierre de año o actualización del sistema.</strong>
+        </p>
+        <a href="{% url 'backup_bd' %}"
+           style="display:inline-flex;align-items:center;gap:.5rem;background:linear-gradient(135deg,#0f766e,#0d9488);color:#fff;padding:.65rem 1.4rem;border-radius:8px;font-weight:700;font-size:.85rem;text-decoration:none">
+          <i class="bi bi-download"></i> Descargar backup ahora
+        </a>
+      </div>
+      <hr style="border:none;border-top:1px solid #e2e8f0;margin:1.4rem 0">
+      <div>
+        <h3 style="font-size:.95rem;font-weight:700;color:#b45309;margin:0 0 .6rem"><i class="bi bi-database-fill-up"></i> Restaurar desde backup</h3>
+        <div style="background:#fef3c7;border:1px solid #fcd34d;border-radius:10px;padding:.9rem 1.1rem;margin-bottom:1rem;font-size:.8rem;color:#78350f;line-height:1.6">
+          <strong>⚠️ Atención:</strong> Restaurar reemplazará <em>toda</em> la base de datos con el archivo seleccionado.
+          Una copia automática del estado actual se guardará junto a <code>db.sqlite3</code> antes de proceder.
+        </div>
+        <form method="post" action="{% url 'restore_bd' %}" enctype="multipart/form-data" onsubmit="return confirmarRestore()">
+          {% csrf_token %}
+          <div style="margin-bottom:1rem">
+            <label style="display:block;font-weight:600;font-size:.85rem;color:#374151;margin-bottom:.5rem">
+              Selecciona el archivo de backup (<code>.sqlite3</code>)
+            </label>
+            <input type="file" name="archivo_backup" accept=".sqlite3" required
+              style="display:block;padding:.5rem .75rem;border:2px solid #fcd34d;border-radius:8px;font-size:.83rem;width:100%;box-sizing:border-box;background:#fffbeb">
+          </div>
+          <button type="submit"
+            style="display:inline-flex;align-items:center;gap:.5rem;background:linear-gradient(135deg,#b45309,#92400e);color:#fff;padding:.65rem 1.4rem;border-radius:8px;font-weight:700;font-size:.85rem;border:none;cursor:pointer">
+            <i class="bi bi-upload"></i> Restaurar base de datos
+          </button>
+        </form>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════
+   TABS / FOTO
+   ═══════════════════════════════════════════════════════ */
+function showTab(name, el) {
+  document.querySelectorAll('.tab-pane').forEach(function(p) { p.classList.remove('active'); });
+  document.querySelectorAll('.p-tab').forEach(function(t) { t.classList.remove('active'); });
+  var pane = document.getElementById('tab-' + name);
+  if (pane) pane.classList.add('active');
+  var tab = el || (typeof event !== 'undefined' && event && event.currentTarget);
+  if (tab) tab.classList.add('active');
+}
+
+function previewFoto(input) {
+  if (input.files && input.files[0]) {
+    var file = input.files[0];
+    if (file.size > 5 * 1024 * 1024) {
+      alert('La imagen supera los 5 MB. Por favor elige una imagen más pequeña.');
+      input.value = '';
+      return;
+    }
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      document.getElementById('foto-preview').src = e.target.result;
+      document.getElementById('foto-preview').style.display = 'block';
+      document.getElementById('foto-submit-btn').style.display = 'inline-flex';
+    };
+    reader.readAsDataURL(file);
+  }
+}
+
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('photo-drop').classList.remove('drag');
+  var files = e.dataTransfer.files;
+  if (files.length) {
+    document.getElementById('foto-input').files = files;
+    previewFoto(document.getElementById('foto-input'));
+  }
+}
+
+/* ═══════════════════════════════════════════════════════
+   MODAL DE BORRADO SELECTIVO
+   ═══════════════════════════════════════════════════════ */
+
+function abrirModalBorrado() {
+  var modal = document.getElementById('modal-borrado');
+  if (!modal) return;
+  if (modal.parentElement !== document.body) {
+    document.body.appendChild(modal);
+    modal.addEventListener('click', function(e) {
+      if (e.target === modal) cerrarModalBorrado();
+    });
+  }
+  _resetModal();
+  modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function cerrarModalBorrado() {
+  var modal = document.getElementById('modal-borrado');
+  if (modal) modal.style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+function _resetModal() {
+  document.querySelectorAll('#grid-categorias .cb-card').forEach(function(c) {
+    c.classList.remove('sel');
+  });
+  var input = document.getElementById('confirmacion-input');
+  if (input) input.value = '';
+  document.getElementById('bloque-confirmacion').style.display = 'none';
+  document.getElementById('aviso-estudiantes').style.display = 'none';
+  _setBotonDeshabilitado();
+}
+
+function toggleCard(card) {
+  card.classList.toggle('sel');
+  actualizarEstadoModal();
+}
+
+function seleccionarTodos(marcar) {
+  document.querySelectorAll('#grid-categorias .cb-card').forEach(function(c) {
+    if (marcar) { c.classList.add('sel'); } else { c.classList.remove('sel'); }
+  });
+  actualizarEstadoModal();
+}
+
+function actualizarEstadoModal() {
+  var seleccionadas = document.querySelectorAll('#grid-categorias .cb-card.sel');
+  var cantidad = seleccionadas.length;
+  var cardEst = document.querySelector('#grid-categorias .cb-card[data-key="estudiantes"]');
+  var estSeleccionada = cardEst && cardEst.classList.contains('sel');
+  document.getElementById('aviso-estudiantes').style.display = estSeleccionada ? 'block' : 'none';
+  if (cantidad > 0) {
+    document.getElementById('bloque-confirmacion').style.display = 'block';
+    document.getElementById('btn-label').textContent =
+      'Eliminar ' + cantidad + ' categoría' + (cantidad > 1 ? 's' : '');
+  } else {
+    document.getElementById('bloque-confirmacion').style.display = 'none';
+    var inp = document.getElementById('confirmacion-input');
+    if (inp) inp.value = '';
+    _setBotonDeshabilitado();
+    return;
+  }
+  validarTextoConfirmacion(document.getElementById('confirmacion-input'));
+}
+
+function validarTextoConfirmacion(input) {
+  var texto     = input ? input.value.trim() : '';
+  var confirmOk = (texto === 'BORRAR TODO');
+  var haySel    = document.querySelectorAll('#grid-categorias .cb-card.sel').length > 0;
+  if (input) input.style.borderColor = confirmOk ? '#ef4444' : '#fecaca';
+  if (confirmOk && haySel) { _setBotonHabilitado(); } else { _setBotonDeshabilitado(); }
+}
+
+function _setBotonHabilitado() {
+  var btn = document.getElementById('btn-ejecutar-borrado');
+  if (!btn) return;
+  btn.disabled = false;
+  btn.style.background = 'linear-gradient(135deg,#dc2626,#b91c1c)';
+  btn.style.cursor = 'pointer';
+}
+
+function _setBotonDeshabilitado() {
+  var btn = document.getElementById('btn-ejecutar-borrado');
+  if (!btn) return;
+  btn.disabled = true;
+  btn.style.background = '#9ca3af';
+  btn.style.cursor = 'not-allowed';
+}
+
+function ejecutarBorrado() {
+  var cards = Array.from(document.querySelectorAll('#grid-categorias .cb-card.sel'));
+  if (!cards.length) return;
+  var keys    = cards.map(function(c) { return c.dataset.key; }).join(',');
+  var nombres = cards.map(function(c) {
+    var t = c.querySelector('.cb-t');
+    return t ? t.textContent.trim() : c.dataset.key;
+  }).join('\n\u2022 ');
+  var msg = '\u00DALTIMA ADVERTENCIA\n\n'
+          + 'Se eliminar\u00E1n permanentemente:\n\u2022 ' + nombres + '\n\n'
+          + 'Esta acci\u00F3n NO se puede deshacer.\n\n\u00BFConfirmas?';
+  if (!window.confirm(msg)) return;
+  document.getElementById('hidden-confirmacion').value = 'BORRAR TODO';
+  document.getElementById('hidden-categorias').value   = keys;
+  document.getElementById('form-borrado-selectivo').submit();
+}
+
+/* ═══════════════════════════════════════════════════════
+   BACKUP / RESTORE
+   ═══════════════════════════════════════════════════════ */
+function confirmarRestore() {
+  var msg = '\u00BFEst\u00E1s seguro?\n\n'
+          + 'Esto reemplazar\u00E1 TODA la base de datos con el archivo seleccionado.\n'
+          + 'Se guardar\u00E1 una copia autom\u00E1tica del estado actual antes de proceder.\n\n'
+          + '\u00BFConfirmas?';
+  return window.confirm(msg);
+}
+</script>
+
+{% endblock %}
+

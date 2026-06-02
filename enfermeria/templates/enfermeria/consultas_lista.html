@@ -1,0 +1,310 @@
+{% extends 'enfermeria/base.html' %}
+{% block title %}Consultas — COSFA CURE{% endblock %}
+{% block page_title %}Consultas{% endblock %}
+{% block content %}
+
+<style>
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+@media(max-width:900px){.stat-grid{grid-template-columns:repeat(2,1fr)}}
+.stat-card{background:white;border-radius:16px;padding:18px 20px;box-shadow:0 2px 16px rgba(15,36,68,.07);display:flex;align-items:center;gap:14px;position:relative;overflow:hidden;border:1px solid rgba(15,36,68,.06);transition:transform .2s,box-shadow .2s}
+.stat-card:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(15,36,68,.12)}
+.stat-card::before{content:'';position:absolute;right:-14px;top:-14px;width:70px;height:70px;border-radius:50%;opacity:.07}
+.stat-card.c-teal::before{background:var(--teal)}.stat-card.c-navy::before{background:#1a3a6e}.stat-card.c-orange::before{background:#f97316}.stat-card.c-green::before{background:#22c55e}
+.stat-icon{width:46px;height:46px;border-radius:12px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:1.3rem}
+.stat-icon.c-teal{background:rgba(14,165,160,.12)}.stat-icon.c-navy{background:rgba(26,58,110,.1)}.stat-icon.c-orange{background:rgba(249,115,22,.1)}.stat-icon.c-green{background:rgba(34,197,94,.1)}
+.stat-num{font-family:'Sora',sans-serif;font-size:1.6rem;font-weight:800;color:var(--navy);line-height:1;margin-bottom:3px}
+.stat-lbl{font-size:.72rem;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+.stat-sub{font-size:.7rem;color:#94a3b8;margin-top:2px}
+
+.filtros-wrap{background:white;border-radius:16px;box-shadow:0 2px 16px rgba(15,36,68,.06);border:1px solid rgba(15,36,68,.06);margin-bottom:16px;overflow:hidden}
+.filtros-header{padding:13px 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(15,36,68,.06);cursor:pointer;user-select:none}
+.filtros-body{padding:16px 18px;display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}
+.filtros-body.hidden{display:none}
+.filter-group{display:flex;flex-direction:column;gap:5px;min-width:150px}
+.filter-group label{font-size:.68rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.4px}
+.filter-group input,.filter-group select{padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:.8rem;color:var(--navy);background:#f8fafc;outline:none;transition:border-color .2s}
+.filter-group input:focus,.filter-group select:focus{border-color:var(--teal);background:white}
+.btn-filtrar{display:inline-flex;align-items:center;gap:7px;background:linear-gradient(135deg,var(--teal),#0d8c88);color:white;border:none;padding:9px 20px;border-radius:10px;font-size:.8rem;font-weight:700;cursor:pointer;align-self:flex-end;box-shadow:0 3px 10px rgba(14,165,160,.3)}
+.btn-limpiar{display:inline-flex;align-items:center;gap:6px;background:white;border:1.5px solid #e2e8f0;color:#64748b;padding:8px 16px;border-radius:10px;font-size:.8rem;font-weight:600;cursor:pointer;text-decoration:none;align-self:flex-end}
+.filtro-badge{display:inline-flex;align-items:center;gap:4px;background:rgba(14,165,160,.1);color:var(--teal);border:1px solid rgba(14,165,160,.25);border-radius:20px;padding:3px 10px;font-size:.68rem;font-weight:700}
+
+.tbl-consultas thead tr{background:linear-gradient(135deg,#0f2444 0%,#0e7490 100%)!important}
+.tbl-consultas thead th{background:transparent!important;color:white!important;font-family:'Sora',sans-serif;font-size:.63rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:12px 14px;border:none!important;white-space:nowrap}
+.tbl-consultas tbody tr{transition:all .18s;border-bottom:1px solid rgba(14,165,160,.07);cursor:pointer}
+.tbl-consultas tbody tr:nth-child(even){background:rgba(14,165,160,.02)}
+.tbl-consultas tbody tr:hover{background:rgba(14,165,160,.06)!important;box-shadow:inset 3px 0 0 var(--teal)}
+.tbl-consultas tbody td{padding:11px 14px;vertical-align:middle;border:none!important;font-size:.81rem;color:var(--text)}
+.row-actions{display:flex;gap:4px;opacity:0;transition:opacity .15s}
+.tbl-consultas tbody tr:hover .row-actions{opacity:1}
+.action-btn{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;border:1.5px solid #e2e8f0;background:white;color:#64748b;font-size:.78rem;cursor:pointer;text-decoration:none;transition:all .15s}
+.action-btn.v:hover{border-color:var(--teal);color:var(--teal);background:rgba(14,165,160,.08)}
+.action-btn.e:hover{border-color:#3b82f6;color:#3b82f6;background:rgba(59,130,246,.08)}
+.action-btn.d:hover{border-color:#dc2626;color:#dc2626;background:rgba(220,38,38,.08)}
+.badge-grado2{display:inline-flex;align-items:center;justify-content:center;min-width:34px;height:22px;padding:0 8px;background:linear-gradient(135deg,var(--teal),#067a76);color:white;font-size:.62rem;font-weight:800;border-radius:20px}
+.col-nombre{font-weight:700;color:var(--navy);text-decoration:none}.col-nombre:hover{color:var(--teal)}
+.alerta-cond{display:inline-flex;align-items:center;gap:2px;background:rgba(239,68,68,.1);color:#dc2626;border-radius:5px;padding:1px 5px;font-size:.6rem;font-weight:700}
+.tbl-footer{padding:10px 16px;font-size:.74rem;color:var(--text-muted);background:rgba(14,165,160,.03);border-top:1px solid rgba(14,165,160,.08);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.empty-icon-wrap{width:72px;height:72px;border-radius:50%;background:rgba(14,165,160,.08);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:1.8rem}
+</style>
+
+<!-- 1. MINI ESTADÍSTICAS -->
+<div class="stat-grid">
+  <div class="stat-card c-teal">
+    <div class="stat-icon c-teal"><i class="bi bi-calendar-month" style="color:var(--teal)"></i></div>
+    <div>
+      <div class="stat-num">{{ total_mes }}</div>
+      <div class="stat-lbl">Este mes</div>
+      <div class="stat-sub">Consultas registradas</div>
+    </div>
+  </div>
+  <div class="stat-card c-navy">
+    <div class="stat-icon c-navy"><i class="bi bi-clock-history" style="color:#1a3a6e"></i></div>
+    <div>
+      <div class="stat-num">{{ total_hoy }}</div>
+      <div class="stat-lbl">Hoy</div>
+      <div class="stat-sub">Atenciones del día</div>
+    </div>
+  </div>
+  <div class="stat-card c-orange">
+    <div class="stat-icon c-orange"><i class="bi bi-hospital" style="color:#f97316"></i></div>
+    <div>
+      <div class="stat-num">{{ remitidas }}</div>
+      <div class="stat-lbl">Remisiones</div>
+      <div class="stat-sub">Total acumulado</div>
+    </div>
+  </div>
+  <div class="stat-card c-green">
+    <div class="stat-icon c-green"><i class="bi bi-bar-chart-fill" style="color:#22c55e"></i></div>
+    <div>
+      <div class="stat-num" style="font-size:.95rem;padding-top:4px">{{ motivo_top_label|default:"—"|truncatechars:14 }}</div>
+      <div class="stat-lbl">Motivo frecuente</div>
+      <div class="stat-sub">Del mes actual</div>
+    </div>
+  </div>
+</div>
+
+<!-- 2. FILTROS AVANZADOS -->
+<div class="filtros-wrap">
+  <div class="filtros-header" onclick="toggleFiltros(this)">
+    <div style="display:flex;align-items:center;gap:8px;font-size:.84rem;font-weight:700;color:var(--navy)">
+      <i class="bi bi-funnel-fill" style="color:var(--teal)"></i>
+      Filtros de búsqueda
+      {% if hay_filtros %}<span class="filtro-badge"><i class="bi bi-check-circle-fill"></i> Activos</span>{% endif %}
+    </div>
+    <i class="bi bi-chevron-down" id="fchev" style="color:#94a3b8;transition:transform .2s{% if hay_filtros %};transform:rotate(180deg){% endif %}"></i>
+  </div>
+  <div class="filtros-body {% if not hay_filtros %}hidden{% endif %}" id="fbody">
+    <form method="get" style="display:contents">
+      <div class="filter-group" style="min-width:200px;flex:1">
+        <label><i class="bi bi-search"></i> Buscar</label>
+        <input type="text" name="q" id="q-consultas" value="{{ query }}" placeholder="Nombre o motivo..." autocomplete="off">
+      </div>
+      <div class="filter-group">
+        <label><i class="bi bi-calendar3"></i> Fecha</label>
+        <input type="date" name="fecha" value="{{ f_fecha }}">
+      </div>
+      <div class="filter-group">
+        <label><i class="bi bi-mortarboard"></i> Grado</label>
+        <select name="grado">
+          <option value="">Todos</option>
+          {% for val,lbl in grados %}<option value="{{ val }}"{% if f_grado == val %} selected{% endif %}>{{ lbl }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="filter-group">
+        <label><i class="bi bi-heart-pulse"></i> Motivo</label>
+        <select name="motivo">
+          <option value="">Todos</option>
+          {% for val,lbl in motivo_choices %}<option value="{{ val }}"{% if f_motivo == val %} selected{% endif %}>{{ lbl }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="filter-group">
+        <label><i class="bi bi-tag"></i> Estado</label>
+        <select name="estado">
+          <option value="">Todos</option>
+          {% for val,lbl in estado_choices %}<option value="{{ val }}"{% if f_estado == val %} selected{% endif %}>{{ lbl }}</option>{% endfor %}
+        </select>
+      </div>
+      <button type="submit" class="btn-filtrar"><i class="bi bi-funnel-fill"></i> Filtrar</button>
+      <a href="{% url 'lista_consultas' %}?fecha={{ today_str }}" class="btn-filtrar" style="background:linear-gradient(135deg,#0e7490,#0f2444);gap:6px"><i class="bi bi-calendar-check"></i> Hoy</a>
+      {% if hay_filtros %}<a href="{% url 'lista_consultas' %}" class="btn-limpiar"><i class="bi bi-x-circle"></i> Limpiar</a>{% endif %}
+    </form>
+  </div>
+</div>
+
+<!-- 3. TABLA + 4. ACCIONES RÁPIDAS -->
+<div class="card">
+  <div class="card-head">
+    <div class="card-head-title">
+      <i class="bi bi-clipboard2-pulse-fill"></i> Todas las consultas
+      {% if hay_filtros %}<span class="filtro-badge" style="margin-left:6px">Filtrado</span>{% endif %}
+    </div>
+    <div style="display:flex;gap:6px">
+      {% if usuario_es_admin %}<a href="{% url 'nueva_consulta' %}" class="btn btn-primary btn-sm"><i class="bi bi-plus"></i> Nueva</a>{% endif %}
+      <a href="{% url 'pdf_consultas' %}{% if query %}?q={{ query }}{% endif %}" target="_blank"
+         class="btn btn-sm" style="background:linear-gradient(135deg,#ef4444,#dc2626);color:white;border:none">
+        <i class="bi bi-file-earmark-pdf-fill"></i> PDF
+      </a>
+      <a href="{% url 'exportar_consultas_xlsx' %}{% if query %}?q={{ query }}{% endif %}{% if f_estado %}&estado={{ f_estado }}{% endif %}{% if f_grado %}&grado={{ f_grado }}{% endif %}{% if f_motivo %}&motivo={{ f_motivo }}{% endif %}{% if f_fecha %}&fecha={{ f_fecha }}{% endif %}"
+         class="btn btn-sm" style="background:linear-gradient(135deg,#16a34a,#15803d);color:white;border:none">
+        <i class="bi bi-file-earmark-excel-fill"></i> Excel
+      </a>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    {% if consultas %}
+    <table class="tbl-consultas" style="width:100%">
+      <thead>
+        <tr>
+          <th>Fecha / Hora</th>
+          <th>Estudiante</th>
+          <th>Grado</th>
+          <th>Motivo</th>
+          <th>Medicamento</th>
+          <th>Estado</th>
+          <th>Signos</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for c in consultas %}
+      <tr onclick="window.location='{% url 'detalle_consulta' c.pk %}'">
+        <td class="col-fecha" style="font-size:.75rem;color:var(--text-muted);white-space:nowrap">
+          <i class="bi bi-calendar3" style="margin-right:3px;opacity:.4"></i>{{ c.fecha_hora|date:"d/m/Y" }}<br>
+          <span style="opacity:.55;font-size:.7rem">{{ c.fecha_hora|date:"H:i" }}</span>
+        </td>
+        <td>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--teal),#1a3a6e);display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:800;color:white;flex-shrink:0">{{ c.estudiante.nombre|slice:":1"|upper }}</div>
+            <div>
+              <a href="{% url 'historial_estudiante' c.estudiante.pk %}" class="col-nombre" onclick="event.stopPropagation()">{{ c.estudiante.nombre }}</a>
+              {% if c.estudiante.alergias or c.estudiante.condicion_especial %}
+              <div><span class="alerta-cond"><i class="bi bi-exclamation-triangle-fill"></i> Condición</span></div>
+              {% endif %}
+            </div>
+          </div>
+        </td>
+        <td><span class="badge-grado2">{{ c.estudiante.grado }}</span></td>
+        <td style="font-size:.8rem">{{ c.get_motivo_display }}</td>
+        <td style="font-size:.75rem;color:var(--text-muted)">
+          {% if c.medicamento_suministrado %}<i class="bi bi-capsule" style="color:var(--teal);margin-right:2px"></i>{{ c.medicamento_suministrado }}{% if c.dosis %}<br><span style="opacity:.6">{{ c.dosis }}</span>{% endif %}
+          {% else %}<span style="opacity:.3">—</span>{% endif %}
+        </td>
+        <td>
+          {% if c.estado == 'remitido_hospital' %}<span class="badge badge-red"><i class="bi bi-hospital"></i> Hospital</span>
+          {% elif c.estado == 'remitido_casa' %}<span class="badge badge-orange"><i class="bi bi-house"></i> A casa</span>
+          {% elif c.estado == 'atendido' %}<span class="badge badge-green"><i class="bi bi-check-circle"></i> Atendido</span>
+          {% elif c.estado == 'regreso_clase' %}<span class="badge badge-teal"><i class="bi bi-mortarboard"></i> Regreso clase</span>
+          {% else %}<span class="badge badge-gray">{{ c.get_estado_display }}</span>{% endif %}
+          {% if c.acudiente_notificado %}<br><span style="font-size:.6rem;color:#22c55e;font-weight:600"><i class="bi bi-bell-fill"></i> Notificado</span>{% endif %}
+        </td>
+        <td style="font-size:.72rem;color:var(--text-muted)">
+          {% if c.temperatura %}<span title="Temperatura">🌡️ {{ c.temperatura }}°C</span><br>{% endif %}
+          {% if c.frecuencia_cardiaca %}<span title="Frec. cardíaca">❤️ {{ c.frecuencia_cardiaca }}lpm</span>{% endif %}
+          {% if not c.temperatura and not c.frecuencia_cardiaca %}<span style="opacity:.3">—</span>{% endif %}
+        </td>
+        <td onclick="event.stopPropagation()">
+  {% if usuario_es_admin %}<div class="row-actions">
+            <a href="{% url 'detalle_consulta' c.pk %}" class="action-btn v" title="Ver"><i class="bi bi-eye"></i></a>
+            <a href="{% url 'detalle_consulta' c.pk %}" class="action-btn e" title="Editar"><i class="bi bi-pencil"></i></a>
+            {% if usuario_es_admin %}<a href="{% url 'eliminar_consulta' c.pk %}" class="action-btn d" title="Eliminar" onclick="return confirm('¿Eliminar esta consulta?')"><i class="bi bi-trash"></i></a>{% endif %}
+          </div>{% endif %}
+</td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    <div class="tbl-footer">
+      <i class="bi bi-clipboard2-pulse"></i>
+      <strong>{{ page_obj.paginator.count }}</strong> consulta(s)
+      {% if query %}&nbsp;·&nbsp;Búsqueda: <em>"{{ query }}"</em>{% endif %}
+      {% if f_grado %}&nbsp;·&nbsp;Grado: <strong>{{ f_grado }}</strong>{% endif %}
+      {% if f_motivo %}&nbsp;·&nbsp;Motivo filtrado{% endif %}
+      {% if f_estado %}&nbsp;·&nbsp;Estado filtrado{% endif %}
+      {% if f_fecha %}&nbsp;·&nbsp;Fecha: <strong>{{ f_fecha }}</strong>{% endif %}
+    </div>
+    {% if page_obj.has_other_pages %}
+    <div style="display:flex;align-items:center;justify-content:center;gap:6px;padding:12px 16px;border-top:1px solid rgba(14,165,160,.08)">
+      {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}{% if f_estado %}&estado={{ f_estado }}{% endif %}{% if f_grado %}&grado={{ f_grado }}{% endif %}{% if f_motivo %}&motivo={{ f_motivo }}{% endif %}{% if f_fecha %}&fecha={{ f_fecha }}{% endif %}" class="btn btn-outline btn-sm"><i class="bi bi-chevron-left"></i></a>{% endif %}
+      {% for num in page_obj.paginator.page_range %}
+        {% if page_obj.number == num %}
+          <span class="btn btn-sm" style="background:var(--teal);color:white;border:none;min-width:34px">{{ num }}</span>
+        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+          <a href="?page={{ num }}{% if query %}&q={{ query }}{% endif %}{% if f_estado %}&estado={{ f_estado }}{% endif %}{% if f_grado %}&grado={{ f_grado }}{% endif %}{% if f_motivo %}&motivo={{ f_motivo }}{% endif %}{% if f_fecha %}&fecha={{ f_fecha }}{% endif %}" class="btn btn-outline btn-sm" style="min-width:34px">{{ num }}</a>
+        {% endif %}
+      {% endfor %}
+      {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}{% if f_estado %}&estado={{ f_estado }}{% endif %}{% if f_grado %}&grado={{ f_grado }}{% endif %}{% if f_motivo %}&motivo={{ f_motivo }}{% endif %}{% if f_fecha %}&fecha={{ f_fecha }}{% endif %}" class="btn btn-outline btn-sm"><i class="bi bi-chevron-right"></i></a>{% endif %}
+      <span style="font-size:.75rem;color:var(--text-muted);margin-left:4px">Pág. {{ page_obj.number }}/{{ page_obj.paginator.num_pages }}</span>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div style="text-align:center;padding:60px 24px">
+      <div class="empty-icon-wrap"><i class="bi bi-clipboard2-pulse" style="color:var(--teal)"></i></div>
+      {% if hay_filtros %}
+        <h3 style="font-family:'Sora',sans-serif;font-size:1rem;font-weight:800;color:var(--navy);margin:0 0 8px">Sin resultados</h3>
+        <p style="font-size:.82rem;color:var(--text-muted);margin-bottom:16px">No hay consultas con los filtros aplicados</p>
+        <a href="{% url 'lista_consultas' %}" class="btn btn-outline btn-sm"><i class="bi bi-x-circle"></i> Limpiar filtros</a>
+      {% else %}
+        <h3 style="font-family:'Sora',sans-serif;font-size:1rem;font-weight:800;color:var(--navy);margin:0 0 8px">Sin consultas registradas</h3>
+        <p style="font-size:.82rem;color:var(--text-muted);margin-bottom:16px">Registra la primera atención del día</p>
+        {% if usuario_es_admin %}<a href="{% url 'nueva_consulta' %}" class="btn btn-primary btn-sm"><i class="bi bi-plus-circle"></i> Nueva consulta</a>{% endif %}
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+function toggleFiltros(el){
+  const body=document.getElementById('fbody');
+  const chev=document.getElementById('fchev');
+  body.classList.toggle('hidden');
+  chev.style.transform=body.classList.contains('hidden')?'':'rotate(180deg)';
+}
+
+// ── BÚSQUEDA EN TIEMPO REAL AJAX ────────────────────────────────────────────
+(function(){
+  const inp = document.getElementById('q-consultas');
+  if(!inp) return;
+  const tbody = document.querySelector('.tbl-consultas tbody') || document.querySelector('table tbody');
+  const contadorEl = document.getElementById('contador-consultas');
+  let timer;
+  let originalRows = null;
+
+  inp.addEventListener('input', function(){
+    clearTimeout(timer);
+    const q = inp.value.trim();
+    if(!q){ if(originalRows){ tbody.innerHTML = originalRows; } return; }
+    if(!originalRows) originalRows = tbody.innerHTML;
+    timer = setTimeout(function(){
+      const url = new URL('/api/buscar/consultas/', window.location.origin);
+      url.searchParams.set('q', q);
+      // Pasar filtros activos también
+      const params = new URLSearchParams(window.location.search);
+      ['estado','grado','motivo','fecha'].forEach(k=>{ const v=params.get(k); if(v) url.searchParams.set(k,v); });
+      fetch(url, {headers:{'X-Requested-With':'XMLHttpRequest'}})
+        .then(r=>r.json())
+        .then(data=>{
+          if(!data.resultados) return;
+          if(contadorEl) contadorEl.textContent = data.total + ' resultado' + (data.total!==1?'s':'');
+          if(data.resultados.length===0){
+            tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:30px;color:#94a3b8"><i class="bi bi-search" style="font-size:1.5rem;display:block;margin-bottom:8px"></i>Sin resultados para "'+q+'"</td></tr>';
+            return;
+          }
+          tbody.innerHTML = data.resultados.map(c=>`
+            <tr onclick="window.location='${c.url}'" style="cursor:pointer">
+              <td><span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:8px;background:rgba(14,165,160,.1);font-size:.75rem;font-weight:700;color:var(--teal)">${c.pk}</span></td>
+              <td><strong>${c.estudiante}</strong><div style="font-size:.72rem;color:#94a3b8">${c.grado}</div></td>
+              <td><span class="badge badge-blue">${c.grado}</span></td>
+              <td>${c.motivo}</td>
+              <td>${c.estado}</td>
+              <td>${c.fecha}</td>
+              <td><a href="${c.url}" class="btn btn-outline btn-xs"><i class="bi bi-eye"></i></a></td>
+            </tr>`).join('');
+        }).catch(()=>{ /* fallback silencioso */ });
+    }, 350);
+  });
+})();
+</script>
+{% endblock %}

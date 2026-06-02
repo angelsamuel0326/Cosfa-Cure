@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Notificación Enfermería Escolar</title>
+</head>
+<body style="margin:0;padding:0;font-family:'Segoe UI',Helvetica,Arial,sans-serif;
+  {% if consulta.estado == 'regreso_clase' %}background-color:#E8F5E9;
+  {% elif consulta.estado == 'remitido_casa' %}background-color:#FFF8F0;
+  {% else %}background-color:#EBF4F8;{% endif %}">
+
+<table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 20px;
+  {% if consulta.estado == 'regreso_clase' %}background-color:#E8F5E9;
+  {% elif consulta.estado == 'remitido_casa' %}background-color:#FFF8F0;
+  {% else %}background-color:#EBF4F8;{% endif %}">
+<tr><td align="center">
+<table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff;border-radius:16px;overflow:hidden;
+  {% if consulta.estado == 'regreso_clase' %}box-shadow:0 4px 24px rgba(0,80,40,0.12);
+  {% elif consulta.estado == 'remitido_casa' %}box-shadow:0 4px 24px rgba(180,60,0,0.14);
+  {% else %}box-shadow:0 4px 24px rgba(0,60,120,0.12);{% endif %}">
+
+  <!-- HEADER (color según estado) -->
+  <tr>
+    <td style="padding:36px 40px 24px;text-align:center;
+      {% if consulta.estado == 'atendido' %}background:linear-gradient(135deg,#003366 0%,#0055A5 60%,#0077CC 100%);
+      {% elif consulta.estado == 'regreso_clase' %}background:linear-gradient(135deg,#004D26 0%,#00703A 55%,#00A550 100%);
+      {% elif consulta.estado == 'remitido_casa' %}background:linear-gradient(135deg,#7B2D00 0%,#BF360C 55%,#E64A19 100%);
+      {% else %}background:linear-gradient(135deg,#37474F 0%,#546E7A 100%);{% endif %}">
+      <img src="cid:logo_cosfa" alt="Logo Colegio San Francisco de Asís" width="80" height="80" style="border-radius:50%;border:3px solid rgba(255,255,255,0.4);display:block;margin:0 auto 12px;">
+      <p style="color:rgba(220,240,255,0.85);font-size:11px;letter-spacing:2.5px;text-transform:uppercase;margin:0 0 5px;font-weight:600;">Colegio San Francisco de Asís</p>
+      <h1 style="color:#ffffff;font-size:21px;font-weight:700;margin:0 0 14px;">Sistema de Enfermería Escolar</h1>
+      <div style="display:inline-block;background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.4);border-radius:30px;padding:7px 20px;">
+        <span style="font-size:12px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;
+          {% if consulta.estado == 'atendido' %}color:#B3E5FC;
+          {% elif consulta.estado == 'regreso_clase' %}color:#B9F6CA;
+          {% elif consulta.estado == 'remitido_casa' %}color:#FFD8B0;
+          {% else %}color:#E0E0E0;{% endif %}">
+          {% if consulta.estado == 'atendido' %}<span style="font-size:12px;color:#93c5fd;vertical-align:middle;">&#9670;</span> Atención en Enfermería
+          {% elif consulta.estado == 'regreso_clase' %}<span style="display:inline-block;width:14px;height:14px;background:#6366f1;border-radius:1px;vertical-align:middle;"></span> Regreso a Clases
+          {% elif consulta.estado == 'remitido_casa' %}<span style="display:inline-block;width:0;height:0;border-left:9px solid transparent;border-right:9px solid transparent;border-bottom:16px solid #f59e0b;vertical-align:middle;"></span> Acción Requerida
+          {% else %}<span style="display:inline-block;width:16px;height:16px;background:#3b82f6;border-radius:50%;text-align:center;line-height:16px;font-size:11px;font-weight:bold;color:#fff;vertical-align:middle;">i</span> Notificación{% endif %}
+        </span>
+      </div>
+    </td>
+  </tr>
+
+  <!-- FRANJA DE ESTADO -->
+  <tr>
+    <td style="padding:11px 40px;
+      {% if consulta.estado == 'atendido' %}background:#1B7A3E;
+      {% elif consulta.estado == 'regreso_clase' %}background:#00A550;
+      {% elif consulta.estado == 'remitido_casa' %}background:#E64A19;
+      {% else %}background:#455A64;{% endif %}">
+      <p style="color:#ffffff;font-size:13px;margin:0;text-align:center;font-weight:600;">
+        {% if consulta.estado == 'atendido' %}<span style="display:inline-block;width:16px;height:16px;background:#22c55e;border-radius:50%;text-align:center;line-height:16px;font-size:11px;font-weight:bold;color:#fff;vertical-align:middle;">&#10003;</span> &nbsp;El/la estudiante fue atendido/a y se encuentra bien
+        {% elif consulta.estado == 'regreso_clase' %}<span style="display:inline-block;width:16px;height:16px;background:#22c55e;border-radius:50%;text-align:center;line-height:16px;font-size:11px;font-weight:bold;color:#fff;vertical-align:middle;">&#10003;</span> &nbsp;¡Buenas noticias! El/la estudiante está listo/a para retomar sus actividades
+        {% elif consulta.estado == 'remitido_casa' %}<span style="display:inline-block;width:14px;height:14px;background:#f97316;border-radius:1px;vertical-align:middle;"></span> &nbsp;El/la estudiante requiere ser recogido/a por el acudiente
+        {% else %}<span style="display:inline-block;width:16px;height:16px;background:#3b82f6;border-radius:50%;text-align:center;line-height:16px;font-size:11px;font-weight:bold;color:#fff;vertical-align:middle;">i</span> &nbsp;Notificación del sistema de enfermería{% endif %}
+      </p>
+    </td>
+  </tr>
+
+  <!-- CUERPO -->
+  <tr><td style="padding:32px 40px;">
+
+    <p style="font-size:15px;color:#1A2B4A;margin:0 0 5px;font-weight:700;">Estimado/a {{ estudiante.acudiente|default:"Acudiente" }},</p>
+
+    <!-- Mensaje principal según estado -->
+    {% if consulta.estado == 'atendido' %}
+    <p style="font-size:14px;color:#4A5568;margin:0 0 24px;line-height:1.75;">
+      Le informamos que el/la estudiante <strong style="color:#003366;">{{ estudiante.nombre }}</strong> fue atendido/a en nuestra enfermería escolar hoy, <strong>{{ consulta.fecha_hora|date:"d \d\e F \d\e Y" }}</strong> a las <strong>{{ consulta.fecha_hora|date:"H:i" }}</strong>. Recibió la atención necesaria y <strong>se encuentra en buen estado de salud</strong>. No es necesaria ninguna acción de su parte en este momento.
+    </p>
+
+    {% elif consulta.estado == 'regreso_clase' %}
+    <p style="font-size:14px;color:#4A5568;margin:0 0 20px;line-height:1.75;">
+      Con mucho agrado le informamos que el/la estudiante <strong style="color:#004D26;">{{ estudiante.nombre }}</strong>, quien fue atendido/a en nuestra enfermería, <strong>ya ha regresado satisfactoriamente a sus actividades académicas</strong>. Su estado de salud es estable y se encuentra en condiciones de continuar con total normalidad su jornada escolar.
+    </p>
+    <!-- Caja de regreso -->
+    <div style="background:linear-gradient(135deg,#F0FFF4,#DCFCE7);border:2px solid #86EFAC;border-radius:12px;padding:18px 22px;margin-bottom:24px;text-align:center;">
+      <p style="font-size:26px;margin:0 0 8px;"><span style="display:inline-block;width:14px;height:14px;background:#10b981;border-radius:3px;vertical-align:middle;"></span></p>
+      <p style="font-size:15px;color:#14532D;font-weight:700;margin:0 0 4px;">Estudiante de regreso en el aula</p>
+      <p style="font-size:13px;color:#166534;margin:0;">Atendido/a el {{ consulta.fecha_hora|date:"d/m/Y" }} a las {{ consulta.fecha_hora|date:"H:i" }}</p>
+    </div>
+
+    {% elif consulta.estado == 'remitido_casa' %}
+    <p style="font-size:14px;color:#4A3630;margin:0 0 20px;line-height:1.75;">
+      Le informamos que el/la estudiante <strong style="color:#7B2D00;">{{ estudiante.nombre }}</strong> fue valorado/a en nuestra enfermería escolar y, dado su estado de salud actual, hemos considerado necesario que sea <strong>recogido/a por su acudiente.</strong>
+    </p>
+    <!-- Caja de espera urgente -->
+    <div style="background:#FFF3E0;border:2px solid #FFAB40;border-radius:12px;padding:18px 22px;margin-bottom:24px;">
+      <table width="100%" cellpadding="0" cellspacing="0"><tr>
+        <td style="width:50px;vertical-align:top;padding-top:2px;">
+          <div style="width:44px;height:44px;background:#FF6D00;border-radius:50%;text-align:center;line-height:44px;font-size:20px;"><span style="display:inline-block;width:12px;height:16px;border:2px solid #f97316;border-radius:2px;vertical-align:middle;"></span></div>
+        </td>
+        <td style="padding-left:14px;vertical-align:top;">
+          <p style="font-size:15px;color:#E65100;font-weight:800;margin:0 0 5px;">Estudiante a la espera del acudiente</p>
+          <p style="font-size:13px;color:#BF360C;margin:0;line-height:1.6;">El/la estudiante se encuentra en la <strong>enfermería del colegio</strong>, bajo supervisión de la enfermera escolar, aguardando ser recogido/a. Por favor, comuníquese con nosotros o diríjase al colegio a la mayor brevedad posible.</p>
+        </td>
+      </tr></table>
+    </div>
+    {% else %}
+    <p style="font-size:14px;color:#4A5568;margin:0 0 24px;line-height:1.75;">
+      Le informamos que el/la estudiante <strong style="color:#003366;">{{ estudiante.nombre }}</strong> fue atendido/a en la enfermería escolar del Colegio San Francisco de Asís.
+    </p>
+    {% endif %}
+
+    <hr style="border:none;border-top:1px solid #E2E8F0;margin:0 0 24px;">
+    <p style="font-size:10.5px;color:#90A4AE;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin:0 0 12px;">Información del Estudiante</p>
+
+    <table width="100%" cellpadding="0" cellspacing="0" style="border-radius:10px;overflow:hidden;border:1px solid #E2E8F0;margin-bottom:22px;
+      {% if consulta.estado == 'regreso_clase' %}background:#F0FFF4;{% elif consulta.estado == 'remitido_casa' %}background:#FFF8F3;{% else %}background:#F7FAFC;{% endif %}">
+      <tr style="border-bottom:1px solid #E2E8F0;">
+        <td style="padding:11px 16px;font-size:13px;color:#718096;width:44%;">Nombre completo</td>
+        <td style="padding:11px 16px;font-size:13px;font-weight:700;
+          {% if consulta.estado == 'regreso_clase' %}color:#14532D;{% elif consulta.estado == 'remitido_casa' %}color:#7B2D00;{% else %}color:#1A2B4A;{% endif %}">{{ estudiante.nombre }}</td>
+      </tr>
+      <tr style="border-bottom:1px solid #E2E8F0;background:#fff;">
+        <td style="padding:11px 16px;font-size:13px;color:#718096;">Grado / Curso</td>
+        <td style="padding:11px 16px;font-size:13px;font-weight:700;
+          {% if consulta.estado == 'regreso_clase' %}color:#14532D;{% elif consulta.estado == 'remitido_casa' %}color:#7B2D00;{% else %}color:#1A2B4A;{% endif %}">{{ estudiante.grado }}</td>
+      </tr>
+      <tr style="border-bottom:1px solid #E2E8F0;">
+        <td style="padding:11px 16px;font-size:13px;color:#718096;">Fecha y hora</td>
+        <td style="padding:11px 16px;font-size:13px;font-weight:700;
+          {% if consulta.estado == 'regreso_clase' %}color:#14532D;{% elif consulta.estado == 'remitido_casa' %}color:#7B2D00;{% else %}color:#1A2B4A;{% endif %}">{{ consulta.fecha_hora|date:"d/m/Y" }} &nbsp;·&nbsp; {{ consulta.fecha_hora|date:"H:i" }}</td>
+      </tr>
+      <tr style="border-bottom:1px solid #E2E8F0;background:#fff;">
+        <td style="padding:11px 16px;font-size:13px;color:#718096;">Motivo de consulta</td>
+        <td style="padding:11px 16px;font-size:13px;font-weight:700;
+          {% if consulta.estado == 'regreso_clase' %}color:#14532D;{% elif consulta.estado == 'remitido_casa' %}color:#7B2D00;{% else %}color:#1A2B4A;{% endif %}">{{ consulta.get_motivo_display }}</td>
+      </tr>
+      <tr {% if not consulta.medicamento_suministrado %}style="border-bottom:none;"{% else %}style="border-bottom:1px solid #E2E8F0;"{% endif %}>
+        <td style="padding:11px 16px;font-size:13px;color:#718096;">Tratamiento</td>
+        <td style="padding:11px 16px;font-size:13px;font-weight:700;
+          {% if consulta.estado == 'regreso_clase' %}color:#14532D;{% elif consulta.estado == 'remitido_casa' %}color:#7B2D00;{% else %}color:#1A2B4A;{% endif %}">{{ consulta.tratamiento }}</td>
+      </tr>
+      {% if consulta.medicamento_suministrado %}
+      <tr style="background:#fff;">
+        <td style="padding:11px 16px;font-size:13px;color:#718096;">Insumos / Medicamentos</td>
+        <td style="padding:11px 16px;font-size:13px;font-weight:700;
+          {% if consulta.estado == 'regreso_clase' %}color:#14532D;{% elif consulta.estado == 'remitido_casa' %}color:#7B2D00;{% else %}color:#1A2B4A;{% endif %}">{{ consulta.medicamento_suministrado }}</td>
+      </tr>
+      {% endif %}
+    </table>
+
+    <!-- Signos vitales -->
+    {% if consulta.temperatura or consulta.presion_arterial or consulta.frecuencia_cardiaca or consulta.frecuencia_respiratoria or consulta.peso %}
+    <p style="font-size:10.5px;color:#90A4AE;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin:0 0 12px;">Signos Vitales Registrados</p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:22px;">
+      <tr>
+        {% if consulta.temperatura %}
+        <td style="width:33%;padding:4px;">
+          <div style="background:#E8F5E9;border-radius:10px;padding:13px;text-align:center;border:1px solid #C8E6C9;">
+            <div style="font-size:10px;color:#2E7D32;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;">Temperatura</div>
+            <div style="font-size:20px;font-weight:800;color:#1B5E20;">{{ consulta.temperatura }}°C</div>
+          </div>
+        </td>
+        {% endif %}
+        {% if consulta.presion_arterial %}
+        <td style="width:33%;padding:4px;">
+          <div style="background:#E3F2FD;border-radius:10px;padding:13px;text-align:center;border:1px solid #BBDEFB;">
+            <div style="font-size:10px;color:#1565C0;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;">Presión</div>
+            <div style="font-size:20px;font-weight:800;color:#0D47A1;">{{ consulta.presion_arterial }}</div>
+          </div>
+        </td>
+        {% endif %}
+        {% if consulta.frecuencia_cardiaca %}
+        <td style="width:33%;padding:4px;">
+          <div style="background:#FCE4EC;border-radius:10px;padding:13px;text-align:center;border:1px solid #F8BBD0;">
+            <div style="font-size:10px;color:#C62828;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;">F. Cardíaca</div>
+            <div style="font-size:20px;font-weight:800;color:#B71C1C;">{{ consulta.frecuencia_cardiaca }} lpm</div>
+          </div>
+        </td>
+        {% endif %}
+      </tr>
+    </table>
+    {% endif %}
+
+    <!-- Observaciones -->
+    {% if consulta.observaciones %}
+    <div style="background:#FFFDE7;border-left:4px solid #F9A825;border-radius:0 8px 8px 0;padding:14px 18px;margin-bottom:20px;">
+      <p style="font-size:10.5px;color:#F57F17;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin:0 0 6px;">Observaciones de Enfermería</p>
+      <p style="font-size:13px;color:#4A3700;margin:0;line-height:1.6;">{{ consulta.observaciones }}</p>
+    </div>
+    {% endif %}
+
+    <!-- Cierre -->
+    <p style="font-size:13px;color:#90A4AE;line-height:1.7;margin:0;">
+      {% if consulta.estado == 'remitido_casa' %}
+      Este mensaje fue generado al momento de registrar la situación en el sistema de enfermería. Su hijo/a se encuentra en buenas manos mientras aguarda su llegada.
+      {% elif consulta.estado == 'regreso_clase' %}
+      Si nota algún cambio en el estado de salud de su hijo/a al llegar a casa, no dude en comunicarse con nosotros. En la enfermería estamos disponibles durante toda la jornada escolar.
+      {% else %}
+      Si tiene alguna duda o desea información adicional sobre la atención brindada, puede comunicarse directamente con la enfermería del colegio. Estamos a su disposición.
+      {% endif %}
+    </p>
+
+  </td></tr>
+
+  <!-- FOOTER -->
+  <tr>
+    <td style="border-top:1px solid #E2E8F0;padding:20px 40px;text-align:center;
+      {% if consulta.estado == 'regreso_clase' %}background:#F0FFF4;
+      {% elif consulta.estado == 'remitido_casa' %}background:#FFF3E0;
+      {% else %}background:#F0F4F8;{% endif %}">
+      <p style="font-size:12px;font-weight:700;margin:0 0 4px;
+        {% if consulta.estado == 'regreso_clase' %}color:#004D26;
+        {% elif consulta.estado == 'remitido_casa' %}color:#7B2D00;
+        {% else %}color:#003366;{% endif %}">Colegio San Francisco de Asís &nbsp;·&nbsp; Enfermería Escolar COSFA CURE</p>
+      <p style="font-size:11px;color:#90A4AE;margin:0;">Este es un mensaje automático generado por el sistema de enfermería. Por favor no responda a este correo.</p>
+    </td>
+  </tr>
+
+</table>
+</td></tr></table>
+
+  <!-- Tracking pixel (invisible) -->
+  {% if confirm_url %}
+  <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:16px;">
+    <tr>
+      <td align="center" style="padding:12px 40px 20px;">
+        <a href="{{ confirm_url }}"
+           style="display:inline-block;font-size:12px;color:#94A3B8;text-decoration:none;
+                  border:1px solid #E2E8F0;border-radius:20px;padding:7px 20px;
+                  font-family:Segoe UI,Helvetica,Arial,sans-serif;">
+          &#10003;&nbsp; Confirmar recepcion de este correo
+        </a>
+      </td>
+    </tr>
+  </table>
+  {% endif %}
+  {% if pixel_url %}<img src="{{ pixel_url }}" width="1" height="1" style="display:none;border:0;height:1px;width:1px;max-height:1px;max-width:1px;" alt="">{% endif %}
+</body></html>

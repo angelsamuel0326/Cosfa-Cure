@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+body{margin:0;padding:0;background:#f0f5fb;font-family:Arial,sans-serif}
+.wrap{max-width:580px;margin:30px auto;background:white;border-radius:12px;overflow:hidden;border:1px solid #d4e4f4}
+.header{background:linear-gradient(135deg,#1e3a5f,#2563eb);padding:28px 32px;text-align:center}
+.header h1{color:white;font-size:20px;margin:0 0 4px}
+.header p{color:rgba(255,255,255,.75);font-size:13px;margin:0}
+.logo{font-size:32px;margin-bottom:10px}
+.aviso{background:#eff6ff;border:2px solid #93c5fd;border-radius:10px;padding:14px 18px;margin-bottom:18px;text-align:center}
+.aviso p{color:#1d4ed8;font-size:15px;font-weight:bold;margin:0}
+.body{padding:28px 32px}
+.info-box{background:#eef5fd;border-radius:10px;padding:16px 20px;margin-bottom:16px}
+.info-row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #d4e4f4;font-size:14px}
+.info-row:last-child{border-bottom:none}
+.info-label{color:#6b86a0;font-weight:bold}
+.info-val{color:#1a2b3c;text-align:right;max-width:65%}
+.accion-box{background:#f0fdf4;border:2px solid #86efac;border-radius:10px;padding:18px 20px;margin-bottom:16px;text-align:center}
+.accion-box h2{color:#15803d;font-size:17px;margin:0 0 8px}
+.accion-box p{color:#166534;font-size:14px;margin:4px 0}
+.footer{background:#f7faff;padding:18px 32px;text-align:center;border-top:1px solid #d4e4f4}
+.footer p{color:#94a3b8;font-size:12px;margin:4px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <img src="cid:logo_cosfa" alt="Logo Colegio San Francisco de Asís" width="80" height="80" style="border-radius:50%;border:3px solid rgba(255,255,255,0.4);display:block;margin:0 auto 12px;">
+    <h1>Aviso de Salida — COSFA CURE</h1>
+    <p>Colegio San Francisco de Asís</p>
+  </div>
+  <div class="body">
+    <div class="aviso">
+      <p><span style="display:inline-block;width:14px;height:14px;background:#fbbf24;border-radius:50% 50% 30% 30%;vertical-align:middle;"></span> Su hijo/a está esperando ser recogido/a en el colegio</p>
+    </div>
+
+    <p style="font-size:15px;color:#1a2b3c;margin-bottom:10px">Estimado/a <strong>{{ estudiante.acudiente }}</strong>,</p>
+    <p style="font-size:14px;color:#3d4f5e;margin-bottom:18px">
+      Le informamos que el/la estudiante <strong>{{ estudiante.nombre }}</strong> fue atendido/a en enfermería y se autorizó su salida al hogar. 
+      <strong>Por favor, acérquese al colegio a la mayor brevedad para recogerlo/a.</strong>
+    </p>
+
+    <div class="info-box">
+      <div class="info-row"><span class="info-label">Estudiante</span><span class="info-val">{{ estudiante.nombre }}</span></div>
+      <div class="info-row"><span class="info-label">Grado</span><span class="info-val">{{ estudiante.grado }}</span></div>
+      <div class="info-row"><span class="info-label">Fecha</span><span class="info-val">{{ remision.fecha_hora|date:"d/m/Y" }}</span></div>
+      <div class="info-row"><span class="info-label">Hora de salida</span><span class="info-val">{{ remision.hora_salida|time:"H:i" }}</span></div>
+      <div class="info-row"><span class="info-label">Motivo</span><span class="info-val">{{ remision.motivo }}</span></div>
+      {% if remision.acompanante %}<div class="info-row"><span class="info-label">Acompañante asignado</span><span class="info-val">{{ remision.acompanante }}</span></div>{% endif %}
+    </div>
+
+    <div class="accion-box">
+      <h2><span style="display:inline-block;width:16px;height:16px;background:#22c55e;border-radius:50%;text-align:center;line-height:16px;font-size:11px;font-weight:bold;color:#fff;vertical-align:middle;">&#10003;</span> Acción requerida</h2>
+      <p>Diríjase a las instalaciones del colegio y preséntese en portería para recoger al/la estudiante.</p>
+      <p style="font-size:13px;color:#4ade80;margin-top:8px">El/la estudiante permanecerá bajo supervisión hasta su llegada.</p>
+    </div>
+
+    {% if remision.observaciones %}
+    <div style="background:#f9fbfd;border:1px solid #d4e4f4;border-radius:10px;padding:14px 18px;margin-bottom:16px">
+      <p style="font-size:12px;color:#6b86a0;text-transform:uppercase;font-weight:bold;margin:0 0 6px">Observaciones</p>
+      <p style="font-size:14px;color:#1a2b3c;margin:0">{{ remision.observaciones }}</p>
+    </div>
+    {% endif %}
+
+    <p style="font-size:13px;color:#1d4ed8;font-weight:bold;margin-top:8px">Si tiene alguna pregunta, comuníquese con el colegio al número de contacto registrado.</p>
+  </div>
+  <div class="footer">
+    <p><strong>COSFA CURE</strong> — Sistema de Enfermería Escolar</p>
+    <p>Colegio San Francisco de Asís · Este es un mensaje automático</p>
+  </div>
+</div>
+
+  <!-- Tracking pixel (invisible) -->
+  {% if confirm_url %}
+  <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:16px;">
+    <tr>
+      <td align="center" style="padding:12px 40px 20px;">
+        <a href="{{ confirm_url }}"
+           style="display:inline-block;font-size:12px;color:#94A3B8;text-decoration:none;
+                  border:1px solid #E2E8F0;border-radius:20px;padding:7px 20px;
+                  font-family:Segoe UI,Helvetica,Arial,sans-serif;">
+          &#10003;&nbsp; Confirmar recepcion de este correo
+        </a>
+      </td>
+    </tr>
+  </table>
+  {% endif %}
+  {% if pixel_url %}<img src="{{ pixel_url }}" width="1" height="1" style="display:none;border:0;height:1px;width:1px;max-height:1px;max-width:1px;" alt="">{% endif %}
+</body>
+</html>

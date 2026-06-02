@@ -1,0 +1,328 @@
+{% extends 'enfermeria/base.html' %}
+{% block title %}{{ docente.nombre }} — Historial Docente{% endblock %}
+{% block page_title %}Historial Docente{% endblock %}
+{% block content %}
+
+<!-- Modal eliminar docente -->
+<div id="modal-eliminar" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center">
+  <div style="background:white;border-radius:16px;padding:28px;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+      <span style="background:#fef2f2;border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-size:1.3rem">🗑️</span>
+      <div>
+        <div style="font-weight:800;color:#b91c1c;font-size:.95rem">¿Eliminar a {{ docente.nombre }}?</div>
+        <div style="font-size:.78rem;color:#64748b">Se eliminarán también todas sus consultas. Esta acción no se puede deshacer.</div>
+      </div>
+    </div>
+    <form method="post" action="{% url 'eliminar_docente' docente.pk %}">
+      {% csrf_token %}
+      <div style="display:flex;gap:8px">
+        <button type="submit" style="flex:1;padding:11px;background:#dc2626;color:white;border:none;border-radius:10px;font-weight:700;cursor:pointer"><i class="bi bi-trash-fill"></i> Sí, eliminar</button>
+        <button type="button" onclick="document.getElementById('modal-eliminar').style.display='none'" style="flex:1;padding:11px;background:#f1f5f9;color:#374151;border:1.5px solid #e2e8f0;border-radius:10px;font-weight:700;cursor:pointer">Cancelar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<style>
+.profile-header{background:linear-gradient(135deg,var(--navy) 0%,var(--teal) 100%);border-radius:18px;padding:28px;display:flex;gap:22px;align-items:flex-start;margin-bottom:20px;position:relative;overflow:hidden;box-shadow:0 8px 32px rgba(14,165,160,.25)}
+.profile-header::before{content:'';position:absolute;top:-30px;right:-30px;width:180px;height:180px;border-radius:50%;background:rgba(255,255,255,.06)}
+.profile-avatar{width:88px;height:88px;border-radius:50%;object-fit:cover;border:3px solid rgba(255,255,255,.4);flex-shrink:0}
+.profile-avatar-ph{width:88px;height:88px;border-radius:50%;background:rgba(255,255,255,.15);border:3px solid rgba(255,255,255,.35);display:flex;align-items:center;justify-content:center;font-size:2.2rem;color:white;font-family:'Sora',sans-serif;font-weight:800;flex-shrink:0}
+.profile-name{font-family:'Sora',sans-serif;font-size:1.3rem;font-weight:800;color:white;margin-bottom:4px}
+.profile-sub{font-size:.82rem;color:rgba(255,255,255,.75);margin-bottom:10px}
+.profile-badges{display:flex;gap:6px;flex-wrap:wrap}
+.p-badge{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:20px;font-size:.68rem;font-weight:700;background:rgba(255,255,255,.15);color:white;border:1px solid rgba(255,255,255,.2)}
+.profile-actions{margin-left:auto;display:flex;flex-direction:column;gap:8px;flex-shrink:0}
+.info-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px}
+@media(max-width:800px){.info-grid{grid-template-columns:1fr 1fr}}
+.info-card{background:white;border-radius:14px;border:1px solid var(--border);padding:16px 18px;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+.info-card-title{font-size:.67rem;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.info-row{display:flex;justify-content:space-between;align-items:flex-start;padding:6px 0;border-bottom:1px solid #f1f5f9;gap:10px}
+.info-row:last-child{border-bottom:none}
+.info-lbl{font-size:.72rem;color:#94a3b8;font-weight:600;flex-shrink:0}
+.info-val{font-size:.8rem;font-weight:600;color:var(--navy);text-align:right;word-break:break-word}
+.alert-box{background:linear-gradient(135deg,#fff7ed,#ffedd5);border:1.5px solid #fed7aa;border-radius:12px;padding:14px 16px;margin-bottom:20px}
+.alert-box-title{font-weight:800;color:#c2410c;font-size:.82rem;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.alert-item{font-size:.78rem;color:#9a3412;padding:4px 0;border-bottom:1px solid rgba(194,65,12,.1)}
+.alert-item:last-child{border-bottom:none}
+.consulta-row{background:white;border-radius:12px;border:1px solid var(--border);padding:14px 16px;margin-bottom:10px;transition:all .2s;cursor:pointer;display:flex;gap:14px;align-items:flex-start}
+.consulta-row:hover{box-shadow:0 4px 16px rgba(14,165,160,.15);border-color:rgba(14,165,160,.35);transform:translateX(3px)}
+.consulta-fecha-col{flex-shrink:0;text-align:center;background:linear-gradient(135deg,#f0fdfa,#ccfbf1);border-radius:10px;padding:8px 12px;min-width:60px}
+.consulta-fecha-day{font-family:'Sora',sans-serif;font-size:1.3rem;font-weight:800;color:var(--navy);line-height:1}
+.consulta-fecha-mon{font-size:.62rem;font-weight:700;color:var(--teal);text-transform:uppercase}
+.consulta-hora{font-size:.7rem;color:var(--teal);font-weight:700;margin-top:4px}
+.consulta-body{flex:1}
+.consulta-motivo{font-weight:700;color:var(--navy);font-size:.85rem;margin-bottom:3px}
+.consulta-desc{font-size:.76rem;color:#64748b;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.consulta-actions{display:flex;gap:5px;flex-shrink:0;margin-left:auto;padding-left:10px}
+.c-act{width:30px;height:30px;border-radius:8px;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.8rem;text-decoration:none;color:#64748b;background:white;transition:all .2s;cursor:pointer}
+.c-act:hover{transform:scale(1.1)}
+.c-act-v:hover{border-color:var(--teal);color:var(--teal);background:rgba(14,165,160,.07)}
+.c-act-e:hover{border-color:#3b82f6;color:#3b82f6;background:rgba(59,130,246,.07)}
+.c-act-d:hover{border-color:#dc2626;color:#dc2626;background:rgba(220,38,38,.07)}
+.section-label{font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#64748b;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+</style>
+
+<!-- Botones top -->
+<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+  <a href="{% url 'lista_docentes' %}" class="btn btn-outline btn-sm"><i class="bi bi-arrow-left"></i> Volver</a>
+  <a href="{% url 'nueva_consulta_docente_desde' docente.pk %}" class="btn btn-primary btn-sm"><i class="bi bi-clipboard2-pulse"></i> Nueva consulta</a>
+  <a href="{% url 'editar_docente' docente.pk %}" class="btn btn-outline btn-sm"><i class="bi bi-pencil"></i> Editar datos</a>
+  <button type="button" onclick="document.getElementById('modal-eliminar').style.display='flex'" class="btn btn-sm" style="background:#fef2f2;color:#dc2626;border:1.5px solid #fca5a5"><i class="bi bi-trash"></i> Eliminar</button>
+</div>
+
+<!-- Header perfil -->
+<div class="profile-header">
+  {% if docente.foto %}
+    <img src="{{ docente.foto.url }}" class="profile-avatar">
+  {% else %}
+    <div class="profile-avatar-ph">{{ docente.nombre|first|upper }}</div>
+  {% endif %}
+  <div style="flex:1;min-width:0">
+    <div class="profile-name">{{ docente.nombre }}</div>
+    <div class="profile-sub">{{ docente.get_area_display }} {% if docente.grados_asignados %}· {{ docente.grados_asignados }}{% endif %}</div>
+    <div class="profile-badges">
+      <span class="p-badge"><i class="bi bi-card-text"></i> CC {{ docente.cedula }}</span>
+      {% if docente.tipo %}<span class="p-badge"><i class="bi bi-person-badge"></i> {{ docente.tipo }}</span>{% endif %}
+      {% if docente.vinculacion %}<span class="p-badge"><i class="bi bi-briefcase"></i> {{ docente.get_vinculacion_display }}</span>{% endif %}
+      {% if docente.tipo_sangre %}<span class="p-badge" style="background:rgba(239,68,68,.25);border-color:rgba(239,68,68,.3)"><i class="bi bi-droplet-fill"></i> {{ docente.tipo_sangre }}</span>{% endif %}
+      {% if docente.activo %}
+        <span class="p-badge" style="background:rgba(16,185,129,.2);border-color:rgba(16,185,129,.3)"><i class="bi bi-circle-fill" style="font-size:.5rem"></i> Activo</span>
+      {% else %}
+        <span class="p-badge" style="background:rgba(239,68,68,.2);border-color:rgba(239,68,68,.3)"><i class="bi bi-circle-fill" style="font-size:.5rem"></i> Inactivo</span>
+      {% endif %}
+    </div>
+  </div>
+  <div class="profile-actions">
+    <span style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);border-radius:12px;padding:10px 16px;text-align:center;color:white">
+      <div style="font-family:'Sora',sans-serif;font-size:1.5rem;font-weight:800">{{ docente.total_consultas }}</div>
+      <div style="font-size:.65rem;opacity:.8;text-transform:uppercase;letter-spacing:.4px">consultas</div>
+    </span>
+  </div>
+</div>
+
+<!-- Alertas médicas -->
+{% if docente.alergias or docente.condiciones_medicas or docente.medicamentos_perm %}
+<div class="alert-box">
+  <div class="alert-box-title">⚠️ Alertas médicas — leer antes de atender</div>
+  {% if docente.alergias %}
+  <div class="alert-item"><strong>Alergias:</strong> {{ docente.alergias }}</div>
+  {% endif %}
+  {% if docente.condiciones_medicas %}
+  <div class="alert-item"><strong>Condiciones:</strong> {{ docente.condiciones_medicas }}</div>
+  {% endif %}
+  {% if docente.medicamentos_perm %}
+  <div class="alert-item"><strong>Medicamentos permanentes:</strong> {{ docente.medicamentos_perm }}</div>
+  {% endif %}
+</div>
+{% endif %}
+
+<!-- Info en tarjetas -->
+<div class="info-grid">
+
+  <!-- Contacto -->
+  <div class="info-card" style="grid-column:1/3">
+    <div class="info-card-title"><i class="bi bi-telephone-fill" style="color:#3b82f6"></i> Contacto</div>
+    <div class="info-row"><span class="info-lbl">Celular</span><span class="info-val">{{ docente.telefono }}</span></div>
+    {% if docente.telefono_alternativo %}<div class="info-row"><span class="info-lbl">Alternativo</span><span class="info-val">{{ docente.telefono_alternativo }}</span></div>{% endif %}
+    {% if docente.correo %}<div class="info-row"><span class="info-lbl">Correo inst.</span><span class="info-val" style="word-break:break-all">{{ docente.correo }}</span></div>{% endif %}
+    {% if docente.correo_personal %}<div class="info-row"><span class="info-lbl">Correo pers.</span><span class="info-val" style="word-break:break-all">{{ docente.correo_personal }}</span></div>{% endif %}
+    {% if docente.direccion_residencia %}<div class="info-row"><span class="info-lbl">Dirección</span><span class="info-val">{{ docente.direccion_residencia }}</span></div>{% endif %}
+  </div>
+
+  <!-- Emergencia -->
+  <div class="info-card">
+    <div class="info-card-title"><i class="bi bi-exclamation-triangle-fill" style="color:#f59e0b"></i> Emergencia</div>
+    {% if docente.contacto_emergencia %}
+    <div class="info-row"><span class="info-lbl">Contacto</span><span class="info-val">{{ docente.contacto_emergencia }}</span></div>
+    <div class="info-row"><span class="info-lbl">Parentesco</span><span class="info-val">{{ docente.parentesco_emergencia|default:"—" }}</span></div>
+    <div class="info-row"><span class="info-lbl">Teléfono</span><span class="info-val">{{ docente.tel_emergencia|default:"—" }}</span></div>
+    {% else %}
+    <div style="font-size:.78rem;color:#94a3b8;text-align:center;padding:12px 0">Sin contacto registrado</div>
+    {% endif %}
+  </div>
+
+  <!-- Salud -->
+  <div class="info-card" style="grid-column:1/-1">
+    <div class="info-card-title"><i class="bi bi-heart-pulse-fill" style="color:#10b981"></i> Salud</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0">
+      <div class="info-row" style="grid-column:1"><span class="info-lbl">Tipo sangre</span><span class="info-val">{{ docente.tipo_sangre|default:"—" }}</span></div>
+      <div class="info-row" style="padding-left:12px"><span class="info-lbl">EPS</span><span class="info-val">{{ docente.eps|default:"—" }}</span></div>
+      <div class="info-row" style="padding-left:12px"><span class="info-lbl">Régimen</span><span class="info-val">{{ docente.get_regimen_display|default:"—" }}</span></div>
+    </div>
+    <div class="info-row"><span class="info-lbl">F. nacimiento</span><span class="info-val">{{ docente.fecha_nacimiento|date:"d/m/Y" }}</span></div>
+    <div class="info-row"><span class="info-lbl">Sexo</span><span class="info-val">{{ docente.get_sexo_display|default:"—" }}</span></div>
+  </div>
+
+</div>
+
+<!-- Historial consultas -->
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+  <div class="section-label"><i class="bi bi-clipboard2-pulse-fill" style="color:var(--teal)"></i> Historial de consultas ({{ consultas.count }})</div>
+  <a href="{% url 'nueva_consulta_docente_desde' docente.pk %}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg"></i> Nueva consulta</a>
+</div>
+
+{% if por_motivo %}
+<div style="background:white;border-radius:14px;border:1px solid var(--border);padding:20px;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,.04)">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+    <div style="font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#64748b;display:flex;align-items:center;gap:6px">
+      <i class="bi bi-bar-chart-fill" style="color:var(--teal)"></i> Motivos más frecuentes
+    </div>
+    <span style="font-size:.72rem;color:#94a3b8;font-weight:600">Últimas consultas</span>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 260px;gap:20px;align-items:center">
+    <div style="position:relative;height:220px">
+      <canvas id="motivosChart"></canvas>
+    </div>
+    <div style="position:relative;height:220px">
+      <canvas id="motivosDoughnut"></canvas>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% if consultas %}
+  {% for c in consultas %}
+  <div class="consulta-row" onclick="window.location='{% url 'detalle_consulta_docente' c.pk %}'">
+    <div class="consulta-fecha-col">
+      <div class="consulta-fecha-day">{{ c.fecha_hora|date:"d" }}</div>
+      <div class="consulta-fecha-mon">{{ c.fecha_hora|date:"M" }}</div>
+      <div class="consulta-hora">{{ c.hora_atencion|time:"H:i" }}</div>
+    </div>
+    <div class="consulta-body">
+      <div class="consulta-motivo">{{ c.get_motivo_display }}</div>
+      <div class="consulta-desc">{{ c.descripcion_sintomas }}</div>
+      <div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap">
+        {% if c.estado == 'atendido' %}<span style="background:#d1fae5;color:#065f46;padding:2px 8px;border-radius:20px;font-size:.66rem;font-weight:700">✅ Atendido</span>
+        {% elif c.estado == 'regreso_clase' %}<span style="background:#dbeafe;color:#1e40af;padding:2px 8px;border-radius:20px;font-size:.66rem;font-weight:700">📚 Regresa</span>
+        {% elif c.estado == 'remitido_casa' %}<span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:20px;font-size:.66rem;font-weight:700">🏠 A casa</span>
+        {% elif c.estado == 'remitido_hospital' %}<span style="background:#fee2e2;color:#991b1b;padding:2px 8px;border-radius:20px;font-size:.66rem;font-weight:700">🚑 Hospital</span>
+        {% endif %}
+        {% if c.medicamento_suministrado %}<span style="background:#f1f5f9;color:#475569;padding:2px 8px;border-radius:20px;font-size:.66rem;font-weight:600"><i class="bi bi-capsule"></i> {{ c.medicamento_suministrado }}</span>{% endif %}
+      </div>
+    </div>
+    <div class="consulta-actions" onclick="event.stopPropagation()">
+      <a href="{% url 'detalle_consulta_docente' c.pk %}" class="c-act c-act-v" title="Ver"><i class="bi bi-eye"></i></a>
+      <a href="{% url 'editar_consulta_docente' c.pk %}" class="c-act c-act-e" title="Editar"><i class="bi bi-pencil"></i></a>
+      <a href="{% url 'eliminar_consulta_docente' c.pk %}" class="c-act c-act-d" title="Eliminar"><i class="bi bi-trash"></i></a>
+    </div>
+  </div>
+  {% endfor %}
+  {% if page_obj.has_other_pages %}
+  <div style="display:flex;align-items:center;justify-content:center;gap:6px;padding:14px;background:white;border-radius:12px;border:1px solid var(--border);margin-top:8px">
+    {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}" class="btn btn-outline btn-sm"><i class="bi bi-chevron-left"></i></a>{% endif %}
+    {% for num in page_obj.paginator.page_range %}
+      {% if page_obj.number == num %}<span class="btn btn-sm" style="background:var(--teal);color:white;border:none;min-width:34px">{{ num }}</span>
+      {% elif num > page_obj.number|add:"-3" and num < page_obj.number|add:"3" %}<a href="?page={{ num }}" class="btn btn-outline btn-sm" style="min-width:34px">{{ num }}</a>{% endif %}
+    {% endfor %}
+    {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}" class="btn btn-outline btn-sm"><i class="bi bi-chevron-right"></i></a>{% endif %}
+    <span style="font-size:.75rem;color:var(--text-muted);margin-left:4px">Pág. {{ page_obj.number }}/{{ page_obj.paginator.num_pages }}</span>
+  </div>
+  {% endif %}
+{% else %}
+  <div style="text-align:center;padding:48px 20px;background:white;border-radius:14px;border:1px solid var(--border)">
+    <div style="font-size:2.5rem;margin-bottom:12px">📋</div>
+    <div style="font-weight:700;color:var(--navy);margin-bottom:6px">Sin consultas registradas</div>
+    <div style="font-size:.82rem;color:var(--text-muted);margin-bottom:18px">Este docente no tiene atenciones registradas aún.</div>
+    <a href="{% url 'nueva_consulta_docente_desde' docente.pk %}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg"></i> Registrar primera consulta</a>
+  </div>
+{% endif %}
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+{% if por_motivo %}
+(function(){
+  const labels = {{ motivos_labels|safe }};
+  const data   = {{ motivos_data|safe }};
+
+  const COLORS = [
+    '#0ea5a0','#0f2444','#14b8a6','#1e3a5f','#0d9488',
+    '#164e63','#06b6d4','#1e40af','#0891b2','#1d4ed8',
+  ];
+  const COLORS_ALPHA = COLORS.map(c => c + 'cc');
+
+  // ── Gráfica de barras ──────────────────────────────────────────────────────
+  const ctxBar = document.getElementById('motivosChart');
+  if(ctxBar){
+    new Chart(ctxBar, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Consultas',
+          data,
+          backgroundColor: labels.map((_,i) => COLORS_ALPHA[i % COLORS.length]),
+          borderColor:      labels.map((_,i) => COLORS[i % COLORS.length]),
+          borderWidth: 1.5,
+          borderRadius: 8,
+          borderSkipped: false,
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: ctx => ` ${ctx.parsed.y} consulta${ctx.parsed.y !== 1 ? 's' : ''}`
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: { stepSize: 1, font: { size: 11, family: 'Sora' }, color: '#64748b' },
+            grid: { color: 'rgba(0,0,0,.05)' },
+            border: { display: false }
+          },
+          x: {
+            ticks: { font: { size: 11, family: 'Sora' }, color: '#374151', maxRotation: 30 },
+            grid: { display: false },
+            border: { display: false }
+          }
+        }
+      }
+    });
+  }
+
+  // ── Gráfica de dona ────────────────────────────────────────────────────────
+  const ctxDough = document.getElementById('motivosDoughnut');
+  if(ctxDough){
+    new Chart(ctxDough, {
+      type: 'doughnut',
+      data: {
+        labels,
+        datasets: [{
+          data,
+          backgroundColor: labels.map((_,i) => COLORS_ALPHA[i % COLORS.length]),
+          borderColor:      labels.map((_,i) => COLORS[i % COLORS.length]),
+          borderWidth: 2,
+          hoverOffset: 6,
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        cutout: '60%',
+        plugins: {
+          legend: {
+            display: true,
+            position: 'bottom',
+            labels: { font: { size: 10, family: 'Sora' }, color: '#374151', padding: 8, boxWidth: 12, boxHeight: 12 }
+          },
+          tooltip: {
+            callbacks: {
+              label: ctx => ` ${ctx.label}: ${ctx.parsed} consulta${ctx.parsed !== 1 ? 's' : ''}`
+            }
+          }
+        }
+      }
+    });
+  }
+})();
+{% endif %}
+
+document.getElementById('modal-eliminar').addEventListener('click', function(e){
+  if(e.target === this) this.style.display = 'none';
+});
+</script>
+{% endblock %}

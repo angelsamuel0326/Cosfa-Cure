@@ -1,0 +1,1487 @@
+{% extends 'enfermeria/base.html' %}
+{% block title %}Historial {{ estudiante.nombre|escapejs }}{% endblock %}
+{% block page_title %}Historial del Estudiante{% endblock %}
+{% block content %}
+<style>
+/* Estilo unificado para todas las tablas del historial */
+.tbl-hist thead tr {
+  background: linear-gradient(135deg, #0f2444 0%, #0e7490 100%) !important;
+}
+.tbl-hist thead th {
+  background: transparent !important;
+  color: white !important;
+  font-family: 'Sora', sans-serif;
+  font-size: .63rem; font-weight: 700;
+  letter-spacing: .08em; text-transform: uppercase;
+  padding: 11px 14px; border: none !important;
+}
+.tbl-hist tbody tr {
+  transition: all .2s cubic-bezier(.4,0,.2,1);
+  border-bottom: 1px solid rgba(14,165,160,.08);
+  animation: rowSlideH .32s ease both;
+}
+.tbl-hist tbody tr:nth-child(even) { background: rgba(14,165,160,.025); }
+.tbl-hist tbody tr:hover {
+  background: rgba(14,165,160,.06) !important;
+  box-shadow: inset 3px 0 0 var(--teal);
+}
+@keyframes rowSlideH {
+  from { opacity:0; transform:translateY(-4px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+.tbl-hist tbody tr:nth-child(1){animation-delay:.03s}
+.tbl-hist tbody tr:nth-child(2){animation-delay:.07s}
+.tbl-hist tbody tr:nth-child(3){animation-delay:.11s}
+.tbl-hist tbody tr:nth-child(n+4){animation-delay:.15s}
+.tbl-hist tbody td {
+  padding: 11px 14px; vertical-align: middle;
+  border: none !important; font-size: .81rem; color: var(--text);
+}
+/* Remisiones: tono violeta */
+.tbl-rem-hist thead tr { background: linear-gradient(135deg, #0f2444 0%, #7c3aed 100%) !important; }
+.tbl-rem-hist tbody tr:hover { background: rgba(124,58,237,.05) !important; box-shadow: inset 3px 0 0 #7c3aed; }
+.tbl-rem-hist tbody tr:nth-child(even) { background: rgba(124,58,237,.02); }
+.tbl-rem-hist tbody tr { border-bottom: 1px solid rgba(124,58,237,.07); }
+/* Seguimientos: tono índigo */
+.tbl-seg-hist thead tr { background: linear-gradient(135deg, #0f2444 0%, #4f46e5 100%) !important; }
+.tbl-seg-hist tbody tr:hover { background: rgba(79,70,229,.05) !important; box-shadow: inset 3px 0 0 #4f46e5; }
+.tbl-seg-hist tbody tr:nth-child(even) { background: rgba(79,70,229,.02); }
+.tbl-seg-hist tbody tr { border-bottom: 1px solid rgba(79,70,229,.07); }
+</style>
+<div style="display:grid;grid-template-columns:260px 1fr;gap:14px">
+  <div>
+    <div class="card" style="padding:18px;text-align:center">
+      {% if estudiante.foto %}<img src="{{ estudiante.foto.url }}" class="student-avatar" style="width:76px;height:76px;margin:0 auto 10px">
+      {% else %}<div class="avatar-placeholder" style="width:76px;height:76px;font-size:2rem;margin:0 auto 10px"><i class="bi bi-person-fill"></i></div>{% endif %}
+      <div style="font-weight:800;font-size:.95rem;margin-bottom:3px">{{ estudiante.nombre }}</div>
+      <span class="badge badge-blue">{{ estudiante.grado }}</span>
+      <div style="margin-top:12px;text-align:left;display:flex;flex-direction:column;gap:6px;font-size:.78rem">
+        <div style="padding:6px 9px;background:var(--blue-pale);border-radius:7px;display:flex;justify-content:space-between"><span style="color:var(--muted)">Documento</span><strong>{{ estudiante.numero_documento }}</strong></div>
+        <div style="padding:6px 9px;background:var(--blue-pale);border-radius:7px;display:flex;justify-content:space-between"><span style="color:var(--muted)">Edad</span><strong>{% if estudiante.edad %}{{ estudiante.edad }} años{% else %}N/A{% endif %}</strong></div>
+        <div style="padding:6px 9px;background:var(--blue-pale);border-radius:7px;display:flex;justify-content:space-between"><span style="color:var(--muted)">F. Nacimiento</span><strong>{{ estudiante.fecha_nacimiento|date:"d/m/Y"|default:"N/A" }}</strong></div>
+        <div style="padding:6px 9px;background:var(--blue-pale);border-radius:7px;display:flex;justify-content:space-between"><span style="color:var(--muted)">Sangre</span><strong>{{ estudiante.tipo_sangre|default:"N/A" }}</strong></div>
+        <div style="padding:6px 9px;background:var(--blue-pale);border-radius:7px;display:flex;justify-content:space-between"><span style="color:var(--muted)">EPS</span><strong>{{ estudiante.eps|default:"N/A" }}</strong></div>
+        <div style="padding:6px 9px;background:var(--blue-pale);border-radius:7px"><div style="color:var(--muted);margin-bottom:2px">Acudiente</div><strong>{{ estudiante.acudiente }}</strong> {% if estudiante.get_parentesco_acudiente_display %}<span style="font-size:.7rem;color:#64748b">({{ estudiante.get_parentesco_acudiente_display }})</span>{% endif %}<br><i class="bi bi-telephone"></i> {{ estudiante.telefono_acudiente }}{% if estudiante.correo_acudiente %}<br><i class="bi bi-envelope"></i> {{ estudiante.correo_acudiente }}{% endif %}{% if estudiante.cc_acudiente %}<br><span style="font-size:.72rem;color:#64748b">CC: {{ estudiante.cc_acudiente }}</span>{% endif %}{% if estudiante.direccion_residencia %}<br><span style="font-size:.72rem;color:#64748b"><i class="bi bi-geo-alt"></i> {{ estudiante.direccion_residencia }}</span>{% endif %}</div>
+        {% if estudiante.alergias %}<div style="padding:6px 9px;background:#fff5f5;border:1px solid #fca5a5;border-radius:7px"><div style="color:#b91c1c;font-weight:700;margin-bottom:2px"><i class="bi bi-exclamation-triangle-fill"></i> Alergias</div>{{ estudiante.alergias }}</div>{% endif %}
+        {% if estudiante.condiciones_medicas %}<div style="padding:6px 9px;background:#fff7ed;border:1px solid #fed7aa;border-radius:7px"><div style="color:#9a3412;font-weight:700;margin-bottom:2px"><i class="bi bi-hospital"></i> Condiciones</div>{{ estudiante.condiciones_medicas }}</div>{% endif %}
+      </div>
+    </div>
+    <div class="card" style="margin-top:12px;padding:14px">
+      <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--blue-dark);margin-bottom:10px"><i class="bi bi-graph-up"></i> Peso y Talla en el tiempo</div>
+      {% if tiene_vitales %}
+        {% if ultimo_imc %}
+        <div class="imc-card" style="display:flex;align-items:center;justify-content:space-between;padding:8px 11px;background:#f0fdf4;border:1.5px solid {{ ultimo_imc_color }}30;border-radius:9px;margin-bottom:10px">
+          <div>
+            <div class="imc-lbl" style="font-size:.68rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px">IMC actual</div>
+            <div class="imc-valor" style="font-size:1.35rem;font-weight:800;color:{{ ultimo_imc_color }};line-height:1.1">{{ ultimo_imc }}</div>
+          </div>
+          <div style="text-align:right">
+            <span style="display:inline-block;padding:3px 9px;border-radius:20px;font-size:.7rem;font-weight:700;color:white;background:{{ ultimo_imc_color }}">{{ ultimo_imc_label }}</span>
+            <div style="font-size:.65rem;color:var(--muted);margin-top:3px">kg/m²</div>
+          </div>
+        </div>
+        <!-- Barra de clasificación IMC -->
+        <div style="margin-bottom:10px">
+          <div style="display:flex;border-radius:5px;overflow:hidden;height:6px;margin-bottom:3px">
+            <div style="flex:1;background:#3b82f6" title="Bajo peso <18.5"></div>
+            <div style="flex:1.3;background:#22c55e" title="Normal 18.5-24.9"></div>
+            <div style="flex:1;background:#f59e0b" title="Sobrepeso 25-29.9"></div>
+            <div style="flex:1;background:#ef4444" title="Obesidad ≥30"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:.6rem;color:var(--muted)">
+            <span>Bajo</span><span>Normal</span><span>Sobrepeso</span><span>Obesidad</span>
+          </div>
+        </div>
+        {% endif %}
+        <canvas id="chartVitales" height="160"></canvas>
+      {% else %}
+        <div style="text-align:center;padding:18px 10px;color:var(--muted)">
+          <i class="bi bi-clipboard2-pulse" style="font-size:1.8rem;opacity:.35;display:block;margin-bottom:7px"></i>
+          <div style="font-size:.78rem">Sin registros de peso y talla.<br>Agrega una consulta con vitales para ver el IMC.</div>
+        </div>
+      {% endif %}
+    </div>
+    <div class="card" style="margin-top:12px;padding:14px">
+      <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--blue-dark);margin-bottom:10px"><i class="bi bi-bar-chart-fill"></i> Estadísticas</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px;background:var(--blue-pale);border-radius:8px;margin-bottom:6px">
+        <span style="font-size:.78rem;color:var(--muted)">Total visitas</span>
+        <strong style="font-size:1.2rem;color:var(--blue-dark)">{{ estudiante.total_consultas }}</strong>
+      </div>
+      {% if estudiante.motivo_frecuente %}
+      <div style="padding:7px 9px;background:#f0f9ff;border-radius:8px;margin-bottom:8px;font-size:.75rem">
+        <span style="color:var(--muted)">Motivo más frecuente:</span><br><strong>{{ estudiante.motivo_frecuente }}</strong>
+      </div>
+      {% endif %}
+      {% if por_motivo %}
+      <canvas id="chartEst" height="140"></canvas>
+      {% endif %}
+    </div>
+    <div style="display:flex;flex-direction:column;gap:5px;margin-top:10px">
+      <a href="{% url 'nueva_consulta_estudiante' estudiante.pk %}" class="btn btn-primary" style="justify-content:center"><i class="bi bi-plus-circle"></i> Nueva Consulta</a>
+      <a href="{% url 'nueva_remision_estudiante' estudiante.pk %}" class="btn btn-outline" style="justify-content:center"><i class="bi bi-hospital"></i> Nueva Remisión</a>
+      <a href="{% url 'nuevo_seguimiento_estudiante' estudiante.pk %}" class="btn btn-outline" style="justify-content:center"><i class="bi bi-calendar-plus"></i> Seguimiento</a>
+      <a href="{% url 'pdf_historial_estudiante' estudiante.pk %}" class="btn btn-outline" style="justify-content:center;border-color:#e05c5c;color:#e05c5c" target="_blank"><i class="bi bi-file-earmark-pdf-fill"></i> Historial PDF</a>
+      <a href="{% url 'editar_estudiante' estudiante.pk %}" class="btn btn-outline" style="justify-content:center"><i class="bi bi-pencil"></i> Editar</a>
+      <button onclick="abrirPanelPatron()" class="btn btn-outline" style="justify-content:center;border-color:#d97706;color:#92400e;background:linear-gradient(135deg,#fef9ec,#fef3c7)"><i class="bi bi-graph-up-arrow"></i> Analizar Patrón</button>
+    </div>
+
+    <!-- Panel de Análisis de Patrón (se despliega dentro del sidebar) -->
+    <div id="patron-sidebar" style="display:none;margin-top:8px;background:#fffbeb;border:1.5px solid #fde68a;border-radius:12px;padding:13px 14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <span style="font-size:.75rem;font-weight:700;color:#92400e;text-transform:uppercase;letter-spacing:.5px"><i class="bi bi-search"></i> Últimos 15 días</span>
+        <button onclick="document.getElementById('patron-sidebar').style.display='none'" style="background:none;border:none;color:#92400e;cursor:pointer;font-size:.9rem;padding:0;line-height:1">×</button>
+      </div>
+      <div id="patron-box">
+        <div style="font-size:.8rem;color:#92400e;display:flex;align-items:center;gap:7px">
+          <i class="bi bi-info-circle"></i> Haz clic en <strong>Analizar Patrón</strong> para detectar patrones recurrentes.
+        </div>
+      </div>
+      <button onclick="verificarPatron()" id="btn-patron" style="margin-top:10px;width:100%;padding:7px;border:none;border-radius:8px;background:linear-gradient(135deg,#fef3c7,#fde68a);color:#92400e;font-size:.78rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px">
+        <i class="bi bi-graph-up-arrow"></i> Analizar ahora
+      </button>
+    </div>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:12px">
+    <!-- CONSULTAS -->
+    <div class="card">
+      <div class="card-head" style="flex-wrap:wrap;gap:8px">
+        <div class="card-head-title"><i class="bi bi-clipboard2-pulse-fill"></i> Consultas ({{ consultas|length }})</div>
+        <button onclick="toggleCalendarioConsultas()" id="btn-cal-cons"
+          style="display:flex;align-items:center;gap:6px;padding:5px 14px;border-radius:20px;border:1.5px solid #0ea5a0;background:white;color:#0ea5a0;font-size:.76rem;font-weight:700;cursor:pointer;transition:all .2s">
+          <i class="bi bi-calendar3"></i> Ver calendario
+        </button>
+      </div>
+
+      <!-- ── CALENDARIO DE CONSULTAS ── -->
+      <div id="cal-cons-wrap" style="display:none;padding:16px;border-bottom:1px solid var(--border)">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <button onclick="calConsMes(-1)" style="border:none;background:none;cursor:pointer;font-size:1.1rem;color:#0ea5a0;padding:4px 10px;border-radius:8px;transition:background .2s" onmouseover="this.style.background='#e6faf9'" onmouseout="this.style.background='none'">&#8249;</button>
+          <span id="cal-cons-titulo" style="font-weight:800;font-size:.9rem;color:#0f2444;letter-spacing:.03em"></span>
+          <button onclick="calConsMes(1)" style="border:none;background:none;cursor:pointer;font-size:1.1rem;color:#0ea5a0;padding:4px 10px;border-radius:8px;transition:background .2s" onmouseover="this.style.background='#e6faf9'" onmouseout="this.style.background='none'">&#8250;</button>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:6px">
+          <div style="text-align:center;font-size:.62rem;font-weight:800;color:#0ea5a0;text-transform:uppercase;padding:4px">Lu</div>
+          <div style="text-align:center;font-size:.62rem;font-weight:800;color:#0ea5a0;text-transform:uppercase;padding:4px">Ma</div>
+          <div style="text-align:center;font-size:.62rem;font-weight:800;color:#0ea5a0;text-transform:uppercase;padding:4px">Mi</div>
+          <div style="text-align:center;font-size:.62rem;font-weight:800;color:#0ea5a0;text-transform:uppercase;padding:4px">Ju</div>
+          <div style="text-align:center;font-size:.62rem;font-weight:800;color:#0ea5a0;text-transform:uppercase;padding:4px">Vi</div>
+          <div style="text-align:center;font-size:.62rem;font-weight:800;color:#94a3b8;text-transform:uppercase;padding:4px">Sa</div>
+          <div style="text-align:center;font-size:.62rem;font-weight:800;color:#94a3b8;text-transform:uppercase;padding:4px">Do</div>
+        </div>
+        <div id="cal-cons-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px"></div>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;padding-top:10px;border-top:1px solid #f1f5f9">
+          <span style="display:flex;align-items:center;gap:4px;font-size:.7rem;color:#64748b"><span style="width:10px;height:10px;border-radius:50%;background:#0ea5a0;display:inline-block"></span>Consulta atendida</span>
+          <span style="display:flex;align-items:center;gap:4px;font-size:.7rem;color:#64748b"><span style="width:10px;height:10px;border-radius:50%;background:#ef4444;display:inline-block"></span>Remitido</span>
+          <span style="display:flex;align-items:center;gap:4px;font-size:.7rem;color:#64748b"><span style="width:10px;height:10px;border-radius:50%;background:#f59e0b;display:inline-block"></span>Acudiente</span>
+        </div>
+        <div id="cal-cons-detalle" style="display:none;margin-top:10px;padding:10px 14px;background:#f0fdfa;border:1.5px solid #99f6e4;border-radius:10px;font-size:.8rem"></div>
+      </div>
+      <div class="table-wrap">
+        {% if consultas %}
+        <table class="tbl-hist" id="tbl-consultas">
+          <thead><tr><th>Fecha</th><th>Motivo</th><th>Medicamento</th><th>Vitales</th><th>Estado</th><th></th></tr></thead>
+          <tbody id="tbody-consultas">{% for c in consultas %}<tr>
+            <td style="font-size:.75rem;color:var(--muted)">{{ c.fecha_hora|date:"d/m/Y H:i" }}</td>
+            <td>{{ c.get_motivo_display }}</td>
+            <td style="font-size:.78rem">
+              {% with usos=c.medicamentos_usados.all %}
+                {% if usos %}
+                  {% for u in usos %}
+                    {% if u.medicamento %}
+                      <a href="{% url 'detalle_medicamento' u.medicamento.pk %}" style="color:var(--primary);text-decoration:none;font-weight:600;display:flex;align-items:center;gap:5px;margin-bottom:2px">
+                        {% if u.medicamento.imagen %}
+                          <img src="{{ u.medicamento.imagen.url }}" style="width:18px;height:18px;border-radius:4px;object-fit:contain;background:#f8fafc;border:1px solid #e2e8f0;flex-shrink:0">
+                        {% else %}
+                          <i class="bi bi-capsule-pill"></i>
+                        {% endif %}
+                        {{ u.medicamento.nombre }}
+                        <span style="color:#6b7280;font-weight:400">×{{ u.cantidad }}</span>
+                      </a>
+                    {% endif %}
+                  {% endfor %}
+                {% elif c.medicamento_suministrado %}
+                  <span style="color:#6b7280">{{ c.medicamento_suministrado }}</span>
+                {% else %}—{% endif %}
+              {% endwith %}
+            </td>
+            <td>{% if c.temperatura or c.presion_arterial %}<span class="badge badge-blue" title="Signos registrados"><i class="bi bi-heart-pulse"></i></span>{% else %}—{% endif %}</td>
+            <td>{% if c.estado == 'remitido' %}<span class="badge badge-red">Remitido</span>{% elif c.estado == 'atendido' %}<span class="badge badge-green">Atendido</span>{% elif c.estado == 'acudiente' %}<span class="badge badge-orange">Acudiente</span>{% elif c.estado == 'regreso_clase' %}<span class="badge" style="background:#ede9fe;color:#5b21b6"><i class="bi bi-mortarboard"></i> A clase</span>{% else %}<span class="badge badge-gray">{{ c.get_estado_display }}</span>{% endif %}</td>
+            <td style="display:flex;gap:4px;align-items:center">
+              <a href="{% url 'detalle_consulta' c.pk %}" class="btn btn-outline btn-xs" title="Ver detalle"><i class="bi bi-eye"></i></a>
+              <a href="{% url 'pdf_consulta_individual' c.pk %}" target="_blank" class="btn btn-xs" style="background:#dc2626;color:white" title="PDF"><i class="bi bi-file-pdf"></i></a>
+              <a href="{% url 'exportar_consulta_xlsx' c.pk %}" class="btn btn-xs" style="background:#16a34a;color:white" title="Excel"><i class="bi bi-file-earmark-excel"></i></a>
+            </td>
+          </tr>{% endfor %}</tbody>
+        </table>
+        <div id="pag-consultas" style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-top:1px solid var(--border,#e2e8f0);flex-wrap:wrap;gap:8px">
+          <span id="pag-consultas-info" style="font-size:.78rem;color:#64748b"></span>
+          <div style="display:flex;gap:6px" id="pag-consultas-btns"></div>
+        </div>
+        {% else %}<p style="padding:18px;text-align:center;color:#94a3b8">Sin consultas registradas</p>{% endif %}
+      </div>
+    </div>
+
+    <!-- REMISIONES -->
+    <!-- REMISIONES + CALENDARIO -->
+    <div class="card" id="card-remisiones">
+      <div class="card-head" style="flex-wrap:wrap;gap:8px">
+        <div class="card-head-title"><i class="bi bi-hospital-fill"></i> Remisiones ({{ remisiones|length }}{% if consultas_traslado %} + {{ consultas_traslado|length }} traslados{% endif %})</div>
+        <button onclick="toggleCalendarioRem()" id="btn-cal-rem"
+          style="display:flex;align-items:center;gap:6px;padding:5px 14px;border-radius:20px;border:1.5px solid #7c3aed;background:white;color:#7c3aed;font-size:.76rem;font-weight:700;cursor:pointer;transition:all .2s">
+          <i class="bi bi-calendar3"></i> Ver calendario
+        </button>
+      </div>
+
+      <!-- ── CALENDARIO DE REMISIONES ── -->
+      <div id="cal-rem-wrap" style="display:none;padding:16px;border-bottom:1px solid var(--border)">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <button onclick="calMes(-1)" style="border:none;background:none;cursor:pointer;font-size:1.1rem;color:#7c3aed;padding:4px 10px;border-radius:8px;transition:background .2s" onmouseover="this.style.background='#ede9fe'" onmouseout="this.style.background='none'">&#8249;</button>
+          <span id="cal-titulo" style="font-weight:800;font-size:.9rem;color:#1e1b4b;letter-spacing:.03em"></span>
+          <button onclick="calMes(1)" style="border:none;background:none;cursor:pointer;font-size:1.1rem;color:#7c3aed;padding:4px 10px;border-radius:8px;transition:background .2s" onmouseover="this.style.background='#ede9fe'" onmouseout="this.style.background='none'">&#8250;</button>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:6px">
+          <div style="text-align:center;font-size:.62rem;font-weight:800;color:#7c3aed;text-transform:uppercase;padding:4px">Lu</div>
+          <div style="text-align:center;font-size:.62rem;font-weight:800;color:#7c3aed;text-transform:uppercase;padding:4px">Ma</div>
+          <div style="text-align:center;font-size:.62rem;font-weight:800;color:#7c3aed;text-transform:uppercase;padding:4px">Mi</div>
+          <div style="text-align:center;font-size:.62rem;font-weight:800;color:#7c3aed;text-transform:uppercase;padding:4px">Ju</div>
+          <div style="text-align:center;font-size:.62rem;font-weight:800;color:#7c3aed;text-transform:uppercase;padding:4px">Vi</div>
+          <div style="text-align:center;font-size:.62rem;font-weight:800;color:#94a3b8;text-transform:uppercase;padding:4px">Sa</div>
+          <div style="text-align:center;font-size:.62rem;font-weight:800;color:#94a3b8;text-transform:uppercase;padding:4px">Do</div>
+        </div>
+        <div id="cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px"></div>
+        <!-- Leyenda -->
+        <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;padding-top:10px;border-top:1px solid #f1f5f9">
+          <span style="display:flex;align-items:center;gap:4px;font-size:.7rem;color:#64748b"><span style="width:10px;height:10px;border-radius:50%;background:#0ea5e9;display:inline-block"></span>Hospital</span>
+          <span style="display:flex;align-items:center;gap:4px;font-size:.7rem;color:#64748b"><span style="width:10px;height:10px;border-radius:50%;background:#f59e0b;display:inline-block"></span>Casa</span>
+          <span style="display:flex;align-items:center;gap:4px;font-size:.7rem;color:#64748b"><span style="width:10px;height:10px;border-radius:50%;background:#6366f1;display:inline-block"></span>A clase</span>
+        </div>
+        <!-- Detalle día seleccionado -->
+        <div id="cal-detalle" style="display:none;margin-top:10px;padding:10px 14px;background:#faf5ff;border:1.5px solid #ddd6fe;border-radius:10px;font-size:.8rem"></div>
+      </div>
+
+      <!-- Tabla remisiones formales -->
+      {% if remisiones %}<div class="table-wrap"><table class="tbl-hist tbl-rem-hist">
+        <thead><tr><th>Fecha</th><th>Destino</th><th>EPS</th><th>Acompañante</th><th>Estado</th><th></th></tr></thead>
+        <tbody id="tbody-remisiones">{% for r in remisiones %}<tr id="rem-row-{{ r.pk }}" data-rem-pk="{{ r.pk }}" data-nombre="{{ r.estudiante.nombre|escapejs }}">
+          <td style="font-size:.75rem;color:var(--muted)">{{ r.fecha_hora|date:"d/m/Y" }}</td>
+          <td>
+            {% if r.tipo_destino == 'casa' %}
+              <span style="display:inline-flex;align-items:center;gap:5px"><i class="bi bi-house-fill" style="color:#f59e0b"></i> <strong>Casa del estudiante</strong></span>
+            {% else %}
+              <span style="display:inline-flex;align-items:center;gap:5px"><i class="bi bi-hospital-fill" style="color:#0ea5e9"></i> <strong>{{ r.hospital_destino|default:"Hospital" }}</strong></span>
+            {% endif %}
+          </td>
+          <td>{{ r.eps|default:"—" }}</td>
+          <td>{{ r.acompanante }}</td>
+          <td id="rem-estado-{{ r.pk }}">
+            {% if r.estado == 'resuelto' %}
+              <span class="badge badge-green"><i class="bi bi-check-circle-fill"></i> Completado</span>
+            {% elif r.estado == 'en_proceso' %}
+              <span class="badge badge-blue"><i class="bi bi-arrow-repeat"></i> En proceso</span>
+            {% else %}
+              <span class="badge badge-orange"><i class="bi bi-clock"></i> Pendiente</span>
+            {% endif %}
+          </td>
+          <td id="rem-acciones-{{ r.pk }}" style="white-space:nowrap;display:flex;align-items:center;gap:4px">
+            {% if r.estado == 'resuelto' %}
+              <span style="font-size:.72rem;color:#16a34a;font-weight:600"><i class="bi bi-check-circle-fill"></i> Cerrada</span>
+            {% elif r.estado == 'en_proceso' %}
+              <button type="button"
+                class="btn btn-xs"
+                style="background:rgba(14,165,160,.15);color:#0e7490;border:1px solid rgba(14,165,160,.3);font-size:.72rem;font-weight:700;border-radius:8px;padding:4px 9px;cursor:pointer;white-space:nowrap"
+                onclick="abrirModalSalidaH({{ r.pk }}, '{{ r.estudiante.nombre|escapejs }}')">
+                <i class="bi bi-door-open"></i> ¿Ya salió?
+              </button>
+            {% else %}
+              {% if r.consentimiento %}
+                <button type="button"
+                  class="btn btn-xs"
+                  style="background:rgba(245,158,11,.15);color:#d97706;border:1px solid rgba(245,158,11,.3);font-size:.72rem;font-weight:700;border-radius:8px;padding:4px 9px;cursor:pointer;white-space:nowrap"
+                  onclick="abrirModalEnProcesoH({{ r.pk }}, '{{ r.estudiante.nombre|escapejs }}', true)">
+                  <i class="bi bi-pen"></i> Avanzar
+                </button>
+              {% else %}
+                <button type="button"
+                  class="btn btn-xs"
+                  style="background:rgba(245,158,11,.15);color:#d97706;border:1px solid rgba(245,158,11,.3);font-size:.72rem;font-weight:700;border-radius:8px;padding:4px 9px;cursor:pointer;white-space:nowrap"
+                  onclick="abrirModalEnProcesoH({{ r.pk }}, '{{ r.estudiante.nombre|escapejs }}', false)">
+                  <i class="bi bi-clock"></i> Avanzar
+                </button>
+              {% endif %}
+            {% endif %}
+            <a href="{% url 'pdf_remision_individual' r.pk %}" target="_blank" class="btn btn-xs" style="background:#1e4a5a;color:white" title="Ver PDF"><i class="bi bi-file-pdf"></i></a>
+            {% if r.consentimiento %}
+              <a href="{% url 'consentimiento_remision' r.pk %}"
+                 class="btn btn-sm"
+                 title="Ver consentimiento firmado"
+                 style="background:linear-gradient(135deg,#16a34a,#15803d);color:white;font-size:.75rem;padding:4px 10px;gap:5px;display:inline-flex;align-items:center;border:none;border-radius:8px;text-decoration:none">
+                <i class="bi bi-shield-check-fill"></i> Consentimiento
+              </a>
+            {% else %}
+              <a href="{% url 'consentimiento_remision' r.pk %}"
+                 class="btn btn-sm"
+                 title="Firmar consentimiento — pendiente"
+                 style="background:linear-gradient(135deg,#d97706,#b45309);color:white;font-size:.75rem;padding:4px 10px;gap:5px;display:inline-flex;align-items:center;border:none;border-radius:8px;text-decoration:none;animation:pulseFirma 2s ease-in-out infinite">
+                <i class="bi bi-pen-fill"></i> Firmar
+              </a>
+            {% endif %}
+          </td>
+        </tr>{% endfor %}</tbody>
+      </table></div>
+      <div id="pag-remisiones" style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-top:1px solid var(--border,#e2e8f0);flex-wrap:wrap;gap:8px">
+        <span id="pag-remisiones-info" style="font-size:.78rem;color:#64748b"></span>
+        <div style="display:flex;gap:6px" id="pag-remisiones-btns"></div>
+      </div>
+      {% else %}<p style="padding:12px;text-align:center;color:#94a3b8;font-size:.8rem">Sin remisiones formales</p>{% endif %}
+
+      <!-- Salidas desde consultas -->
+      {% if consultas_traslado %}
+      <div style="padding:10px 16px 4px;border-top:1px solid var(--border)">
+        <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:6px">
+          <i class="bi bi-arrow-right-circle"></i> Salidas registradas desde consultas
+        </div>
+      </div>
+      <div class="table-wrap"><table class="tbl-hist tbl-seg-hist">
+        <thead><tr><th>Fecha / Hora</th><th>Tipo de salida</th><th>Motivo</th><th>Estado</th><th></th></tr></thead>
+        <tbody>
+        {% for c in consultas_traslado %}<tr>
+          <td style="font-size:.75rem;color:var(--muted);white-space:nowrap">{{ c.fecha_hora|date:"d/m/Y H:i" }}</td>
+          <td>
+            {% if c.estado == 'remitido_hospital' %}<span style="display:inline-flex;align-items:center;gap:5px"><i class="bi bi-hospital-fill" style="color:#0ea5e9"></i> <strong>Hospital</strong></span>
+            {% elif c.estado == 'remitido_casa' %}<span style="display:inline-flex;align-items:center;gap:5px"><i class="bi bi-house-fill" style="color:#f59e0b"></i> <strong>Casa del estudiante</strong></span>
+            {% else %}<span style="display:inline-flex;align-items:center;gap:5px"><i class="bi bi-mortarboard-fill" style="color:#6366f1"></i> <strong>Regreso a clases</strong></span>{% endif %}
+          </td>
+          <td style="font-size:.8rem">{{ c.get_motivo_display }}</td>
+          <td>
+            {% if c.estado == 'remitido_hospital' %}<span class="badge badge-red"><i class="bi bi-hospital"></i> Hospital</span>
+            {% elif c.estado == 'remitido_casa' %}<span class="badge badge-orange"><i class="bi bi-house"></i> Casa</span>
+            {% else %}<span class="badge" style="background:#ede9fe;color:#5b21b6"><i class="bi bi-mortarboard"></i> A clase</span>{% endif %}
+          </td>
+          <td><a href="{% url 'detalle_consulta' c.pk %}" class="btn btn-outline btn-xs" title="Ver consulta"><i class="bi bi-eye"></i></a></td>
+        </tr>{% endfor %}
+        </tbody>
+      </table></div>
+      {% endif %}
+    </div>
+
+    <style>
+    @keyframes pulseFirma {
+      0%,100% { box-shadow: 0 0 0 0 rgba(217,119,6,.4); }
+      50%      { box-shadow: 0 0 0 6px rgba(217,119,6,0); }
+    }
+    .cal-day {
+      aspect-ratio: 1;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: .76rem;
+      font-weight: 600;
+      cursor: default;
+      transition: all .15s;
+      position: relative;
+      min-height: 36px;
+    }
+    .cal-day.empty { background: transparent; }
+    .cal-day.hoy { border: 2px solid #7c3aed !important; font-weight: 900; color: #7c3aed; }
+    .cal-day.normal { background: #f8fafc; color: #475569; }
+    .cal-day.normal:hover { background: #f1f5f9; }
+    .cal-day.tiene-rem { background: linear-gradient(135deg,#ede9fe,#ddd6fe); color: #4c1d95; font-weight: 800; cursor: pointer; }
+    .cal-day.tiene-rem:hover { background: linear-gradient(135deg,#ddd6fe,#c4b5fd); transform: scale(1.05); }
+    .cal-dots { display: flex; gap: 2px; margin-top: 2px; flex-wrap: wrap; justify-content: center; }
+    .cal-dot { width: 6px; height: 6px; border-radius: 50%; }
+    </style>
+
+    <script>
+    const CAL_DATA = {{ cal_remisiones_json|safe }};
+    const CAL_CONS_DATA = {{ cal_consultas_json|safe }};
+    let calYear, calMonth;
+    let calConsYear, calConsMonth;
+
+    (function() {
+      const today = new Date();
+      // Ir al mes con remisiones más reciente, o mes actual
+      const keys = Object.keys(CAL_DATA);
+      if (keys.length) {
+        keys.sort();
+        const last = keys[keys.length-1].split('-');
+        calYear  = parseInt(last[0]);
+        calMonth = parseInt(last[1]) - 1;
+      } else {
+        calYear  = today.getFullYear();
+        calMonth = today.getMonth();
+      }
+      // Consultas: ir al mes más reciente
+      const ckeys = Object.keys(CAL_CONS_DATA);
+      if (ckeys.length) {
+        ckeys.sort();
+        const clast = ckeys[ckeys.length-1].split('-');
+        calConsYear  = parseInt(clast[0]);
+        calConsMonth = parseInt(clast[1]) - 1;
+      } else {
+        calConsYear  = today.getFullYear();
+        calConsMonth = today.getMonth();
+      }
+    })();
+
+    /* ── CALENDARIO REMISIONES ── */
+    function toggleCalendarioRem() {
+      const wrap = document.getElementById('cal-rem-wrap');
+      const btn  = document.getElementById('btn-cal-rem');
+      if (wrap.style.display === 'none') {
+        wrap.style.display = 'block';
+        btn.style.background = '#7c3aed';
+        btn.style.color = 'white';
+        btn.innerHTML = '<i class="bi bi-calendar3"></i> Ocultar calendario';
+        renderCal();
+      } else {
+        wrap.style.display = 'none';
+        btn.style.background = 'white';
+        btn.style.color = '#7c3aed';
+        btn.innerHTML = '<i class="bi bi-calendar3"></i> Ver calendario';
+      }
+    }
+
+    function calMes(delta) {
+      calMonth += delta;
+      if (calMonth > 11) { calMonth = 0; calYear++; }
+      if (calMonth < 0)  { calMonth = 11; calYear--; }
+      renderCal();
+    }
+
+    function renderCal() {
+      const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+      document.getElementById('cal-titulo').textContent = meses[calMonth] + ' ' + calYear;
+
+      const grid = document.getElementById('cal-grid');
+      grid.innerHTML = '';
+
+      const today = new Date();
+      const firstDay = new Date(calYear, calMonth, 1);
+      let startDow = firstDay.getDay() - 1;
+      if (startDow < 0) startDow = 6;
+      const daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
+
+      for (let i = 0; i < startDow; i++) {
+        const e = document.createElement('div');
+        e.className = 'cal-day empty';
+        grid.appendChild(e);
+      }
+
+      for (let d = 1; d <= daysInMonth; d++) {
+        const key = calYear + '-' + String(calMonth+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+        const eventos = CAL_DATA[key] || [];
+        const esHoy = (today.getFullYear()===calYear && today.getMonth()===calMonth && today.getDate()===d);
+
+        const cell = document.createElement('div');
+        cell.className = 'cal-day ' + (eventos.length ? 'tiene-rem' : 'normal') + (esHoy ? ' hoy' : '');
+
+        const numEl = document.createElement('span');
+        numEl.textContent = d;
+        cell.appendChild(numEl);
+
+        if (eventos.length) {
+          const dots = document.createElement('div');
+          dots.className = 'cal-dots';
+          const tipos = [...new Set(eventos.map(e => e.tipo))];
+          const colores = { hospital: '#0ea5e9', casa: '#f59e0b', clase: '#6366f1' };
+          tipos.forEach(t => {
+            const dot = document.createElement('span');
+            dot.className = 'cal-dot';
+            dot.style.background = colores[t] || '#7c3aed';
+            dots.appendChild(dot);
+          });
+          cell.appendChild(dots);
+          cell.onclick = () => mostrarDetalleDia(key, eventos, d);
+        }
+        grid.appendChild(cell);
+      }
+    }
+
+    function mostrarDetalleDia(key, eventos, d) {
+      const det = document.getElementById('cal-detalle');
+      const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+      const iconos = { hospital: '🏥', casa: '🏠', clase: '🎓' };
+      let html = '<div style="font-weight:800;color:#4c1d95;margin-bottom:8px;font-size:.82rem">' + d + ' de ' + meses[calMonth] + ' — ' + eventos.length + ' evento(s)</div>';
+      eventos.forEach(ev => {
+        html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:white;border-radius:7px;margin-bottom:5px;border:1px solid #e9d5ff">';
+        html += '<span style="font-size:1rem">' + (iconos[ev.tipo] || '📋') + '</span>';
+        html += '<div><div style="font-weight:700;font-size:.78rem;color:#374151">' + ev.destino + '</div>';
+        html += '<div style="font-size:.7rem;color:#64748b">Estado: ' + ev.estado + '</div></div></div>';
+      });
+      det.innerHTML = html;
+      det.style.display = 'block';
+    }
+
+    /* ── CALENDARIO CONSULTAS ── */
+    function toggleCalendarioConsultas() {
+      const wrap = document.getElementById('cal-cons-wrap');
+      const btn  = document.getElementById('btn-cal-cons');
+      if (wrap.style.display === 'none') {
+        wrap.style.display = 'block';
+        btn.style.background = '#0ea5a0';
+        btn.style.color = 'white';
+        btn.innerHTML = '<i class="bi bi-calendar3"></i> Ocultar calendario';
+        renderCalCons();
+      } else {
+        wrap.style.display = 'none';
+        btn.style.background = 'white';
+        btn.style.color = '#0ea5a0';
+        btn.innerHTML = '<i class="bi bi-calendar3"></i> Ver calendario';
+      }
+    }
+
+    function calConsMes(delta) {
+      calConsMonth += delta;
+      if (calConsMonth > 11) { calConsMonth = 0; calConsYear++; }
+      if (calConsMonth < 0)  { calConsMonth = 11; calConsYear--; }
+      renderCalCons();
+    }
+
+    function renderCalCons() {
+      const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+      document.getElementById('cal-cons-titulo').textContent = meses[calConsMonth] + ' ' + calConsYear;
+
+      const grid = document.getElementById('cal-cons-grid');
+      grid.innerHTML = '';
+
+      const today = new Date();
+      const firstDay = new Date(calConsYear, calConsMonth, 1);
+      let startDow = firstDay.getDay() - 1;
+      if (startDow < 0) startDow = 6;
+      const daysInMonth = new Date(calConsYear, calConsMonth+1, 0).getDate();
+
+      for (let i = 0; i < startDow; i++) {
+        const e = document.createElement('div');
+        e.className = 'cal-day empty';
+        grid.appendChild(e);
+      }
+
+      const coloresEstado = { 'Atendido': '#0ea5a0', 'Remitido': '#ef4444', 'Acudiente': '#f59e0b' };
+
+      for (let d = 1; d <= daysInMonth; d++) {
+        const key = calConsYear + '-' + String(calConsMonth+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+        const eventos = CAL_CONS_DATA[key] || [];
+        const esHoy = (today.getFullYear()===calConsYear && today.getMonth()===calConsMonth && today.getDate()===d);
+
+        const cell = document.createElement('div');
+        cell.className = 'cal-day-cons ' + (eventos.length ? 'tiene-cons' : 'normal') + (esHoy ? ' hoy-cons' : '');
+        cell.style.cssText = 'aspect-ratio:1;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:.76rem;font-weight:600;cursor:default;transition:all .15s;position:relative;min-height:36px;' + (eventos.length ? 'background:linear-gradient(135deg,#e6faf9,#ccfbf1);color:#065f46;font-weight:800;cursor:pointer;' : 'background:#f8fafc;color:#475569;') + (esHoy ? 'border:2px solid #0ea5a0 !important;font-weight:900;color:#0ea5a0;' : '');
+
+        const numEl = document.createElement('span');
+        numEl.textContent = d;
+        cell.appendChild(numEl);
+
+        if (eventos.length) {
+          const dots = document.createElement('div');
+          dots.style.cssText = 'display:flex;gap:2px;margin-top:2px;flex-wrap:wrap;justify-content:center';
+          const estados = [...new Set(eventos.map(e => e.estado))];
+          estados.forEach(est => {
+            const dot = document.createElement('span');
+            dot.style.cssText = 'width:6px;height:6px;border-radius:50%;background:' + (coloresEstado[est] || '#0ea5a0');
+            dots.appendChild(dot);
+          });
+          cell.appendChild(dots);
+          cell.addEventListener('mouseover', function(){ if(eventos.length) this.style.transform='scale(1.05)'; });
+          cell.addEventListener('mouseout', function(){ this.style.transform=''; });
+          cell.onclick = () => mostrarDetalleConsDia(key, eventos, d);
+        }
+        grid.appendChild(cell);
+      }
+    }
+
+    function mostrarDetalleConsDia(key, eventos, d) {
+      const det = document.getElementById('cal-cons-detalle');
+      const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+      const coloresEstado = { 'Atendido': '#0ea5a0', 'Remitido': '#ef4444', 'Acudiente': '#f59e0b' };
+      let html = '<div style="font-weight:800;color:#065f46;margin-bottom:8px;font-size:.82rem">📋 ' + d + ' de ' + meses[calConsMonth] + ' — ' + eventos.length + ' consulta(s)</div>';
+      eventos.forEach(ev => {
+        const color = coloresEstado[ev.estado] || '#0ea5a0';
+        html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:white;border-radius:7px;margin-bottom:5px;border:1.5px solid ' + color + '30">';
+        html += '<span style="font-size:1rem">🩺</span>';
+        html += '<div style="flex:1"><div style="font-weight:700;font-size:.78rem;color:#374151">' + ev.motivo + ' — ' + ev.hora + '</div>';
+        html += '<div style="font-size:.7rem;color:' + color + ';font-weight:600">' + ev.estado + '</div></div>';
+        if(ev.pk) html += '<a href="/consultas/' + ev.pk + '/" style="font-size:.7rem;color:#0ea5a0;font-weight:700;text-decoration:none">Ver ›</a>';
+        html += '</div>';
+      });
+      det.innerHTML = html;
+      det.style.display = 'block';
+    }
+    </script>
+
+    <!-- CONSENTIMIENTO DEL ACUDIENTE PARA REMISIÓN -->
+    <div class="card" id="card-consentimiento">
+      <div class="card-head">
+        <div class="card-head-title"><i class="bi bi-pen-fill"></i> Confirmación del Acudiente para la Remisión</div>
+      </div>
+      <div style="padding:14px">
+        {% if remisiones %}
+        <!-- Selector de remisión -->
+        <div style="margin-bottom:14px">
+          <label style="font-size:.78rem;font-weight:700;color:var(--blue-dark);display:block;margin-bottom:6px"><i class="bi bi-hospital-fill"></i> Seleccionar remisión:</label>
+          <select id="sel-remision" onchange="cargarResumenRemision()" style="width:100%;padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:.82rem;color:#374151;background:#f8fafc;outline:none">
+            <option value="">— Elige una remisión —</option>
+            {% for r in remisiones %}
+            <option value="{{ r.pk }}"
+              data-tipo-destino="{{ r.tipo_destino }}"
+              data-hospital="{% if r.tipo_destino == 'casa' %}Casa del estudiante{% else %}{{ r.hospital_destino|default:'Hospital' }}{% endif %}"
+              data-eps="{{ r.eps|default:'N/A' }}"
+              data-motivo="{{ r.motivo }}"
+              data-acompanante="{{ r.acompanante }}"
+              data-fecha="{{ r.fecha_hora|date:'d/m/Y H:i' }}"
+              data-estado="{{ r.get_estado_display }}"
+              data-obs="{{ r.observaciones|default:'' }}"
+              data-tiene-consentimiento="{% if r.consentimiento %}true{% else %}false{% endif %}"
+              data-url-consentimiento="{% url 'consentimiento_remision' r.pk %}">
+              {% if r.tipo_destino == 'casa' %}🏠{% else %}🏥{% endif %} {{ r.fecha_hora|date:"d/m/Y" }} — {% if r.tipo_destino == 'casa' %}Casa del estudiante{% else %}{{ r.hospital_destino|default:'Hospital' }}{% endif %} ({{ r.get_estado_display }})
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Resumen de la remisión seleccionada -->
+        <div id="resumen-remision" style="display:none;margin-bottom:14px;padding:12px;background:linear-gradient(135deg,#f0f9ff,#e0f2fe);border:1.5px solid #bae6fd;border-radius:12px">
+          <div style="font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.7px;color:#0369a1;margin-bottom:10px"><i class="bi bi-clipboard2-pulse-fill"></i> Resumen de la Remisión</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:.79rem">
+            <div><span style="color:#64748b">Fecha:</span> <strong id="r-fecha"></strong></div>
+            <div><span style="color:#64748b">Hospital:</span> <strong id="r-hospital"></strong></div>
+            <div><span style="color:#64748b">EPS:</span> <strong id="r-eps"></strong></div>
+            <div><span style="color:#64748b">Acompañante:</span> <strong id="r-acompanante"></strong></div>
+            <div style="grid-column:1/-1"><span style="color:#64748b">Motivo:</span> <strong id="r-motivo"></strong></div>
+            <div><span style="color:#64748b">Estado:</span> <span id="r-estado" class="badge"></span></div>
+          </div>
+          <div id="r-obs-wrap" style="display:none;margin-top:8px;padding:7px;background:rgba(255,255,255,.7);border-radius:7px;font-size:.77rem"><span style="color:#64748b">Observaciones:</span> <span id="r-obs"></span></div>
+
+          <!-- Alerta consentimiento ya registrado -->
+          <div id="alerta-ya-firmado" style="display:none;margin-top:10px;padding:9px 12px;background:#f0fdf4;border:1.5px solid #86efac;border-radius:9px;font-size:.78rem;color:#166534;font-weight:600">
+            <i class="bi bi-check-circle-fill"></i> Este consentimiento ya fue firmado y guardado.
+            <a id="link-ver-consentimiento" href="#" target="_blank" style="margin-left:8px;color:#166534;text-decoration:underline">Ver consentimiento</a>
+          </div>
+        </div>
+
+        <!-- Formulario de firma -->
+        <div id="form-firmas" style="display:none">
+          <!-- Alerta de confirmación de datos -->
+          <div style="background:#fef9c3;border:1.5px solid #fde047;border-radius:10px;padding:12px;margin-bottom:14px">
+            <div style="font-size:.73rem;font-weight:700;color:#854d0e;margin-bottom:8px"><i class="bi bi-person-check-fill"></i> Datos del acudiente (pre-llenados del perfil del estudiante)</div>
+            <div style="font-size:.78rem;color:#78350f">Verifique y corrija si es necesario antes de firmar.</div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+            <div>
+              <label style="font-size:.75rem;font-weight:700;color:#374151;display:block;margin-bottom:4px">Nombre del acudiente</label>
+              <input id="inp-nombre-acudiente" type="text" placeholder="Nombre completo" value="{{ estudiante.acudiente }}" style="width:100%;padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.8rem;box-sizing:border-box">
+            </div>
+            <div>
+              <label style="font-size:.75rem;font-weight:700;color:#374151;display:block;margin-bottom:4px">CC del acudiente</label>
+              <input id="inp-cc-acudiente" type="text" placeholder="Número de cédula" value="{{ estudiante.cc_acudiente }}" style="width:100%;padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.8rem;box-sizing:border-box">
+            </div>
+          </div>
+          <div style="margin-bottom:14px">
+            <label style="font-size:.75rem;font-weight:700;color:#374151;display:block;margin-bottom:4px">Nombre de la enfermera</label>
+            <input id="inp-nombre-enfermera" type="text" placeholder="Nombre de la enfermera" value="{{ request.user.get_full_name }}" style="width:100%;padding:7px 10px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.8rem;box-sizing:border-box">
+          </div>
+
+          <!-- Firma Acudiente -->
+          <div style="margin-bottom:14px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+              <label style="font-size:.78rem;font-weight:700;color:#1e3a5f"><i class="bi bi-pen"></i> Firma del Acudiente / Padre de familia</label>
+              <button onclick="limpiarFirma('canvas-acudiente','btn-limpiar-acudiente')" id="btn-limpiar-acudiente" style="display:none;font-size:.72rem;padding:3px 9px;border:1px solid #e2e8f0;border-radius:6px;background:white;cursor:pointer;color:#64748b"><i class="bi bi-eraser-fill"></i> Limpiar</button>
+            </div>
+            <canvas id="canvas-acudiente" width="700" height="160"
+              style="border:2px dashed #bae6fd;border-radius:10px;width:100%;touch-action:none;background:white;cursor:crosshair;display:block"></canvas>
+            <div style="font-size:.68rem;color:#94a3b8;margin-top:3px;text-align:center"><i class="bi bi-info-circle"></i> Firme con el dedo (tablet) o con el mouse (computador)</div>
+          </div>
+
+          <!-- Firma Enfermera -->
+          <div style="margin-bottom:14px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+              <label style="font-size:.78rem;font-weight:700;color:#1e3a5f"><i class="bi bi-pen"></i> Firma de la Enfermera</label>
+              <button onclick="limpiarFirma('canvas-enfermera','btn-limpiar-enfermera')" id="btn-limpiar-enfermera" style="display:none;font-size:.72rem;padding:3px 9px;border:1px solid #e2e8f0;border-radius:6px;background:white;cursor:pointer;color:#64748b"><i class="bi bi-eraser-fill"></i> Limpiar</button>
+            </div>
+            <canvas id="canvas-enfermera" width="700" height="160"
+              style="border:2px dashed #bae6fd;border-radius:10px;width:100%;touch-action:none;background:white;cursor:crosshair;display:block"></canvas>
+            <div style="font-size:.68rem;color:#94a3b8;margin-top:3px;text-align:center"><i class="bi bi-info-circle"></i> Firme con el dedo (tablet) o con el mouse (computador)</div>
+          </div>
+
+          <!-- Botón de Confirmación -->
+          <div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:10px;padding:12px;margin-bottom:12px;font-size:.78rem;color:#166534">
+            <i class="bi bi-info-circle-fill"></i> Al confirmar, los datos del acudiente y las firmas quedaran registradas en el consentimiento de remisión.
+          </div>
+          <button onclick="guardarConsentimiento()" id="btn-guardar-consentimiento"
+            style="width:100%;padding:13px;background:linear-gradient(135deg,#16a34a,#15803d);color:white;border:none;border-radius:10px;font-size:.92rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 2px 8px rgba(22,163,74,.25)">
+            <i class="bi bi-check2-circle"></i> Confirmar y Guardar Consentimiento
+          </button>
+          <div id="msg-consentimiento" style="display:none;margin-top:8px;padding:9px;border-radius:8px;font-size:.8rem;text-align:center"></div>
+        </div>
+        {% else %}
+        <p style="text-align:center;color:#94a3b8;font-size:.82rem;padding:10px"><i class="bi bi-hospital"></i> El estudiante no tiene remisiones registradas.</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- SEGUIMIENTOS con filtro de rango de fechas -->
+    <div class="card">
+      <div class="card-head" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+        <div class="card-head-title"><i class="bi bi-calendar2-check-fill"></i> Seguimientos ({{ seguimientos|length }})</div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <a href="{% url 'nuevo_seguimiento_estudiante' estudiante.pk %}" class="btn btn-primary" style="font-size:.76rem;padding:5px 12px"><i class="bi bi-plus-lg"></i> Nuevo Seguimiento</a>
+          <div style="display:flex;align-items:center;gap:6px;font-size:.76rem">
+            <label style="color:var(--muted);font-weight:600">Desde</label>
+            <input type="date" id="seg-desde" style="border:1px solid #e2e8f0;border-radius:7px;padding:4px 8px;font-size:.76rem;color:#374151">
+            <label style="color:var(--muted);font-weight:600">Hasta</label>
+            <input type="date" id="seg-hasta" style="border:1px solid #e2e8f0;border-radius:7px;padding:4px 8px;font-size:.76rem;color:#374151">
+            <button onclick="filtrarSeguimientos()" style="background:var(--primary);color:white;border:none;border-radius:7px;padding:5px 12px;font-size:.76rem;font-weight:700;cursor:pointer"><i class="bi bi-funnel-fill"></i> Filtrar</button>
+            <button onclick="limpiarFiltro()" style="background:#f1f5f9;color:#64748b;border:1px solid #e2e8f0;border-radius:7px;padding:5px 10px;font-size:.76rem;cursor:pointer"><i class="bi bi-x"></i></button>
+          </div>
+        </div>
+      </div>
+      <div id="seg-tabla">
+      {% if seguimientos %}<div class="table-wrap"><table class="tbl-hist tbl-seg-hist">
+        <thead><tr><th>Tipo</th><th>Período</th><th>Descripción</th><th>Estado</th><th></th></tr></thead>
+        <tbody id="seg-tbody">{% for s in seguimientos %}<tr data-fecha="{{ s.fecha|date:'Y-m-d' }}">
+          <td>{{ s.get_tipo_display }}</td>
+          <td style="font-size:.75rem;white-space:nowrap">
+            {{ s.fecha|date:"d/m/Y" }}
+            {% if s.fecha_fin %}<br><span style="color:#64748b;font-size:.7rem">→ {{ s.fecha_fin|date:"d/m/Y" }}</span>{% endif %}
+          </td>
+          <td style="font-size:.78rem">
+            {{ s.descripcion|truncatechars:45 }}
+            {% if s.evolucion %}<br><span style="color:#64748b;font-size:.7rem"><i class="bi bi-journal-text"></i> {{ s.evolucion|truncatechars:40 }}</span>{% endif %}
+          </td>
+          <td>
+            {% if s.completado %}<span class="badge badge-green"><i class="bi bi-check-circle-fill"></i> Completado</span>
+            {% elif s.vencido %}<span class="badge badge-red"><i class="bi bi-exclamation-circle-fill"></i> Vencido</span>
+            {% else %}<span class="badge badge-blue"><i class="bi bi-clock"></i> Pendiente</span>{% endif %}
+          </td>
+          <td style="display:flex;gap:5px;align-items:center;flex-wrap:wrap">
+            <a href="{% url 'detalle_seguimiento' s.pk %}"
+              class="btn btn-xs btn-outline" title="Ver detalle del seguimiento"
+              style="font-size:.72rem">
+              <i class="bi bi-eye"></i> Ver
+            </a>
+            {% if not s.completado %}
+            {% if s.vencido %}
+            <button type="button"
+              onclick="abrirModalSeguimiento({{ s.pk }}, '{{ s.get_tipo_display }}', '{{ estudiante.pk }}', true)"
+              class="btn btn-xs" style="background:#ef4444;color:white;font-size:.72rem"
+              title="Este seguimiento venció — definir continuidad">
+              <i class="bi bi-exclamation-circle"></i> Resolver
+            </button>
+            {% else %}
+            <button type="button"
+              onclick="abrirModalSeguimiento({{ s.pk }}, '{{ s.get_tipo_display }}', '{{ estudiante.pk }}', false)"
+              class="btn btn-xs btn-outline" title="Registrar evolución o completar"
+              style="font-size:.72rem">
+              <i class="bi bi-clipboard2-pulse"></i> Gestionar
+            </button>
+            {% endif %}
+            {% endif %}
+          </td>
+        </tr>{% endfor %}</tbody>
+      </table></div>
+      {% else %}
+      <div style="padding:20px;text-align:center">
+        <p style="color:#94a3b8;font-size:.82rem;margin-bottom:12px"><i class="bi bi-calendar-x" style="font-size:1.4rem;display:block;margin-bottom:6px"></i> Sin seguimientos registrados</p>
+        <a href="{% url 'nuevo_seguimiento_estudiante' estudiante.pk %}" class="btn btn-primary" style="font-size:.8rem"><i class="bi bi-plus-lg"></i> Crear primer seguimiento</a>
+      </div>
+      {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const ESTUDIANTE_PK_PATRON = {{ estudiante.pk }};
+
+function abrirPanelPatron() {
+  const panel = document.getElementById('patron-sidebar');
+  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+}
+
+function verificarPatron() {
+  const box = document.getElementById('patron-box');
+  const btn = document.getElementById('btn-patron');
+  btn.disabled = true;
+  box.innerHTML = '<div style="display:flex;align-items:center;gap:10px;background:#fffbeb;border:1px solid #fde68a;border-radius:11px;padding:13px 15px;font-size:.83rem;color:#92400e"><div style="width:18px;height:18px;border:2.5px solid #fde68a;border-top-color:#f59e0b;border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0"></div>Analizando consultas de los últimos 15 días…</div>';
+  fetch('/estudiantes/' + ESTUDIANTE_PK_PATRON + '/patron-salud/')
+    .then(r => r.json()).then(d => {
+      btn.disabled = false;
+      if (!d.hay_alerta) {
+        box.innerHTML = '<div style="background:#f0fdf4;border:1px solid #86efac;padding:13px 15px;border-radius:12px"><div style="font-size:.84rem;color:#166534;font-weight:700;margin-bottom:3px"><i class="bi bi-check-circle-fill"></i> Sin patrones de riesgo</div><div style="font-size:.79rem;color:#16a34a">Total consultas en 15 días: <strong>' + d.total_consultas + '</strong></div></div>';
+        return;
+      }
+      let html = '';
+      d.alertas.forEach(a => {
+        const h = a.veces >= 4;
+        html += '<div style="background:' + (h ? '#fef2f2' : '#fffbeb') + ';border:1px solid ' + (h ? '#fca5a5' : '#fcd34d') + ';padding:12px 15px;border-radius:12px;margin-bottom:8px"><div style="font-weight:800;font-size:.85rem;color:' + (h ? '#7f1d1d' : '#78350f') + ';margin-bottom:5px">' + (h ? '<i class="bi bi-exclamation-triangle-fill"></i>' : '<i class="bi bi-exclamation-circle"></i>') + ' ' + a.motivo + ' — ' + a.veces + ' veces en 15 días</div><div style="font-size:.8rem;color:' + (h ? '#991b1b' : '#92400e') + ';line-height:1.55">' + a.recomendacion + '</div></div>';
+      });
+      box.innerHTML = html;
+    }).catch(() => {
+      btn.disabled = false;
+      box.innerHTML = '<div style="background:#fef2f2;border:1px solid #fca5a5;padding:12px;border-radius:10px;font-size:.82rem;color:#991b1b"><i class="bi bi-x-circle"></i> Error al analizar el patrón.</div>';
+    });
+}
+</script>
+
+<script>
+function filtrarSeguimientos() {
+  const desde = document.getElementById('seg-desde').value;
+  const hasta = document.getElementById('seg-hasta').value;
+  const rows = document.querySelectorAll('#seg-tbody tr');
+  let visible = 0;
+  rows.forEach(row => {
+    const fecha = row.dataset.fecha;
+    let show = true;
+    if (desde && fecha < desde) show = false;
+    if (hasta && fecha > hasta) show = false;
+    row.style.display = show ? '' : 'none';
+    if (show) visible++;
+  });
+  // Actualizar contador
+  document.querySelector('.card-head-title i.bi-calendar2-check-fill').parentElement.innerHTML =
+    '<i class="bi bi-calendar2-check-fill"></i> Seguimientos (' + visible + ' mostrados)';
+}
+function limpiarFiltro() {
+  document.getElementById('seg-desde').value = '';
+  document.getElementById('seg-hasta').value = '';
+  document.querySelectorAll('#seg-tbody tr').forEach(r => r.style.display = '');
+}
+</script>
+
+<script>
+// ── CONSENTIMIENTO DIGITAL ─────────────────────────────────────────────────
+function setupCanvas(id, btnId) {
+  const canvas = document.getElementById(id);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  let drawing = false, lastX = 0, lastY = 0;
+  ctx.strokeStyle = '#1e3a5f';
+  ctx.lineWidth = 2.2;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  function getPos(e) {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    if (e.touches) {
+      return {
+        x: (e.touches[0].clientX - rect.left) * scaleX,
+        y: (e.touches[0].clientY - rect.top) * scaleY
+      };
+    }
+    return {
+      x: (e.clientX - rect.left) * scaleX,
+      y: (e.clientY - rect.top) * scaleY
+    };
+  }
+
+  function start(e) {
+    e.preventDefault();
+    drawing = true;
+    const p = getPos(e);
+    lastX = p.x; lastY = p.y;
+    document.getElementById(btnId).style.display = 'inline-block';
+  }
+  function draw(e) {
+    if (!drawing) return;
+    e.preventDefault();
+    const p = getPos(e);
+    ctx.beginPath();
+    ctx.moveTo(lastX, lastY);
+    ctx.lineTo(p.x, p.y);
+    ctx.stroke();
+    lastX = p.x; lastY = p.y;
+  }
+  function stop(e) { drawing = false; }
+
+  canvas.addEventListener('mousedown', start);
+  canvas.addEventListener('mousemove', draw);
+  canvas.addEventListener('mouseup', stop);
+  canvas.addEventListener('mouseleave', stop);
+  canvas.addEventListener('touchstart', start, {passive:false});
+  canvas.addEventListener('touchmove', draw, {passive:false});
+  canvas.addEventListener('touchend', stop);
+}
+
+function limpiarFirma(canvasId, btnId) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+  document.getElementById(btnId).style.display = 'none';
+}
+
+function canvasIsBlank(canvas) {
+  const data = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height).data;
+  for (let i = 3; i < data.length; i += 4) { if (data[i] > 0) return false; }
+  return true;
+}
+
+function cargarResumenRemision() {
+  const sel = document.getElementById('sel-remision');
+  const opt = sel.selectedOptions[0];
+  const resumen = document.getElementById('resumen-remision');
+  const formFirmas = document.getElementById('form-firmas');
+  const alertaFirmado = document.getElementById('alerta-ya-firmado');
+
+  if (!opt || !opt.value) {
+    resumen.style.display = 'none';
+    formFirmas.style.display = 'none';
+    return;
+  }
+  document.getElementById('r-fecha').textContent        = opt.dataset.fecha;
+  document.getElementById('r-hospital').textContent     = opt.dataset.hospital;
+  document.getElementById('r-eps').textContent          = opt.dataset.eps;
+  document.getElementById('r-acompanante').textContent  = opt.dataset.acompanante;
+  document.getElementById('r-motivo').textContent       = opt.dataset.motivo;
+  const estado = opt.dataset.estado;
+  const badge = document.getElementById('r-estado');
+  badge.textContent = estado;
+  badge.className = estado === 'Resuelto' ? 'badge badge-green' : estado === 'En proceso' ? 'badge badge-blue' : 'badge badge-orange';
+
+  const obs = opt.dataset.obs;
+  if (obs) {
+    document.getElementById('r-obs').textContent = obs;
+    document.getElementById('r-obs-wrap').style.display = 'block';
+  } else {
+    document.getElementById('r-obs-wrap').style.display = 'none';
+  }
+
+  resumen.style.display = 'block';
+
+  if (opt.dataset.tieneConsentimiento === 'true') {
+    alertaFirmado.style.display = 'block';
+    document.getElementById('link-ver-consentimiento').href = opt.dataset.urlConsentimiento;
+    formFirmas.style.display = 'none';
+  } else {
+    alertaFirmado.style.display = 'none';
+    formFirmas.style.display = 'block';
+    limpiarFirma('canvas-acudiente', 'btn-limpiar-acudiente');
+    limpiarFirma('canvas-enfermera', 'btn-limpiar-enfermera');
+  }
+}
+
+async function guardarConsentimiento() {
+  const sel = document.getElementById('sel-remision');
+  if (!sel.value) { alert('Selecciona una remisión'); return; }
+
+  const cAcudiente = document.getElementById('canvas-acudiente');
+  const cEnfermera = document.getElementById('canvas-enfermera');
+  if (canvasIsBlank(cAcudiente)) { alert('La firma del acudiente está vacía'); return; }
+  if (canvasIsBlank(cEnfermera)) { alert('La firma de la enfermera está vacía'); return; }
+
+  const btn = document.getElementById('btn-guardar-consentimiento');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Guardando...';
+
+  const payload = {
+    firma_acudiente:  cAcudiente.toDataURL('image/png'),
+    firma_enfermera:  cEnfermera.toDataURL('image/png'),
+    nombre_acudiente: document.getElementById('inp-nombre-acudiente').value,
+    nombre_enfermera: document.getElementById('inp-nombre-enfermera').value,
+    cc_acudiente:     document.getElementById('inp-cc-acudiente').value,
+  };
+
+  try {
+    const url = `/remisiones/${sel.value}/consentimiento/guardar/`;
+    const resp = await fetch(url, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json','X-CSRFToken': getCookie('csrftoken')},
+      body: JSON.stringify(payload)
+    });
+    const data = await resp.json();
+    const msg = document.getElementById('msg-consentimiento');
+    if (data.ok) {
+      msg.style.display = 'block';
+      msg.style.background = '#f0fdf4';
+      msg.style.color = '#166534';
+      msg.style.border = '1px solid #86efac';
+      msg.innerHTML = '<i class="bi bi-check-circle-fill"></i> ¡Consentimiento guardado exitosamente!';
+      btn.innerHTML = '<i class="bi bi-shield-check-fill"></i> Guardado';
+      btn.style.background = '#22c55e';
+      // Actualizar selector para mostrar que ya está firmado
+      const remPk = sel.value;
+      sel.selectedOptions[0].dataset.tieneConsentimiento = 'true';
+      sel.selectedOptions[0].dataset.urlConsentimiento = `/remisiones/${remPk}/consentimiento/`;
+      document.getElementById('alerta-ya-firmado').style.display = 'block';
+      document.getElementById('link-ver-consentimiento').href = `/remisiones/${remPk}/consentimiento/`;
+      document.getElementById('form-firmas').style.display = 'none';
+
+      // ── Actualizar tabla de remisiones sin recargar ──────────────
+      const nombreEst = document.querySelector(`#rem-row-${remPk}`)?.dataset.nombre || '';
+
+      // 1) Cambiar badge de estado: Pendiente → En proceso
+      const celdaEstado = document.getElementById(`rem-estado-${remPk}`);
+      if (celdaEstado) {
+        celdaEstado.innerHTML = '<span class="badge badge-blue"><i class="bi bi-arrow-repeat"></i> En proceso</span>';
+      }
+
+      // 2) Cambiar celda de acciones: reemplazar "Avanzar/Firmar" por "¿Ya salió?" + botón Consentimiento verde
+      const celdaAcciones = document.getElementById(`rem-acciones-${remPk}`);
+      if (celdaAcciones) {
+        celdaAcciones.innerHTML = `
+          <button type="button"
+            class="btn btn-xs"
+            style="background:rgba(14,165,160,.15);color:#0e7490;border:1px solid rgba(14,165,160,.3);font-size:.72rem;font-weight:700;border-radius:8px;padding:4px 9px;cursor:pointer;white-space:nowrap"
+            onclick="abrirModalSalidaH(${remPk}, '${nombreEst}')">
+            <i class="bi bi-door-open"></i> ¿Ya salió?
+          </button>
+          <a href="/remisiones/${remPk}/consentimiento/" target="_blank"
+             class="btn btn-sm"
+             title="Ver consentimiento firmado"
+             style="background:linear-gradient(135deg,#16a34a,#15803d);color:white;font-size:.75rem;padding:4px 10px;gap:5px;display:inline-flex;align-items:center;border:none;border-radius:8px;text-decoration:none">
+            <i class="bi bi-shield-check-fill"></i> Consentimiento
+          </a>`;
+      }
+
+      // 3) Actualizar texto del <option> en el select
+      const opt = sel.selectedOptions[0];
+      if (opt) {
+        const textoActual = opt.textContent;
+        opt.textContent = textoActual.replace('(Pendiente)', '(En proceso)');
+        opt.dataset.estado = 'En proceso';
+      }
+    } else {
+      throw new Error(data.error || 'Error al guardar');
+    }
+  } catch(e) {
+    const msg = document.getElementById('msg-consentimiento');
+    msg.style.display = 'block';
+    msg.style.background = '#fef2f2';
+    msg.style.color = '#991b1b';
+    msg.style.border = '1px solid #fca5a5';
+    msg.innerHTML = '<i class="bi bi-exclamation-triangle-fill"></i> ' + e.message;
+    btn.disabled = false;
+    btn.innerHTML = '<i class="bi bi-shield-check-fill"></i> Guardar Consentimiento Digital';
+  }
+}
+
+function getCookie(name) {
+  let v = null;
+  document.cookie.split(';').forEach(c => {
+    const [k,val] = c.trim().split('=');
+    if (k === name) v = decodeURIComponent(val);
+  });
+  return v;
+}
+
+// Inicializar canvas de firmas
+setupCanvas('canvas-acudiente', 'btn-limpiar-acudiente');
+setupCanvas('canvas-enfermera', 'btn-limpiar-enfermera');
+
+function cambiarEstadoRemision(pk, selectEl) {
+  const nuevo = selectEl.value;
+  const colores = { pendiente: '#f59e0b', en_proceso: '#3b82f6', resuelto: '#16a34a' };
+  selectEl.style.borderColor = colores[nuevo] || '#e2e8f0';
+  selectEl.style.color = colores[nuevo] || '#374151';
+
+  const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+  const fd = new FormData();
+  fd.append('estado', nuevo);
+  fd.append('csrfmiddlewaretoken', csrfToken);
+
+  fetch(`/remisiones/${pk}/estado/`, { method: 'POST', body: fd })
+    .then(r => r.json())
+    .then(data => {
+      if (data.ok) {
+        // Pequeño flash de confirmación
+        selectEl.style.background = '#f0fdf4';
+        setTimeout(() => { selectEl.style.background = '#f8fafc'; }, 1200);
+      }
+    })
+    .catch(() => alert('Error al actualizar el estado.'));
+}
+
+</script>
+
+<!-- ══ MODAL SEGUIMIENTO (vencido / gestionar) ══ -->
+<div id="modal-seguimiento" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);backdrop-filter:blur(3px);z-index:9999;align-items:center;justify-content:center;padding:16px">
+  <div id="modal-seg-inner" style="background:#fff;border-radius:20px;padding:0;max-width:460px;width:100%;box-shadow:0 24px 64px rgba(0,0,0,.22);animation:fadeIn .2s ease;overflow:hidden">
+
+    <!-- Header -->
+    <div style="padding:20px 24px 16px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;gap:12px">
+      <div id="modal-seg-icon" style="width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:#eff6ff">
+        <i id="modal-seg-icon-i" class="bi bi-clipboard2-pulse" style="font-size:1.3rem;color:#2563eb"></i>
+      </div>
+      <div style="flex:1;min-width:0">
+        <div id="modal-seg-title" style="font-size:.9rem;font-weight:800;color:#0f172a">Gestionar seguimiento</div>
+        <div id="modal-seg-tipo" style="font-size:.76rem;color:#64748b;margin-top:2px"></div>
+      </div>
+      <button id="btn-modal-seg-x" style="width:32px;height:32px;border-radius:8px;border:1.5px solid #e2e8f0;background:#f8fafc;color:#64748b;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:.9rem">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+
+    <!-- Body -->
+    <div style="padding:20px 24px">
+      <p id="modal-seg-desc" style="font-size:.84rem;color:#374151;margin:0 0 18px;line-height:1.6">Registra la evolución del estudiante y cierra el seguimiento, o extiéndelo si aún requiere atención.</p>
+
+      <button id="btn-continuar-seg" style="width:100%;padding:12px 16px;margin-bottom:10px;background:linear-gradient(135deg,#0ea5e9,#0284c7);color:#fff;border:none;border-radius:11px;font-size:.86rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
+        <i class="bi bi-arrow-clockwise"></i> Extender 7 días más
+      </button>
+
+      <button id="btn-mostrar-evolucion" style="width:100%;padding:12px 16px;margin-bottom:10px;background:#f8fafc;color:#374151;border:1.5px solid #e2e8f0;border-radius:11px;font-size:.86rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
+        <i class="bi bi-check2-circle"></i> Registrar cierre
+      </button>
+
+      <div id="evolucion-wrap" style="display:none;margin-bottom:10px">
+        <label style="font-size:.77rem;font-weight:700;color:#374151;display:block;margin-bottom:6px">
+          <i class="bi bi-journal-text"></i>&nbsp; Notas de cierre <span style="font-weight:400;color:#94a3b8">(opcional)</span>
+        </label>
+        <textarea id="inp-evolucion" rows="3" placeholder="Ej: Estudiante mejoró. Alta. Sin novedades..."
+          style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:.81rem;resize:none;box-sizing:border-box;outline:none"></textarea>
+        <button id="btn-confirmar-cierre" style="width:100%;margin-top:8px;padding:12px 16px;background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;border:none;border-radius:11px;font-size:.86rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
+          <i class="bi bi-check-lg"></i> Confirmar cierre
+        </button>
+      </div>
+
+      <button id="btn-modal-seg-cancelar" style="width:100%;padding:9px;background:none;border:none;color:#94a3b8;font-size:.79rem;cursor:pointer;border-radius:8px">
+        <i class="bi bi-x"></i> Cancelar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal completar directo (no vencido) -->
+<form id="form-completar-directo" method="post" action="" style="display:none">
+  {% csrf_token %}
+  <input type="hidden" name="continuar" value="0">
+  <input type="hidden" name="evolucion" value="Completado manualmente.">
+  <input type="hidden" name="next" id="next-directo" value="">
+</form>
+
+<form id="form-seguimiento-modal" method="post" action="" style="display:none">
+  {% csrf_token %}
+  <input type="hidden" name="continuar" id="seg-continuar-val" value="0">
+  <input type="hidden" name="evolucion" id="seg-evolucion-val" value="">
+  <input type="hidden" name="next" value="{{ request.path }}">
+</form>
+
+<script>
+let _segPk = null;
+
+function cerrarModalSeg() {
+  document.getElementById('modal-seguimiento').style.display = 'none';
+}
+
+function abrirModalSeguimiento(pk, tipo, estPk, esVencido) {
+  _segPk = pk;
+  var icon  = document.getElementById('modal-seg-icon');
+  var iconI = document.getElementById('modal-seg-icon-i');
+  var title = document.getElementById('modal-seg-title');
+  var desc  = document.getElementById('modal-seg-desc');
+  var btnCont = document.getElementById('btn-continuar-seg');
+  if (esVencido) {
+    icon.style.background = '#fef2f2';
+    iconI.className       = 'bi bi-exclamation-circle';
+    iconI.style.color     = '#dc2626';
+    title.textContent     = 'Seguimiento vencido';
+    title.style.color     = '#dc2626';
+    desc.textContent      = 'El período de este seguimiento ya venció. Puedes extenderlo 7 días más o registrar el cierre con notas de evolución.';
+  } else {
+    icon.style.background = '#eff6ff';
+    iconI.className       = 'bi bi-clipboard2-pulse';
+    iconI.style.color     = '#2563eb';
+    title.textContent     = 'Gestionar seguimiento';
+    title.style.color     = '#0f172a';
+    desc.textContent      = 'Registra la evolución del estudiante y cierra el seguimiento, o extiéndelo si aún requiere atención.';
+  }
+  document.getElementById('modal-seg-tipo').textContent = tipo;
+  document.getElementById('evolucion-wrap').style.display = 'none';
+  document.getElementById('btn-mostrar-evolucion').style.display = 'flex';
+  document.getElementById('inp-evolucion').value = '';
+  document.getElementById('modal-seguimiento').style.display = 'flex';
+}
+
+function mostrarCampoEvolucion() {
+  document.getElementById('btn-mostrar-evolucion').style.display = 'none';
+  document.getElementById('evolucion-wrap').style.display = 'block';
+}
+
+function enviarSeguimiento(continuar) {
+  var f = document.getElementById('form-seguimiento-modal');
+  f.action = '/seguimientos/' + _segPk + '/completar/';
+  document.getElementById('seg-continuar-val').value = continuar;
+  document.getElementById('seg-evolucion-val').value = document.getElementById('inp-evolucion').value;
+  f.submit();
+}
+
+function abrirModalCompletarDirecto(pk, estPk) {
+  if (!confirm('¿Marcar este seguimiento como completado?')) return;
+  var f = document.getElementById('form-completar-directo');
+  f.action = '/seguimientos/' + pk + '/completar/';
+  document.getElementById('next-directo').value = window.location.pathname;
+  f.submit();
+}
+
+// Listeners del modal — sin onclick inline para evitar conflictos
+(function() {
+  var modal    = document.getElementById('modal-seguimiento');
+  var inner    = document.getElementById('modal-seg-inner');
+  var btnX     = document.getElementById('btn-modal-seg-x');
+  var btnCanc  = document.getElementById('btn-modal-seg-cancelar');
+  var btnCont  = document.getElementById('btn-continuar-seg');
+  var btnMostrar = document.getElementById('btn-mostrar-evolucion');
+  var btnConfirm = document.getElementById('btn-confirmar-cierre');
+
+  btnX.addEventListener('click', function(e) { e.stopPropagation(); cerrarModalSeg(); });
+  btnCanc.addEventListener('click', function(e) { e.stopPropagation(); cerrarModalSeg(); });
+  btnCont.addEventListener('click', function(e) { e.stopPropagation(); enviarSeguimiento(1); });
+  btnMostrar.addEventListener('click', function(e) { e.stopPropagation(); mostrarCampoEvolucion(); });
+  btnConfirm.addEventListener('click', function(e) { e.stopPropagation(); enviarSeguimiento(0); });
+  inner.addEventListener('click', function(e) { e.stopPropagation(); });
+  modal.addEventListener('click', function(e) { if (e.target === modal) cerrarModalSeg(); });
+})();
+</script>
+
+<style>
+@keyframes fadeIn { from{opacity:0;transform:scale(.95)} to{opacity:1;transform:scale(1)} }
+@keyframes spin { to{transform:rotate(360deg)} }
+</style>
+
+{% if por_motivo or tiene_vitales %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+{% if por_motivo %}
+new Chart(document.getElementById('chartEst'),{type:'doughnut',data:{labels:{{ motivos_labels|safe }},datasets:[{data:{{ motivos_data|safe }},backgroundColor:['#5b9bd5','#4caf82','#e8954a','#8b7fd4','#e05c5c'],borderWidth:0}]},options:{plugins:{legend:{position:'bottom',labels:{font:{size:9},boxWidth:10}}},cutout:'60%',responsive:true}});
+{% endif %}
+{% if tiene_vitales %}
+new Chart(document.getElementById('chartVitales'),(function(){
+  var labels = {{ vitales_labels|safe }};
+  var dataPeso = {{ vitales_peso|safe }};
+  var dataTalla = {{ vitales_talla|safe }};
+  var dataImc = {{ vitales_imc|safe }};
+  // Con un solo punto, duplicamos el label para forzar que se vea una línea
+  var single = labels.length === 1;
+  if(single){ labels=[labels[0],labels[0]]; dataPeso=[dataPeso[0],dataPeso[0]]; dataTalla=[dataTalla[0],dataTalla[0]]; dataImc=[dataImc[0],dataImc[0]]; }
+  // Calcular rangos para cada eje con padding
+  function rng(arr){var v=arr.filter(function(x){return x!=null;}); if(!v.length)return{min:0,max:100}; var mn=Math.min.apply(null,v),mx=Math.max.apply(null,v),pad=(mx-mn)*0.2||5; return{min:Math.floor(mn-pad),max:Math.ceil(mx+pad)};}
+  var rP=rng(dataPeso), rT=rng(dataTalla), rI=rng(dataImc);
+  return {type:'line',data:{labels:labels,datasets:[
+    {label:'Peso (kg)',data:dataPeso,borderColor:'#3aafa9',backgroundColor:'rgba(58,175,169,0.10)',tension:0.35,pointRadius:single?6:4,pointBackgroundColor:'#3aafa9',fill:false,yAxisID:'y'},
+    {label:'Talla (cm)',data:dataTalla,borderColor:'#e8954a',backgroundColor:'rgba(232,149,74,0.10)',tension:0.35,pointRadius:single?6:4,pointBackgroundColor:'#e8954a',fill:false,yAxisID:'y1'},
+    {label:'IMC (kg/m²)',data:dataImc,borderColor:'#8b5cf6',backgroundColor:'rgba(139,92,246,0.12)',tension:0.35,pointRadius:single?6:5,pointBackgroundColor:'#8b5cf6',borderDash:[6,3],fill:false,yAxisID:'y2'}
+  ]},options:{responsive:true,interaction:{mode:'index',intersect:false},
+  scales:{
+    x:{ticks:{maxRotation:0,font:{size:9}},grid:{color:'#f1f5f9'}},
+    y:{position:'left',min:rP.min,max:rP.max,title:{display:true,text:'Peso (kg)',font:{size:9}},ticks:{color:'#3aafa9',font:{size:9}},grid:{color:'#eef5f4'}},
+    y1:{position:'right',min:rT.min,max:rT.max,title:{display:true,text:'Talla (cm)',font:{size:9}},ticks:{color:'#e8954a',font:{size:9}},grid:{display:false}},
+    y2:{position:'right',min:rI.min,max:rI.max,title:{display:true,text:'IMC',font:{size:9}},ticks:{color:'#8b5cf6',font:{size:9}},grid:{display:false},offset:true}
+  },
+  plugins:{legend:{position:'bottom',labels:{font:{size:10},boxWidth:12,padding:8}},
+  tooltip:{callbacks:{label:function(ctx){var v=ctx.parsed.y;if(v===null||v===undefined)return null;if(ctx.dataset.label==='IMC (kg/m²)'){var lbl=v<18.5?'Bajo peso':v<25?'Normal':v<30?'Sobrepeso':'Obesidad';return 'IMC: '+v+' kg/m² ('+lbl+')';}return ctx.dataset.label+': '+v;}}}}}};}()))
+{% endif %}
+</script>
+{% endif %}
+
+<script>
+// Notificación emergente automática si hay seguimientos vencidos
+(function(){
+  var vencidos = document.querySelectorAll('#seg-tbody tr .badge-red');
+  if(vencidos.length > 0){
+    var n = vencidos.length;
+    var banner = document.createElement('div');
+    banner.id = 'banner-seg-vencidos';
+    banner.style.cssText = 'position:fixed;top:16px;right:16px;z-index:8888;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:12px;padding:14px 18px;max-width:340px;box-shadow:0 8px 32px rgba(220,38,38,.18);display:flex;gap:12px;align-items:flex-start;animation:slideInRight .3s ease';
+    banner.innerHTML = '<i class=\"bi bi-exclamation-circle-fill\" style=\"font-size:1.3rem;color:#dc2626;flex-shrink:0\"></i><div style="flex:1"><div style="font-weight:800;color:#b91c1c;font-size:.88rem;margin-bottom:3px">' + n + ' seguimiento' + (n>1?'s':'') + ' vencido' + (n>1?'s':'')+' pendiente'+(n>1?'s':'')+' de resolución</div><div style="font-size:.76rem;color:#64748b">Haz clic en <strong>Resolver</strong> para registrar la evolución del estudiante.</div><button onclick="document.getElementById('banner-seg-vencidos').remove()" style="margin-top:8px;font-size:.73rem;background:none;border:1px solid #fca5a5;border-radius:6px;padding:3px 10px;color:#b91c1c;cursor:pointer">Cerrar</button></div>';
+    document.body.appendChild(banner);
+    setTimeout(()=>{ var b=document.getElementById('banner-seg-vencidos'); if(b) b.style.opacity='0'; b.style.transition='opacity .5s'; setTimeout(()=>{ if(b) b.remove(); },500); }, 8000);
+  }
+})();
+</script>
+<style>
+@keyframes slideInRight { from{opacity:0;transform:translateX(40px)} to{opacity:1;transform:translateX(0)} }
+</style>
+
+<!-- ═══ MODAL HISTORIAL: Pendiente → En proceso ═══ -->
+<div id="modal-h-en-proceso" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(15,36,68,.45);backdrop-filter:blur(4px);align-items:center;justify-content:center">
+  <div style="background:white;border-radius:20px;padding:32px;max-width:440px;width:90%;box-shadow:0 20px 60px rgba(15,36,68,.25)">
+    <div style="text-align:center;margin-bottom:20px">
+      <div style="width:60px;height:60px;border-radius:50%;background:rgba(245,158,11,.12);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-size:1.6rem">⏳</div>
+      <h3 style="font-family:'Sora',sans-serif;font-size:1.05rem;font-weight:800;color:#0f2444;margin:0 0 6px">¿Llegó el acudiente?</h3>
+      <p style="font-size:.83rem;color:#64748b;margin:0" id="modal-h-ep-nombre"></p>
+    </div>
+    <div id="modal-h-ep-sin-c" style="background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.3);border-radius:12px;padding:14px 16px;margin-bottom:18px">
+      <p style="font-size:.8rem;color:#92400e;margin:0;font-weight:600"><i class="bi bi-exclamation-triangle-fill"></i> Falta el consentimiento firmado</p>
+      <p style="font-size:.76rem;color:#b45309;margin:6px 0 10px">Para avanzar el acudiente debe firmar el consentimiento de remisión.</p>
+      <a id="btn-h-ir-consentimiento" href="#" class="btn btn-primary btn-sm" style="width:100%;justify-content:center;text-decoration:none"><i class="bi bi-pen"></i> Ir a firmar consentimiento</a>
+    </div>
+    <div id="modal-h-ep-con-c" style="background:rgba(34,197,94,.07);border:1px solid rgba(34,197,94,.25);border-radius:12px;padding:14px 16px;margin-bottom:18px">
+      <p style="font-size:.8rem;color:#166534;margin:0;font-weight:600"><i class="bi bi-check-circle-fill"></i> Consentimiento ya firmado</p>
+      <p style="font-size:.76rem;color:#15803d;margin:4px 0 0">El acudiente ya firmó. Puedes avanzar al estado <strong>En proceso</strong>.</p>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button onclick="cerrarModalesH()" class="btn btn-outline btn-sm" style="flex:1">Cancelar</button>
+      <form id="form-h-en-proceso" method="post" style="flex:1">
+        {% csrf_token %}
+        <input type="hidden" name="estado" value="en_proceso">
+        <button type="submit" id="btn-h-confirmar-ep" class="btn btn-primary btn-sm" style="width:100%">
+          <i class="bi bi-arrow-right-circle"></i> Confirmar En proceso
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL HISTORIAL: En proceso → Completado ═══ -->
+<div id="modal-h-salida" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(15,36,68,.45);backdrop-filter:blur(4px);align-items:center;justify-content:center">
+  <div style="background:white;border-radius:20px;padding:32px;max-width:440px;width:90%;box-shadow:0 20px 60px rgba(15,36,68,.25)">
+    <div style="text-align:center;margin-bottom:20px">
+      <div style="width:60px;height:60px;border-radius:50%;background:rgba(34,197,94,.1);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-size:1.6rem">🚪</div>
+      <h3 style="font-family:'Sora',sans-serif;font-size:1.05rem;font-weight:800;color:#0f2444;margin:0 0 6px">¿El estudiante salió del colegio?</h3>
+      <p style="font-size:.83rem;color:#64748b;margin:0" id="modal-h-sal-nombre"></p>
+    </div>
+    <div style="background:rgba(14,165,160,.06);border:1px solid rgba(14,165,160,.2);border-radius:12px;padding:14px 16px;margin-bottom:14px">
+      <p style="font-size:.78rem;color:#0e7490;margin:0 0 10px;font-weight:600"><i class="bi bi-clock-fill"></i> Registra la hora de salida real</p>
+      <div style="display:flex;align-items:center;gap:10px">
+        <label style="font-size:.75rem;color:#64748b;font-weight:600;white-space:nowrap">Hora salida:</label>
+        <input type="time" id="input-h-hora-salida" style="flex:1;padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.85rem;color:#0f2444">
+      </div>
+    </div>
+    <div style="background:rgba(239,68,68,.05);border:1px solid rgba(239,68,68,.15);border-radius:12px;padding:12px 16px;margin-bottom:18px">
+      <p style="font-size:.76rem;color:#991b1b;margin:0"><i class="bi bi-info-circle-fill"></i> Esta acción <strong>cierra la remisión</strong>. El estudiante habrá salido oficialmente de las instalaciones.</p>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button onclick="cerrarModalesH()" class="btn btn-outline btn-sm" style="flex:1">Cancelar</button>
+      <form id="form-h-salida" method="post" style="flex:1">
+        {% csrf_token %}
+        <input type="hidden" name="estado" value="resuelto">
+        <input type="hidden" name="hora_salida_real" id="hidden-h-hora-salida">
+        <button type="submit" class="btn btn-sm" style="width:100%;background:linear-gradient(135deg,#22c55e,#16a34a);color:white;border:none;font-weight:700">
+          <i class="bi bi-check-circle-fill"></i> Completar remisión
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+function abrirModalEnProcesoH(pk, nombre, tieneConsentimiento) {
+  const modal = document.getElementById('modal-h-en-proceso');
+  document.getElementById('modal-h-ep-nombre').textContent = 'Remisión de: ' + nombre;
+  document.getElementById('form-h-en-proceso').action = '/remisiones/' + pk + '/estado/';
+  document.getElementById('btn-h-ir-consentimiento').href = '/remisiones/' + pk + '/consentimiento/';
+  const sinC = document.getElementById('modal-h-ep-sin-c');
+  const conC = document.getElementById('modal-h-ep-con-c');
+  const btnC = document.getElementById('btn-h-confirmar-ep');
+  if (tieneConsentimiento) {
+    sinC.style.display = 'none'; conC.style.display = 'block';
+    btnC.disabled = false; btnC.style.opacity = '1';
+  } else {
+    sinC.style.display = 'block'; conC.style.display = 'none';
+    btnC.disabled = true; btnC.style.opacity = '.4';
+  }
+  modal.style.display = 'flex';
+}
+
+function abrirModalSalidaH(pk, nombre) {
+  const modal = document.getElementById('modal-h-salida');
+  document.getElementById('modal-h-sal-nombre').textContent = 'Remisión de: ' + nombre;
+  document.getElementById('form-h-salida').action = '/remisiones/' + pk + '/estado/';
+  const now = new Date();
+  document.getElementById('input-h-hora-salida').value =
+    String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+  modal.style.display = 'flex';
+}
+
+function cerrarModalesH() {
+  document.getElementById('modal-h-en-proceso').style.display = 'none';
+  document.getElementById('modal-h-salida').style.display = 'none';
+}
+
+document.getElementById('form-h-salida').addEventListener('submit', function() {
+  document.getElementById('hidden-h-hora-salida').value =
+    document.getElementById('input-h-hora-salida').value;
+});
+
+['modal-h-en-proceso','modal-h-salida'].forEach(id => {
+  document.getElementById(id).addEventListener('click', function(e) {
+    if (e.target === this) cerrarModalesH();
+  });
+});
+</script>
+
+<!-- ══ PAGINACIÓN CONSULTAS Y REMISIONES ══════════════════════════════════ -->
+<style>
+.cosfa-pag-btn{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-width:32px;height:32px;padding:0 10px;border-radius:8px;border:1.5px solid #e2e8f0;
+  background:#fff;color:#475569;font-size:.8rem;font-weight:600;cursor:pointer;
+  transition:all .18s;font-family:inherit;
+}
+.cosfa-pag-btn:hover{background:#f0fdfa;border-color:#0d9488;color:#0d9488;}
+.cosfa-pag-btn.active{background:linear-gradient(135deg,#0d9488,#0f766e);border-color:#0d9488;color:#fff;box-shadow:0 2px 8px rgba(13,148,136,.25);}
+.cosfa-pag-btn:disabled{opacity:.4;cursor:default;pointer-events:none;}
+#pag-remisiones .cosfa-pag-btn.active{background:linear-gradient(135deg,#7c3aed,#6d28d9);border-color:#7c3aed;box-shadow:0 2px 8px rgba(124,58,237,.25);}
+#pag-remisiones .cosfa-pag-btn:hover{background:#f5f3ff;border-color:#7c3aed;color:#7c3aed;}
+</style>
+<script>
+(function(){
+  function paginar(tbodyId, infoCont, btnsId, porPagina, accentClass){
+    var tbody = document.getElementById(tbodyId);
+    if(!tbody) return;
+    var filas = Array.from(tbody.querySelectorAll('tr'));
+    if(filas.length <= porPagina){ 
+      var cont = document.getElementById(btnsId);
+      if(cont) cont.closest('[id^="pag-"]').style.display='none';
+      return; 
+    }
+    var totalPags = Math.ceil(filas.length / porPagina);
+    var paginaActual = 1;
+
+    function render(){
+      var inicio = (paginaActual - 1) * porPagina;
+      var fin    = inicio + porPagina;
+      filas.forEach(function(tr, i){
+        tr.style.display = (i >= inicio && i < fin) ? '' : 'none';
+      });
+      // Info
+      var infoEl = document.getElementById(infoCont);
+      if(infoEl){
+        var desde = inicio + 1;
+        var hasta = Math.min(fin, filas.length);
+        infoEl.textContent = 'Mostrando '+desde+'–'+hasta+' de '+filas.length;
+      }
+      // Botones
+      var btns = document.getElementById(btnsId);
+      btns.innerHTML = '';
+      // Prev
+      var prev = document.createElement('button');
+      prev.className = 'cosfa-pag-btn';
+      prev.innerHTML = '&#8249;';
+      prev.title = 'Anterior';
+      if(paginaActual === 1) prev.disabled = true;
+      prev.addEventListener('click', function(){ if(paginaActual>1){paginaActual--;render();} });
+      btns.appendChild(prev);
+      // Páginas
+      for(var p=1; p<=totalPags; p++){
+        (function(pg){
+          var btn = document.createElement('button');
+          btn.className = 'cosfa-pag-btn' + (pg===paginaActual?' active':'');
+          btn.textContent = pg;
+          btn.addEventListener('click',function(){ paginaActual=pg; render(); });
+          btns.appendChild(btn);
+        })(p);
+      }
+      // Next
+      var next = document.createElement('button');
+      next.className = 'cosfa-pag-btn';
+      next.innerHTML = '&#8250;';
+      next.title = 'Siguiente';
+      if(paginaActual === totalPags) next.disabled = true;
+      next.addEventListener('click', function(){ if(paginaActual<totalPags){paginaActual++;render();} });
+      btns.appendChild(next);
+    }
+    render();
+  }
+
+  document.addEventListener('DOMContentLoaded', function(){
+    paginar('tbody-consultas',  'pag-consultas-info',  'pag-consultas-btns',  10);
+    paginar('tbody-remisiones', 'pag-remisiones-info', 'pag-remisiones-btns',  5);
+  });
+})();
+</script>
+
+{% endblock %}

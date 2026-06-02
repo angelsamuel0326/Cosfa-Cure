@@ -1,0 +1,674 @@
+{% extends 'enfermeria/base.html' %}
+{% block title %}{% if editar %}Editar{% else %}Nueva{% endif %} Consulta — COSFA CURE{% endblock %}
+{% block page_title %}{% if editar %}Editar Consulta{% else %}Nueva Consulta{% endif %}{% endblock %}
+{% block content %}
+
+<style>
+/* ── Estado cards ── */
+.estado-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 10px; margin-bottom: 4px; }
+.estado-card {
+  border: 2px solid var(--border); border-radius: 12px; padding: 12px 14px;
+  cursor: pointer; transition: all .18s; display: flex; align-items: flex-start; gap: 10px;
+  background: white; position: relative;
+}
+.estado-card:hover { border-color: var(--teal); box-shadow: var(--shadow-md); transform: translateY(-1px); }
+.estado-card.selected { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+.estado-card.selected.verde  { border-color: #10b981; background: #f0fdf4; }
+.estado-card.selected.azul   { border-color: #3b82f6; background: #eff6ff; }
+.estado-card.selected.naranja{ border-color: #f59e0b; background: #fffbeb; }
+.estado-card.selected.rojo   { border-color: #ef4444; background: #fef2f2; }
+.estado-card input[type=radio] { display:none; }
+.estado-icon { font-size: 1.5rem; flex-shrink: 0; margin-top: 1px; }
+.estado-label { font-size: .82rem; font-weight: 700; color: var(--text); }
+.estado-desc  { font-size: .72rem; color: var(--text-muted); margin-top: 2px; line-height: 1.4; }
+.estado-check { position: absolute; top: 8px; right: 10px; width: 18px; height: 18px; border-radius: 50%; border: 2px solid #cbd5e1; display: flex; align-items: center; justify-content: center; font-size: .65rem; }
+.estado-card.selected .estado-check { background: currentColor; border-color: transparent; }
+.estado-card.selected.verde  .estado-check { color: #10b981; }
+.estado-card.selected.azul   .estado-check { color: #3b82f6; }
+.estado-card.selected.naranja .estado-check { color: #f59e0b; }
+.estado-card.selected.rojo   .estado-check { color: #ef4444; }
+
+/* ── Modal PDF ── */
+#pdf-modal-overlay {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,.55);
+  z-index: 9999; align-items: center; justify-content: center; backdrop-filter: blur(4px);
+}
+#pdf-modal {
+  background: white; border-radius: 20px; padding: 32px 28px; max-width: 420px; width: 90%;
+  box-shadow: 0 32px 80px rgba(0,0,0,.25); text-align: center; animation: popIn .25s ease;
+}
+@keyframes popIn { from{opacity:0;transform:scale(.88)} to{opacity:1;transform:scale(1)} }
+#pdf-modal .modal-icon { font-size: 3rem; margin-bottom: 12px; }
+#pdf-modal h3 { font-size: 1.1rem; font-weight: 800; color: var(--navy); margin-bottom: 6px; }
+#pdf-modal p  { font-size: .86rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 22px; }
+#pdf-modal .modal-btns { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+</style>
+
+<!-- Modal PDF -->
+<div id="pdf-modal-overlay">
+  <div id="pdf-modal">
+    <div class="modal-icon">📄</div>
+    <h3>¡Consulta guardada!</h3>
+    <p>La consulta fue registrada correctamente.<br>¿Deseas ver e imprimir el documento oficial?</p>
+    <div class="modal-btns">
+      <a id="pdf-modal-link" href="#" target="_blank" class="btn btn-primary">
+        <i class="bi bi-file-earmark-pdf-fill"></i> Ver PDF
+      </a>
+      <a id="pdf-modal-skip" href="#" class="btn btn-outline">
+        No, ir al historial
+      </a>
+    </div>
+  </div>
+</div>
+
+<div class="page-title">{% if editar %}Editar{% else %}Registrar{% endif %} <span>Consulta Médica</span></div>
+<div class="card" style="max-width:720px;margin:0 auto">
+  <div class="card-head"><div class="card-head-title"><i class="bi bi-clipboard2-plus-fill"></i> Datos de la Consulta</div></div>
+  <div style="padding:20px">
+    <form method="post" id="consultaForm">{% csrf_token %}
+    <script>
+    // Auto-rellenar hora de atención con la hora actual si el campo está vacío
+    document.addEventListener('DOMContentLoaded', function() {
+      var horaInput = document.querySelector('[name="hora_atencion"]');
+      if (horaInput && !horaInput.value) {
+        var now = new Date();
+        horaInput.value = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+      }
+    });
+    </script>
+
+      <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--blue-dark);margin-bottom:10px;padding-bottom:5px;border-bottom:1.5px solid var(--blue-pale)">📋 Información básica</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+        <div style="grid-column:1/-1">
+          <label class="form-label">Estudiante *</label>
+          {{ form.estudiante }}
+          <div style="font-size:.72rem;color:var(--text-muted);margin-top:3px"><i class="bi bi-search"></i> Escribe el nombre o grado para filtrar rápidamente.</div>
+        </div>
+        <div style="grid-column:1/-1">
+          <label class="form-label"><i class="bi bi-clock-fill" style="color:var(--teal)"></i> Hora de atención *</label>
+          {{ form.hora_atencion }}
+          <div style="font-size:.7rem;color:var(--text-muted);margin-top:4px"><i class="bi bi-info-circle"></i> Registra la hora exacta en que se atendió al estudiante.</div>
+        </div>
+        <div style="grid-column:1/-1"><label class="form-label">Motivo *</label>{{ form.motivo }}</div>
+        <div style="grid-column:1/-1"><label class="form-label">Descripción de síntomas *</label>{{ form.descripcion_sintomas }}</div>
+        <div style="grid-column:1/-1"><label class="form-label">Tratamiento aplicado *</label>{{ form.tratamiento }}</div>
+        <div style="grid-column:1/-1"><label class="form-label">Observaciones</label>{{ form.observaciones }}</div>
+      </div>
+
+      <!-- Estado / Resultado como cards visuales -->
+      <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--blue-dark);margin-bottom:10px;padding-bottom:5px;border-bottom:1.5px solid var(--blue-pale)">
+        📌 Estado / Resultado *
+      </div>
+      <!-- Input oculto real del form -->
+      <div style="display:none">{{ form.estado }}</div>
+
+      <div class="estado-grid" style="margin-bottom:14px">
+        <label class="estado-card verde {% if form.estado.value == 'atendido' or not form.estado.value %}selected{% endif %}" data-val="atendido">
+          <div class="estado-icon">🏥</div>
+          <div>
+            <div class="estado-label">Atendido en enfermería</div>
+            <div class="estado-desc">El estudiante fue atendido y permanece en el colegio.</div>
+          </div>
+          <div class="estado-check">✓</div>
+        </label>
+
+        <label class="estado-card azul {% if form.estado.value == 'regreso_clase' %}selected{% endif %}" data-val="regreso_clase">
+          <div class="estado-icon">🏫</div>
+          <div>
+            <div class="estado-label">Regreso a clases</div>
+            <div class="estado-desc">Fue atendido y regresa a clase. Se notifica al docente.</div>
+          </div>
+          <div class="estado-check">✓</div>
+        </label>
+
+        <label class="estado-card naranja {% if form.estado.value == 'remitido_casa' %}selected{% endif %}" data-val="remitido_casa">
+          <div class="estado-icon">🏠</div>
+          <div>
+            <div class="estado-label">Remitido a casa</div>
+            <div class="estado-desc">El acudiente fue llamado y el estudiante va a casa.</div>
+          </div>
+          <div class="estado-check">✓</div>
+        </label>
+
+        <label class="estado-card rojo {% if form.estado.value == 'remitido_hospital' %}selected{% endif %}" data-val="remitido_hospital">
+          <div class="estado-icon">🚑</div>
+          <div>
+            <div class="estado-label">Remitido al hospital</div>
+            <div class="estado-desc">Requiere atención médica externa urgente.</div>
+          </div>
+          <div class="estado-check">✓</div>
+        </label>
+      </div>
+
+      <!-- Sección dinámica: correos (visible para TODOS los estados) -->
+      <div id="seccion-correos" style="margin-bottom:14px">
+        <hr class="section-divider">
+        <div id="correos-header-clase" style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#4caf82;margin-bottom:10px;padding-bottom:5px;border-bottom:1.5px solid #d1fae5;display:none">
+          <i class="bi bi-mortarboard-fill"></i> Notificación de regreso a clase
+          <span style="font-weight:400;color:var(--muted);text-transform:none;font-size:.75rem;margin-left:6px">Se enviará un correo automáticamente al guardar</span>
+        </div>
+        <div id="correos-header-general" style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--blue-dark);margin-bottom:10px;padding-bottom:5px;border-bottom:1.5px solid var(--blue-pale)">
+          <i class="bi bi-envelope-fill"></i> Correos de notificación
+          <span style="font-weight:400;color:var(--muted);text-transform:none;font-size:.75rem;margin-left:6px">(opcional — se enviarán al guardar)</span>
+        </div>
+
+        <!-- Aviso especial para regreso a clase -->
+        <div id="aviso-clase" style="display:none;background:linear-gradient(135deg,#f0fdf4,#d1fae5);border:1px solid #a7f3d0;border-radius:10px;padding:12px;margin-bottom:10px;font-size:.78rem;color:#065f46">
+          <i class="bi bi-envelope-check-fill"></i> Al registrar con estado <strong>"Regreso a clases"</strong>, se enviará una notificación al docente y/o acudiente confirmando que el estudiante retorna a clase.
+        </div>
+        <!-- Aviso para remitido a casa -->
+        <div id="aviso-casa" style="display:none;background:linear-gradient(135deg,#fffbeb,#fef3c7);border:1px solid #fcd34d;border-radius:10px;padding:12px;margin-bottom:10px;font-size:.78rem;color:#92400e">
+          <i class="bi bi-house-door-fill"></i> Al registrar con estado <strong>"Remitido a casa"</strong>, se enviará una alerta al acudiente informando que debe recoger al estudiante.
+        </div>
+        <!-- Aviso para remitido al hospital -->
+        <div id="aviso-hospital" style="display:none;background:linear-gradient(135deg,#fef2f2,#fee2e2);border:1px solid #fca5a5;border-radius:10px;padding:12px;margin-bottom:10px;font-size:.78rem;color:#991b1b">
+          <i class="bi bi-hospital-fill"></i> Al registrar con estado <strong>"Remitido al hospital"</strong>, se enviará una alerta urgente al acudiente.
+        </div>
+        <!-- Aviso neutral para atendido -->
+        <div id="aviso-atendido" style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px;font-size:.78rem;color:var(--text-muted)">
+          <i class="bi bi-info-circle-fill"></i> Si deseas notificar al acudiente o docente sobre esta atención, puedes agregar sus correos aquí.
+        </div>
+
+        <!-- Sugerencia correo acudiente guardado -->
+        {% if form.initial.correo_padre_madre %}
+        <div id="sugerencia-correo" style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:10px 13px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+          <div style="font-size:.79rem;color:#1e40af"><i class="bi bi-person-check-fill"></i> <strong>Correo del acudiente guardado:</strong> {{ form.initial.correo_padre_madre }}</div>
+          <div style="display:flex;gap:6px">
+            <button type="button" onclick="usarCorreoGuardado()" style="background:#1d4ed8;color:white;border:none;border-radius:7px;padding:5px 12px;font-size:.76rem;font-weight:700;cursor:pointer"><i class="bi bi-check-lg"></i> Usar este correo</button>
+            <button type="button" onclick="document.getElementById('sugerencia-correo').style.display='none'" style="background:#e2e8f0;color:#374151;border:none;border-radius:7px;padding:5px 10px;font-size:.76rem;cursor:pointer"><i class="bi bi-pencil"></i> Escribir otro</button>
+          </div>
+        </div>
+        <script>
+        function usarCorreoGuardado() {
+          var correo = "{{ form.initial.correo_padre_madre }}";
+          var input = document.querySelector('[name="correo_padre_madre"]');
+          if (input) { input.value = correo; }
+          document.getElementById('sugerencia-correo').style.display = 'none';
+        }
+        </script>
+        {% endif %}
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div>
+            <label class="form-label"><i class="bi bi-person-heart"></i> Correo padre / madre / acudiente</label>
+            {{ form.correo_padre_madre }}
+          </div>
+          <div>
+            <label class="form-label"><i class="bi bi-person-workspace"></i> Correo del docente</label>
+            {{ form.correo_docente }}
+          </div>
+        </div>
+        <div style="font-size:.7rem;color:var(--text-muted);margin-top:6px;padding:6px 8px;background:var(--bg2);border-radius:7px">
+          <i class="bi bi-lightbulb-fill" style="color:var(--accent)"></i> <strong>Tip:</strong> Puedes llenar uno, ambos o ninguno. Solo se enviará correo a los que tengan dirección válida.
+        </div>
+      </div>
+
+      <!-- Sección: datos del hospital (para remitido_hospital) -->
+      <div id="seccion-hospital" style="display:none;margin-bottom:14px">
+        <hr class="section-divider">
+        <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#dc2626;margin-bottom:10px;padding-bottom:5px;border-bottom:1.5px solid #fee2e2">
+          🚑 Datos de remisión al hospital
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div><label class="form-label">Hospital / Centro de salud destino</label><input type="text" name="hospital_destino_consulta" class="form-control" placeholder="Ej: Hospital Departamental"></div>
+          <div><label class="form-label">Acompañante</label><input type="text" name="acompanante_consulta" class="form-control" placeholder="Ej: Coordinador Carlos Pérez"></div>
+        </div>
+      </div>
+
+      <hr class="section-divider">
+      <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--blue-dark);margin-bottom:6px">🩹 Insumos y recursos aplicados <span style="font-weight:400;color:var(--muted)">(puede agregar varios)</span></div>
+      <div style="background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.2);color:#b91c1c;border-radius:9px;padding:9px 13px;font-size:.77rem;margin-bottom:10px">
+        <i class="bi bi-shield-exclamation"></i> <strong>Recuerda:</strong> Solo puedes aplicar <strong>insumos de primeros auxilios</strong> (gasas, alcohol, etc.) de manera autónoma. Los ítems marcados como <strong>Medicamento</strong> requieren prescripción médica y autorización del acudiente.
+      </div>
+      <div id="meds-container" style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px"></div>
+      <button type="button" id="btn-add-med" class="btn btn-outline btn-sm" style="margin-bottom:14px">
+        <i class="bi bi-plus-circle"></i> Agregar insumo / recurso
+      </button>
+
+      <hr class="section-divider">
+      <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--blue-dark);margin-bottom:10px">💓 Signos vitales <span style="font-weight:400;color:var(--muted)">(opcional)</span></div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">
+        <div><label class="form-label">Temperatura °C</label>{{ form.temperatura }}</div>
+        <div><label class="form-label">Presión arterial</label>{{ form.presion_arterial }}</div>
+        <div><label class="form-label">Frec. cardíaca (lpm)</label>{{ form.frecuencia_cardiaca }}</div>
+        <div><label class="form-label">Frec. resp. (rpm)</label>{{ form.frecuencia_respiratoria }}</div>
+        <div><label class="form-label">Peso (kg)</label>{{ form.peso }}</div>
+        <div><label class="form-label">Talla (cm)</label>{{ form.talla }}</div>
+      </div>
+
+      <hr class="section-divider">
+      <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--blue-dark);margin-bottom:10px">📞 Notificación al acudiente <span style="font-weight:400;color:var(--muted)">(si aplica)</span></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div style="grid-column:1/-1;display:flex;align-items:center;gap:8px;padding:10px;background:var(--blue-pale);border-radius:9px">
+          {{ form.acudiente_notificado }} <label style="font-size:.84rem;font-weight:600;cursor:pointer">¿Se notificó al acudiente?</label>
+        </div>
+        <div><label class="form-label">Hora de notificación</label>{{ form.hora_notificacion }}</div>
+        <div><label class="form-label">¿Quién atendió la llamada?</label>{{ form.quien_atendio_llamada }}</div>
+        <div style="grid-column:1/-1"><label class="form-label">Detalle de lo informado</label>{{ form.detalle_notificacion }}</div>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:18px">
+        <button type="submit" id="btn-submit-consulta" class="btn btn-primary"
+          onclick="this.disabled=true;this.innerHTML='<i class=\'bi bi-hourglass-split\'></i> Guardando…';this.form.submit();">
+          <i class="bi bi-check-circle"></i> {% if editar %}Actualizar{% else %}Registrar{% endif %} consulta
+        </button>
+        <a href="{% url 'lista_consultas' %}" class="btn btn-outline">Cancelar</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+const meds = {{ medicamentos_json|safe }};
+const medsPrevios = [{% if editar %}{% for mc in consulta.medicamentos_usados.all %}{ id:"{{ mc.medicamento.pk }}", cant:{{ mc.cantidad }}, dosis:"{{ mc.dosis|escapejs }}" },{% endfor %}{% endif %}];
+
+// ── Estado cards ──────────────────────────────────────────
+const estadoInput = document.querySelector('[name="estado"]');
+const cards = document.querySelectorAll('.estado-card');
+
+function selectEstado(val) {
+  estadoInput.value = val;
+  cards.forEach(c => {
+    c.classList.toggle('selected', c.dataset.val === val);
+  });
+  // Mostrar/ocultar avisos según estado
+  document.getElementById('aviso-atendido').style.display  = val === 'atendido'          ? 'block' : 'none';
+  document.getElementById('aviso-clase').style.display     = val === 'regreso_clase'      ? 'block' : 'none';
+  document.getElementById('aviso-casa').style.display      = val === 'remitido_casa'      ? 'block' : 'none';
+  document.getElementById('aviso-hospital').style.display  = val === 'remitido_hospital'  ? 'block' : 'none';
+  // Header correos: cambiar entre clase y general
+  document.getElementById('correos-header-clase').style.display   = val === 'regreso_clase' ? 'block' : 'none';
+  document.getElementById('correos-header-general').style.display = val !== 'regreso_clase' ? 'block' : 'none';
+  // Sección hospital
+  document.getElementById('seccion-hospital').style.display = val === 'remitido_hospital'  ? 'block' : 'none';
+}
+
+cards.forEach(card => {
+  card.addEventListener('click', () => selectEstado(card.dataset.val));
+});
+
+// init
+const initVal = estadoInput.value || 'atendido';
+selectEstado(initVal);
+
+// ── Medicamentos ──────────────────────────────────────────
+function buildOptions(selectedId){
+  let html = '<option value="">— Sin insumo / recurso —</option>';
+  for(const [id, m] of Object.entries(meds)){
+    const cat = m.categoria === 'medicamento' ? ' ⚠️ [Medicamento]' : '';
+    html += `<option value="${id}" ${id==selectedId?'selected':''}>${m.nombre}${cat} (${m.stock} ${m.unidad})</option>`;
+  }
+  return html;
+}
+function addRow(selectedId='', cant=1, dosis=''){
+  const row = document.createElement('div');
+  row.style.cssText = 'display:grid;grid-template-columns:2fr 80px 1fr auto;gap:8px;align-items:end;background:var(--blue-pale);padding:10px;border-radius:8px';
+  row.innerHTML = `<div><label class="form-label" style="font-size:.75rem">Insumo / Recurso</label><select name="med_ids[]" class="form-select med-sel" style="font-size:.82rem">${buildOptions(selectedId)}</select><div class="stock-info" style="font-size:.68rem;color:var(--muted);margin-top:2px;display:flex;align-items:center;gap:6px"><img class="med-img" src="" style="display:none;width:28px;height:28px;border-radius:5px;object-fit:contain;background:#f8fafc;border:1px solid #e2e8f0"><span class="stock-txt"></span><span class="med-warn" style="display:none;color:#dc2626;font-weight:700;font-size:.68rem"><i class="bi bi-exclamation-triangle-fill"></i> Requiere prescripción y autorización del acudiente</span></div></div><div><label class="form-label" style="font-size:.75rem">Cantidad</label><input type="number" name="med_cants[]" class="form-control" min="1" value="${cant}" style="font-size:.82rem"></div><div><label class="form-label" style="font-size:.75rem">Dosis / indicación</label><input type="text" name="med_dosis[]" class="form-control" placeholder="Ej: Limpiar herida con gasa" value="${dosis}" style="font-size:.82rem"></div><div style="padding-bottom:2px"><button type="button" class="btn btn-outline btn-xs remove-btn" title="Quitar"><i class="bi bi-trash"></i></button></div>`;
+  const sel = row.querySelector('.med-sel');
+  const medImg = row.querySelector('.med-img');
+  const stockTxt = row.querySelector('.stock-txt');
+  const medWarn = row.querySelector('.med-warn');
+  function updateStock(){
+    const v = sel.value;
+    if(v && meds[v]){
+      stockTxt.textContent = `Stock: ${meds[v].stock} ${meds[v].unidad}`;
+      if(meds[v].imagen){ medImg.src = meds[v].imagen; medImg.style.display='inline-block'; }
+      else { medImg.style.display='none'; }
+      medWarn.style.display = meds[v].categoria === 'medicamento' ? 'inline-flex' : 'none';
+      row.style.background = meds[v].categoria === 'medicamento' ? 'rgba(239,68,68,.07)' : 'var(--blue-pale)';
+    } else { stockTxt.textContent = ''; medImg.style.display='none'; medWarn.style.display='none'; row.style.background='var(--blue-pale)'; }
+  }
+  sel.addEventListener('change', updateStock); updateStock();
+  row.querySelector('.remove-btn').addEventListener('click', () => row.remove());
+  document.getElementById('meds-container').appendChild(row);
+}
+document.getElementById('btn-add-med').addEventListener('click', () => addRow());
+if(medsPrevios.length){ medsPrevios.forEach(m => addRow(m.id, m.cant, m.dosis)); } else { addRow(); }
+
+// ── Modal PDF (se activa si ?pdf_consulta_pk=X en la URL) ──
+const urlParams = new URLSearchParams(window.location.search);
+const pdfPk = urlParams.get('pdf_consulta_pk');
+const historialUrl = urlParams.get('historial_url');
+if(pdfPk){
+  const overlay = document.getElementById('pdf-modal-overlay');
+  document.getElementById('pdf-modal-link').href = `/consultas/${pdfPk}/pdf/`;
+  document.getElementById('pdf-modal-skip').href = historialUrl || '/estudiantes/';
+  overlay.style.display = 'flex';
+  overlay.addEventListener('click', e => { if(e.target === overlay) overlay.style.display='none'; });
+}
+</script>
+
+<!-- ═══════════════════════════════════════════════════════
+     CURE-BOT CONTEXTUAL (v19) — Modo Consulta Activa
+     • Botón "Consulta Activa" abre el panel ya expandido con contexto
+     • Copiar respuesta con un clic
+     • Contador de mensajes en tiempo real
+     ═══════════════════════════════════════════════════════ -->
+<!-- Ocultar el FAB global en esta página ya que el panel lo reemplaza -->
+<style>
+  .fab-bot { display: none !important; }
+
+  /* ── Botón Consulta Activa ── */
+  #btn-consulta-activa {
+    display: inline-flex; align-items: center; gap: 7px;
+    background: linear-gradient(135deg, #1d4ed8, #0ea5e9);
+    color: #fff; border: none; border-radius: 10px;
+    padding: 9px 16px; font-size: .83rem; font-weight: 700;
+    cursor: pointer; transition: all .18s;
+    box-shadow: 0 3px 12px rgba(29,78,216,.35);
+  }
+  #btn-consulta-activa:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(29,78,216,.45);
+  }
+  #btn-consulta-activa .pulse-dot {
+    width: 8px; height: 8px; background: #4ade80;
+    border-radius: 50%; flex-shrink: 0;
+    animation: cbPulse 1.8s infinite;
+  }
+  @keyframes cbPulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(.75)} }
+
+  /* ── Copy button on bot messages ── */
+  .curebot-copy-btn {
+    background: none; border: 1px solid #cbd5e1; border-radius: 6px;
+    padding: 2px 7px; font-size: .68rem; color: #64748b; cursor: pointer;
+    margin-top: 4px; display: inline-flex; align-items: center; gap: 3px;
+    transition: all .15s; float: right; clear: both;
+  }
+  .curebot-copy-btn:hover { background: #f0f9ff; border-color: #1d4ed8; color: #1d4ed8; }
+  .curebot-copy-btn.copied { background: #f0fdf4; border-color: #16a34a; color: #16a34a; }
+</style>
+
+<!-- Botón Consulta Activa — se inserta en el área de botones del form -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Insertar botón "Consulta Activa" junto al botón de guardar
+  var submitArea = document.querySelector('#btn-submit-consulta')?.parentElement;
+  if (submitArea) {
+    var btnCA = document.createElement('button');
+    btnCA.type = 'button';
+    btnCA.id = 'btn-consulta-activa';
+    btnCA.innerHTML = '<span class="pulse-dot"></span>🤖 Consulta Activa';
+    btnCA.title = 'Abrir CURE-BOT con el contexto del estudiante ya cargado';
+    btnCA.onclick = function() {
+      // Expandir el panel y hacer foco en el input
+      var body = document.getElementById('curebot-body');
+      var icon = document.getElementById('curebot-toggle-icon');
+      if (body.style.display === 'none' || !body.style.display) {
+        body.style.display = 'flex';
+        body.style.flexDirection = 'column';
+        icon.textContent = '▲';
+      }
+      // Scroll al panel
+      document.getElementById('curebot-panel').scrollIntoView({behavior:'smooth', block:'end'});
+      setTimeout(() => document.getElementById('curebot-input').focus(), 350);
+      // Actualizar badge con nombre del estudiante si está seleccionado
+      var sel = document.querySelector('select[name="estudiante"]');
+      if (sel && sel.value) {
+        var selText = sel.options[sel.selectedIndex]?.text || '';
+        var namePart = selText.split('—')[0]?.trim() || selText;
+        document.getElementById('curebot-ctx-badge').textContent = '📋 ' + namePart;
+      }
+    };
+    submitArea.insertBefore(btnCA, submitArea.children[1] || null);
+  }
+});
+</script>
+
+<!-- Panel CURE-BOT mejorado (v19) -->
+<div id="curebot-panel" style="
+  position:fixed; bottom:24px; right:24px; z-index:1050;
+  width:390px; max-width:95vw;
+  background:#fff; border-radius:16px;
+  box-shadow:0 8px 32px rgba(0,0,0,.18);
+  border:1.5px solid #bfdbfe;
+  display:flex; flex-direction:column;
+  overflow:hidden;
+  font-family:inherit;
+">
+  <!-- Header -->
+  <div style="background:linear-gradient(135deg,#1d4ed8,#0ea5e9);padding:10px 14px;display:flex;align-items:center;justify-content:space-between;cursor:pointer" onclick="toggleCureBot()">
+    <div style="display:flex;align-items:center;gap:8px;color:#fff;font-weight:700;font-size:.9rem">
+      <span style="font-size:1.2rem">🤖</span> CURE-BOT
+      <span id="curebot-ctx-badge" style="font-size:.65rem;background:rgba(255,255,255,.25);border-radius:20px;padding:2px 7px;font-weight:500"></span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <!-- Contador de mensajes -->
+      <span id="curebot-counter" style="font-size:.65rem;color:rgba(255,255,255,.75);background:rgba(0,0,0,.2);border-radius:20px;padding:2px 8px;display:none">0 mensajes</span>
+      <span id="curebot-toggle-icon" style="color:#fff;font-size:1rem">▼</span>
+    </div>
+  </div>
+  <!-- Body (colapsable) — inicia colapsado -->
+  <div id="curebot-body" style="display:none;flex-direction:column;max-height:430px">
+    <!-- Mensajes -->
+    <div id="curebot-msgs" style="flex:1;overflow-y:auto;padding:10px 12px;min-height:120px;max-height:270px;font-size:.82rem;background:#f8fafc">
+      <div style="color:#64748b;font-style:italic;text-align:center;padding:12px 0">
+        Hola 👋 Selecciona el estudiante y pregúntame sobre síntomas,<br>
+        tratamientos o medicamentos disponibles.
+      </div>
+    </div>
+    <!-- Input -->
+    <div style="padding:8px 10px;border-top:1px solid #e2e8f0;display:flex;gap:6px">
+      <input id="curebot-input" type="text" placeholder="Escribe tu pregunta…"
+             style="flex:1;border:1px solid #cbd5e1;border-radius:8px;padding:6px 10px;font-size:.82rem;outline:none"
+             onkeydown="if(event.key==='Enter')enviarCureBot()">
+      <button onclick="enviarCureBot()" id="curebot-btn"
+              style="background:#1d4ed8;color:#fff;border:none;border-radius:8px;padding:6px 12px;cursor:pointer;font-size:.82rem">
+        <i class="bi bi-send-fill"></i>
+      </button>
+    </div>
+    <div style="font-size:.62rem;color:#94a3b8;text-align:center;padding:3px 0 5px">
+      Solo sugiere medicamentos del inventario real · No reemplaza criterio clínico
+    </div>
+  </div>
+</div>
+
+<script>
+// ── CURE-BOT CONTEXTUAL v19 ────────────────────────────────────────────────────
+(function(){
+  const msgs     = document.getElementById('curebot-msgs');
+  const input    = document.getElementById('curebot-input');
+  const btn      = document.getElementById('curebot-btn');
+  const badge    = document.getElementById('curebot-ctx-badge');
+  const counter  = document.getElementById('curebot-counter');
+  let historial  = [];
+  let estudianteId = null;
+  let msgCount   = 0;
+
+  function actualizarContador() {
+    counter.textContent = msgCount + (msgCount === 1 ? ' mensaje' : ' mensajes');
+    counter.style.display = msgCount > 0 ? 'inline-block' : 'none';
+  }
+
+  // Detectar cambio de estudiante en el selector principal del form
+  function watchEstudiante() {
+    const sel = document.querySelector('select[name="estudiante"]');
+    if (!sel) return;
+    sel.addEventListener('change', () => {
+      estudianteId = sel.value || null;
+      if (estudianteId) {
+        var selText = sel.options[sel.selectedIndex]?.text || '';
+        var namePart = selText.split('—')[0]?.trim() || selText;
+        badge.textContent = '📋 ' + namePart;
+      } else {
+        badge.textContent = '';
+      }
+    });
+    // Init si ya hay un estudiante preseleccionado (edición / desde historial)
+    estudianteId = sel.value || null;
+    if (estudianteId) {
+      var selText = sel.options[sel.selectedIndex]?.text || '';
+      var namePart = selText.split('—')[0]?.trim() || selText;
+      badge.textContent = '📋 ' + namePart;
+    }
+  }
+  watchEstudiante();
+
+  window.toggleCureBot = function() {
+    const body = document.getElementById('curebot-body');
+    const icon = document.getElementById('curebot-toggle-icon');
+    const visible = body.style.display !== 'none';
+    body.style.display = visible ? 'none' : 'flex';
+    body.style.flexDirection = 'column';
+    icon.textContent = visible ? '▼' : '▲';
+  };
+
+  function copiarTexto(texto, boton) {
+    navigator.clipboard.writeText(texto).then(() => {
+      boton.innerHTML = '<i class="bi bi-check-lg"></i> Copiado';
+      boton.classList.add('copied');
+      setTimeout(() => {
+        boton.innerHTML = '<i class="bi bi-clipboard"></i> Copiar';
+        boton.classList.remove('copied');
+      }, 2000);
+    }).catch(() => {
+      // Fallback para navegadores sin clipboard API
+      var ta = document.createElement('textarea');
+      ta.value = texto;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      boton.innerHTML = '<i class="bi bi-check-lg"></i> Copiado';
+      boton.classList.add('copied');
+      setTimeout(() => {
+        boton.innerHTML = '<i class="bi bi-clipboard"></i> Copiar';
+        boton.classList.remove('copied');
+      }, 2000);
+    });
+  }
+
+  function addMsg(role, text) {
+    msgCount++;
+    actualizarContador();
+    const wrapper = document.createElement('div');
+    wrapper.style.cssText = 'margin-bottom:10px';
+
+    const div = document.createElement('div');
+    div.style.cssText = `
+      padding:7px 10px;
+      border-radius:10px;
+      font-size:.81rem;
+      line-height:1.45;
+      max-width:94%;
+      white-space:pre-wrap;
+      ${role === 'user'
+        ? 'background:#dbeafe;color:#1e3a5f;margin-left:auto;border-bottom-right-radius:3px'
+        : 'background:#fff;border:1px solid #e2e8f0;color:#1e293b;border-bottom-left-radius:3px'}
+    `;
+    div.textContent = text;
+    wrapper.appendChild(div);
+
+    // Botón copiar solo para respuestas del bot
+    if (role === 'assistant') {
+      const copyBtn = document.createElement('button');
+      copyBtn.className = 'curebot-copy-btn';
+      copyBtn.innerHTML = '<i class="bi bi-clipboard"></i> Copiar';
+      copyBtn.onclick = function() { copiarTexto(text, copyBtn); };
+      wrapper.appendChild(copyBtn);
+    }
+
+    msgs.appendChild(wrapper);
+    msgs.scrollTop = msgs.scrollHeight;
+  }
+
+  window.enviarCureBot = async function() {
+    const pregunta = input.value.trim();
+    if (!pregunta) return;
+    input.value = '';
+    btn.disabled = true;
+    addMsg('user', pregunta);
+    historial.push({role:'user', content:pregunta});
+
+    const thinking = document.createElement('div');
+    thinking.id = 'curebot-thinking';
+    thinking.style.cssText = 'color:#64748b;font-size:.78rem;font-style:italic;margin-bottom:6px;padding:4px 10px';
+    thinking.textContent = '💭 CURE-BOT está pensando…';
+    msgs.appendChild(thinking);
+    msgs.scrollTop = msgs.scrollHeight;
+
+    try {
+      const resp = await fetch('{% url "chatbot_api_consulta" %}', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({
+          pregunta,
+          historial: historial.slice(-10),
+          estudiante_id: estudianteId ? parseInt(estudianteId) : null,
+        })
+      });
+      const data = await resp.json();
+      const el = document.getElementById('curebot-thinking');
+      if (el) el.remove();
+
+      if (data.respuesta) {
+        addMsg('assistant', data.respuesta);
+        historial.push({role:'assistant', content:data.respuesta});
+        if (data.con_inventario) {
+          var baseBadge = estudianteId
+            ? (badge.textContent.replace(' + 💊 Inventario','') || '📋 Con historial')
+            : '';
+          badge.textContent = baseBadge ? baseBadge + ' + 💊 Inventario' : '💊 Con inventario';
+        }
+      } else {
+        addMsg('assistant', '⚠️ ' + (data.error || 'Error desconocido'));
+      }
+    } catch(e) {
+      const el = document.getElementById('curebot-thinking');
+      if (el) el.remove();
+      addMsg('assistant', '⚠️ Error de conexión con CURE-BOT.');
+    }
+    btn.disabled = false;
+    input.focus();
+  };
+})();
+</script>
+
+<!-- ══ Tom Select: búsqueda rápida de estudiante ══ -->
+<link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+<style>
+.ts-wrapper.single .ts-control{
+  border:1.5px solid var(--border,#e2e8f0) !important;border-radius:10px !important;
+  padding:9px 14px !important;font-size:.85rem !important;font-family:inherit !important;
+  background:#fff !important;box-shadow:none !important;min-height:42px !important;
+}
+.ts-wrapper.single.focus .ts-control,.ts-wrapper.single:focus-within .ts-control{
+  border-color:#0d9488 !important;box-shadow:0 0 0 3px rgba(13,148,136,.13) !important;
+}
+.ts-dropdown{border-radius:12px !important;border:1.5px solid #e2e8f0 !important;
+  box-shadow:0 8px 30px rgba(0,0,0,.13) !important;font-family:inherit !important;overflow:hidden;margin-top:4px !important;}
+.ts-dropdown .option{padding:9px 14px !important;font-size:.84rem !important;border-bottom:1px solid rgba(0,0,0,.04);cursor:pointer;}
+.ts-dropdown .option:hover,.ts-dropdown .option.active{background:#f0fdfa !important;color:#1e3a5f !important;}
+.ts-dropdown .cosfa-grado{
+  display:inline-block;background:#dbeafe;color:#1d4ed8;border-radius:5px;
+  padding:1px 7px;font-size:.71rem;font-weight:700;margin-left:7px;vertical-align:middle;
+}
+.ts-dropdown-content{max-height:260px !important;}
+</style>
+<script>
+(function(){
+  var sel = document.getElementById('id_estudiante');
+  if(!sel || sel.dataset.tsLoaded) return;
+  sel.dataset.tsLoaded = '1';
+  new TomSelect(sel, {
+    placeholder: '🔍 Escribe nombre o grado para filtrar…',
+    maxOptions: 300,
+    render: {
+      option: function(data, escape){
+        var text = data.text || '';
+        var m = text.match(/^(.+?)\s*[-–]\s*(.+)$/);
+        var nombre = escape(m ? m[1].trim() : text);
+        var grado  = m ? '<span class="cosfa-grado">'+escape(m[2].trim())+'</span>' : '';
+        return '<div style="display:flex;align-items:center">'+nombre+grado+'</div>';
+      },
+      item: function(data, escape){ return '<div>'+escape(data.text)+'</div>'; }
+    }
+  });
+})();
+</script>
+
+{% endblock %}

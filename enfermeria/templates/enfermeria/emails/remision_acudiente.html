@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Remisión Médica</title>
+</head>
+<body style="margin:0;padding:0;background-color:#FEF2F2;font-family:'Segoe UI',Helvetica,Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background-color:#FEF2F2;padding:40px 20px;">
+<tr><td align="center">
+<table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(150,0,0,0.14);">
+
+  <!-- HEADER ROJO URGENTE -->
+  <tr>
+    <td style="background:linear-gradient(135deg,#7F1D1D 0%,#991B1B 55%,#DC2626 100%);padding:36px 40px 24px;text-align:center;">
+      <img src="cid:logo_cosfa" alt="Logo Colegio San Francisco de Asís" width="80" height="80" style="border-radius:50%;border:3px solid rgba(255,255,255,0.4);display:block;margin:0 auto 12px;">
+      <p style="color:rgba(255,200,200,0.9);font-size:11px;letter-spacing:2.5px;text-transform:uppercase;margin:0 0 5px;font-weight:600;">Colegio San Francisco de Asís</p>
+      <h1 style="color:#ffffff;font-size:21px;font-weight:700;margin:0 0 14px;">Sistema de Enfermería Escolar</h1>
+      <div style="display:inline-block;background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.4);border-radius:30px;padding:7px 20px;">
+        <span style="color:#FECACA;font-size:12px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;"><span style="display:inline-block;width:16px;height:10px;background:#ef4444;border-radius:2px;vertical-align:middle;border:1px solid #b91c1c;"></span> Remisión Médica</span>
+      </div>
+    </td>
+  </tr>
+
+  <!-- FRANJA URGENTE -->
+  <tr>
+    <td style="background:#DC2626;padding:13px 40px;">
+      <p style="color:#ffffff;font-size:13px;margin:0;text-align:center;font-weight:700;">
+        <span style="display:inline-block;width:0;height:0;border-left:9px solid transparent;border-right:9px solid transparent;border-bottom:16px solid #f59e0b;vertical-align:middle;"></span> &nbsp;Su hijo/a ha sido remitido/a a una institución de salud
+      </p>
+    </td>
+  </tr>
+
+  <!-- CUERPO -->
+  <tr><td style="padding:32px 40px;">
+
+    <p style="font-size:15px;color:#3E0000;margin:0 0 5px;font-weight:700;">Estimado/a {{ estudiante.acudiente }},</p>
+
+    <p style="font-size:14px;color:#4A3636;margin:0 0 20px;line-height:1.75;">
+      Le informamos que el/la estudiante <strong style="color:#7F1D1D;">{{ estudiante.nombre }}</strong> requirió atención médica especializada y ha sido <strong>remitido/a a una institución de salud.</strong> A continuación encontrará los detalles de la remisión.
+    </p>
+
+    <!-- Caja de institución destino -->
+    <div style="background:linear-gradient(135deg,#FFF5F5,#FEE2E2);border:2px solid #FCA5A5;border-radius:12px;padding:18px 24px;margin-bottom:24px;text-align:center;">
+      <p style="font-size:10.5px;color:#B91C1C;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin:0 0 8px;">Hospital / Clínica Destino</p>
+      <p style="font-size:20px;color:#7F1D1D;font-weight:800;margin:0 0 4px;">{{ remision.hospital_destino }}</p>
+      <p style="font-size:13px;color:#991B1B;margin:0;">Por favor diríjase a esta institución a la mayor brevedad posible</p>
+    </div>
+
+    <hr style="border:none;border-top:1px solid #FEE2E2;margin:0 0 24px;">
+    <p style="font-size:10.5px;color:#B45A5A;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin:0 0 12px;">Detalle de la Remisión</p>
+
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#FFF5F5;border-radius:10px;overflow:hidden;border:1px solid #FECACA;margin-bottom:22px;">
+      <tr style="border-bottom:1px solid #FECACA;">
+        <td style="padding:11px 16px;font-size:13px;color:#B45A5A;width:44%;">Estudiante</td>
+        <td style="padding:11px 16px;font-size:13px;color:#7F1D1D;font-weight:700;">{{ estudiante.nombre }}</td>
+      </tr>
+      <tr style="border-bottom:1px solid #FECACA;background:#fff;">
+        <td style="padding:11px 16px;font-size:13px;color:#B45A5A;">Grado / Curso</td>
+        <td style="padding:11px 16px;font-size:13px;color:#7F1D1D;font-weight:700;">{{ estudiante.grado }}</td>
+      </tr>
+      <tr style="border-bottom:1px solid #FECACA;">
+        <td style="padding:11px 16px;font-size:13px;color:#B45A5A;">Fecha</td>
+        <td style="padding:11px 16px;font-size:13px;color:#7F1D1D;font-weight:700;">{{ remision.fecha_hora|date:"d/m/Y" }}</td>
+      </tr>
+      <tr style="border-bottom:1px solid #FECACA;background:#fff;">
+        <td style="padding:11px 16px;font-size:13px;color:#B45A5A;">Hora de salida</td>
+        <td style="padding:11px 16px;font-size:13px;color:#7F1D1D;font-weight:700;">{{ remision.hora_salida|time:"H:i" }}</td>
+      </tr>
+      <tr style="border-bottom:1px solid #FECACA;">
+        <td style="padding:11px 16px;font-size:13px;color:#B45A5A;">Motivo</td>
+        <td style="padding:11px 16px;font-size:13px;color:#7F1D1D;font-weight:700;">{{ remision.motivo }}</td>
+      </tr>
+      <tr style="border-bottom:1px solid #FECACA;background:#fff;">
+        <td style="padding:11px 16px;font-size:13px;color:#B45A5A;">Acompañante</td>
+        <td style="padding:11px 16px;font-size:13px;color:#7F1D1D;font-weight:700;">{{ remision.acompanante }}</td>
+      </tr>
+      {% if remision.eps %}
+      <tr>
+        <td style="padding:11px 16px;font-size:13px;color:#B45A5A;">EPS</td>
+        <td style="padding:11px 16px;font-size:13px;color:#7F1D1D;font-weight:700;">{{ remision.eps }}</td>
+      </tr>
+      {% endif %}
+    </table>
+
+    {% if remision.observaciones %}
+    <div style="background:#FFFDE7;border-left:4px solid #F9A825;border-radius:0 8px 8px 0;padding:14px 18px;margin-bottom:22px;">
+      <p style="font-size:10.5px;color:#F57F17;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin:0 0 6px;">Observaciones</p>
+      <p style="font-size:13px;color:#4A3700;margin:0;line-height:1.6;">{{ remision.observaciones }}</p>
+    </div>
+    {% endif %}
+
+    <div style="background:#FEE2E2;border:2px solid #FCA5A5;border-radius:10px;padding:14px 20px;text-align:center;">
+      <p style="font-size:14px;color:#B91C1C;font-weight:800;margin:0 0 4px;"><span style="display:inline-block;width:14px;height:14px;background:#22c55e;border-radius:50%;vertical-align:middle;"></span> Comuníquese con el colegio de inmediato</p>
+      <p style="font-size:13px;color:#991B1B;margin:0;">O diríjase directamente a la institución de salud indicada arriba.</p>
+    </div>
+
+  </td></tr>
+
+  <!-- FOOTER -->
+  <tr>
+    <td style="background:#FFF5F5;border-top:1px solid #FECACA;padding:20px 40px;text-align:center;">
+      <p style="font-size:12px;color:#7F1D1D;font-weight:700;margin:0 0 4px;">Colegio San Francisco de Asís &nbsp;·&nbsp; Enfermería Escolar COSFA CURE</p>
+      <p style="font-size:11px;color:#90A4AE;margin:0;">Este es un mensaje automático generado por el sistema de enfermería. Por favor no responda a este correo.</p>
+    </td>
+  </tr>
+</table>
+</td></tr></table>
+
+  <!-- Tracking pixel (invisible) -->
+  {% if confirm_url %}
+  <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:16px;">
+    <tr>
+      <td align="center" style="padding:12px 40px 20px;">
+        <a href="{{ confirm_url }}"
+           style="display:inline-block;font-size:12px;color:#94A3B8;text-decoration:none;
+                  border:1px solid #E2E8F0;border-radius:20px;padding:7px 20px;
+                  font-family:Segoe UI,Helvetica,Arial,sans-serif;">
+          &#10003;&nbsp; Confirmar recepcion de este correo
+        </a>
+      </td>
+    </tr>
+  </table>
+  {% endif %}
+  {% if pixel_url %}<img src="{{ pixel_url }}" width="1" height="1" style="display:none;border:0;height:1px;width:1px;max-height:1px;max-width:1px;" alt="">{% endif %}
+</body></html>

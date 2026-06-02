@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mensaje al Coordinador — COSFA CURE</title>
+</head>
+<body style="margin:0;padding:0;font-family:'Segoe UI',Helvetica,Arial,sans-serif;background-color:#EBF4F8;">
+
+<table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 20px;background-color:#EBF4F8;">
+<tr><td align="center">
+<table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,60,120,0.12);">
+
+  <!-- HEADER -->
+  <tr>
+    <td style="padding:36px 40px 24px;text-align:center;background:linear-gradient(135deg,#0f2444 0%,#003366 55%,#0055A5 100%);">
+      <img src="cid:logo_cosfa" alt="Logo Colegio San Francisco de Asís" width="80" height="80" style="border-radius:50%;border:3px solid rgba(255,255,255,0.4);display:block;margin:0 auto 12px;">
+      <p style="color:rgba(220,240,255,0.85);font-size:11px;letter-spacing:2.5px;text-transform:uppercase;margin:0 0 5px;font-weight:600;">Colegio San Francisco de Asís</p>
+      <h1 style="color:#ffffff;font-size:21px;font-weight:700;margin:0 0 14px;">Sistema de Enfermería Escolar</h1>
+      <div style="display:inline-block;background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.4);border-radius:30px;padding:7px 20px;">
+        <span style="font-size:12px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#B3E5FC;"><span style="display:inline-block;width:16px;height:12px;border:2px solid #93c5fd;background:transparent;border-radius:1px;vertical-align:middle;"></span> Mensaje al Coordinador</span>
+      </div>
+    </td>
+  </tr>
+
+  <!-- FRANJA DE ESTADO -->
+  <tr>
+    <td style="padding:11px 40px;background:#1B5E8A;">
+      <p style="color:#ffffff;font-size:13px;margin:0;text-align:center;font-weight:600;">
+        <span style="display:inline-block;width:12px;height:14px;background:#60a5fa;border-radius:1px;vertical-align:middle;border-top:3px solid #2563eb;"></span> &nbsp;Comunicación oficial desde la Enfermería Escolar
+      </p>
+    </td>
+  </tr>
+
+  <!-- CUERPO -->
+  <tr><td style="padding:32px 40px;">
+
+    <p style="font-size:15px;color:#1A2B4A;margin:0 0 5px;font-weight:700;">Estimado/a Coordinador/a,</p>
+    <p style="font-size:14px;color:#4A5568;margin:0 0 24px;line-height:1.75;">
+      La enfermera escolar <strong style="color:#003366;">{{ nombre_enfermera }}</strong> le ha enviado el siguiente mensaje a través del sistema COSFA CURE:
+    </p>
+
+    <hr style="border:none;border-top:1px solid #E2E8F0;margin:0 0 24px;">
+
+    <!-- DATOS DEL MENSAJE -->
+    <p style="font-size:10.5px;color:#90A4AE;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin:0 0 12px;">Información del Mensaje</p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="border-radius:10px;overflow:hidden;border:1px solid #E2E8F0;margin-bottom:22px;background:#F7FAFC;">
+      <tr style="border-bottom:1px solid #E2E8F0;">
+        <td style="padding:11px 16px;font-size:13px;color:#718096;width:44%;">Remitente</td>
+        <td style="padding:11px 16px;font-size:13px;font-weight:700;color:#1A2B4A;">{{ nombre_enfermera }} ({{ correo_remitente }})</td>
+      </tr>
+      <tr style="border-bottom:1px solid #E2E8F0;background:#fff;">
+        <td style="padding:11px 16px;font-size:13px;color:#718096;">Motivo</td>
+        <td style="padding:11px 16px;font-size:13px;font-weight:700;color:#1A2B4A;">{{ motivo_display }}</td>
+      </tr>
+      <tr style="border-bottom:1px solid #E2E8F0;">
+        <td style="padding:11px 16px;font-size:13px;color:#718096;">Asunto</td>
+        <td style="padding:11px 16px;font-size:13px;font-weight:700;color:#1A2B4A;">{{ asunto }}</td>
+      </tr>
+      <tr style="background:#fff;">
+        <td style="padding:11px 16px;font-size:13px;color:#718096;">Fecha y hora</td>
+        <td style="padding:11px 16px;font-size:13px;font-weight:700;color:#1A2B4A;">{{ fecha_hora }}</td>
+      </tr>
+    </table>
+
+    <!-- MENSAJE -->
+    <p style="font-size:10.5px;color:#90A4AE;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin:0 0 12px;">Contenido del Mensaje</p>
+    <div style="background:#FFFDE7;border-left:4px solid #F9A825;border-radius:0 8px 8px 0;padding:18px 22px;margin-bottom:24px;">
+      <p style="font-size:14px;color:#4A3700;margin:0;line-height:1.75;white-space:pre-line;">{{ cuerpo }}</p>
+    </div>
+
+    <!-- CIERRE -->
+    <p style="font-size:13px;color:#90A4AE;line-height:1.7;margin:0;">
+      Si desea responder a este mensaje, puede hacerlo directamente al correo de la enfermera: <strong>{{ correo_remitente }}</strong>.
+    </p>
+
+  </td></tr>
+
+  <!-- FOOTER -->
+  <tr>
+    <td style="border-top:1px solid #E2E8F0;padding:20px 40px;text-align:center;background:#F0F4F8;">
+      <p style="font-size:12px;font-weight:700;margin:0 0 4px;color:#003366;">Colegio San Francisco de Asís &nbsp;·&nbsp; Enfermería Escolar COSFA CURE</p>
+      <p style="font-size:11px;color:#90A4AE;margin:0;">Este mensaje fue enviado desde el sistema de enfermería COSFA CURE. Por favor no responda a este correo directamente.</p>
+    </td>
+  </tr>
+
+</table>
+</td></tr></table>
+
+  <!-- Tracking pixel (invisible) -->
+  {% if confirm_url %}
+  <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:16px;">
+    <tr>
+      <td align="center" style="padding:12px 40px 20px;">
+        <a href="{{ confirm_url }}"
+           style="display:inline-block;font-size:12px;color:#94A3B8;text-decoration:none;
+                  border:1px solid #E2E8F0;border-radius:20px;padding:7px 20px;
+                  font-family:Segoe UI,Helvetica,Arial,sans-serif;">
+          &#10003;&nbsp; Confirmar recepcion de este correo
+        </a>
+      </td>
+    </tr>
+  </table>
+  {% endif %}
+  {% if pixel_url %}<img src="{{ pixel_url }}" width="1" height="1" style="display:none;border:0;height:1px;width:1px;max-height:1px;max-width:1px;" alt="">{% endif %}
+</body></html>

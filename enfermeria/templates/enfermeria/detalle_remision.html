@@ -1,0 +1,204 @@
+{% extends 'enfermeria/base.html' %}
+{% block title %}Remisión #{{ remision.pk }} — COSFA CURE{% endblock %}
+{% block page_title %}Detalle de Remisión{% endblock %}
+
+{% block content %}
+<div style="max-width:860px;margin:0 auto;padding:0 8px 40px">
+
+  {# ── Barra de acciones ── #}
+  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:22px">
+    <a href="{% url 'lista_remisiones' %}" class="btn btn-outline btn-sm">
+      <i class="bi bi-arrow-left"></i> Volver
+    </a>
+    <a href="{% url 'editar_remision' remision.pk %}" class="btn btn-primary btn-sm">
+      <i class="bi bi-pencil"></i> Editar
+    </a>
+    <a href="{% url 'pdf_remision_individual' remision.pk %}" target="_blank" class="btn btn-sm"
+       style="background:#ef4444;color:white;border:none">
+      <i class="bi bi-file-earmark-pdf"></i> PDF
+    </a>
+    {% if not consentimiento %}
+    <a href="{% url 'consentimiento_remision' remision.pk %}" class="btn btn-sm"
+       style="background:#8b5cf6;color:white;border:none">
+      <i class="bi bi-pen"></i> Consentimiento
+    </a>
+    {% endif %}
+    <form method="post" action="{% url 'eliminar_remision' remision.pk %}" style="margin:0"
+          onsubmit="return confirm('¿Eliminar esta remisión? Esta acción no se puede deshacer.')">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-sm" style="background:#fef2f2;color:#dc2626;border:1.5px solid #fecaca">
+        <i class="bi bi-trash"></i> Eliminar
+      </button>
+    </form>
+  </div>
+
+  {# ── Encabezado estudiante ── #}
+  <div style="background:linear-gradient(135deg,var(--navy),var(--navy-mid));border-radius:16px;padding:22px 26px;color:white;margin-bottom:20px;display:flex;align-items:center;gap:18px;flex-wrap:wrap">
+    {% if remision.estudiante.foto %}
+      <img src="{{ remision.estudiante.foto.url }}" style="width:58px;height:58px;border-radius:50%;object-fit:cover;border:3px solid rgba(255,255,255,.3)">
+    {% else %}
+      <div style="width:58px;height:58px;border-radius:50%;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:1.7rem">👤</div>
+    {% endif %}
+    <div>
+      <div style="font-weight:800;font-size:1.15rem">{{ remision.estudiante.nombre }}</div>
+      <div style="font-size:.85rem;opacity:.8">{{ remision.estudiante.grado }} · Doc. {{ remision.estudiante.numero_documento }}</div>
+      <div style="margin-top:6px">
+        {% if remision.estado == 'pendiente' %}
+          <span style="background:#fef3c7;color:#92400e;padding:3px 10px;border-radius:20px;font-size:.75rem;font-weight:700">⏳ Pendiente</span>
+        {% elif remision.estado == 'en_proceso' %}
+          <span style="background:#dbeafe;color:#1e40af;padding:3px 10px;border-radius:20px;font-size:.75rem;font-weight:700">🔄 En proceso</span>
+        {% else %}
+          <span style="background:#dcfce7;color:#166534;padding:3px 10px;border-radius:20px;font-size:.75rem;font-weight:700">✅ Resuelto</span>
+        {% endif %}
+        <span style="background:rgba(255,255,255,.15);padding:3px 10px;border-radius:20px;font-size:.75rem;margin-left:6px">
+          {{ remision.fecha_hora|date:"d/m/Y H:i" }}
+        </span>
+      </div>
+    </div>
+    <div style="margin-left:auto;text-align:right">
+      <div style="font-size:.8rem;opacity:.7">Remisión #</div>
+      <div style="font-size:2rem;font-weight:800">{{ remision.pk }}</div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+
+    {# ── Destino ── #}
+    <div style="background:white;border-radius:14px;padding:20px 22px;box-shadow:0 2px 12px rgba(0,0,0,.06);border:1px solid #e2e8f0">
+      <div style="font-weight:700;color:var(--navy);font-size:.85rem;text-transform:uppercase;letter-spacing:.05em;margin-bottom:14px">
+        <i class="bi bi-geo-alt-fill" style="color:#ef4444"></i> Destino
+      </div>
+      <div style="font-size:1.05rem;font-weight:700;color:var(--navy);margin-bottom:6px">
+        {% if remision.tipo_destino == 'casa' %}
+          🏠 Casa del estudiante
+        {% else %}
+          🏥 {{ remision.hospital_destino|default:"Hospital / Centro médico" }}
+        {% endif %}
+      </div>
+      {% if remision.eps %}<div style="font-size:.82rem;color:#64748b">EPS: {{ remision.eps }}{% if remision.numero_eps %} — <strong>N°:</strong> {{ remision.numero_eps }}{% endif %}{% if remision.numero_contacto_eps %} — <strong>Tel:</strong> {{ remision.numero_contacto_eps }}{% endif %}</div>{% endif %}
+    </div>
+
+    {# ── Horarios ── #}
+    <div style="background:white;border-radius:14px;padding:20px 22px;box-shadow:0 2px 12px rgba(0,0,0,.06);border:1px solid #e2e8f0">
+      <div style="font-weight:700;color:var(--navy);font-size:.85rem;text-transform:uppercase;letter-spacing:.05em;margin-bottom:14px">
+        <i class="bi bi-clock-fill" style="color:#3b82f6"></i> Horarios
+      </div>
+      <div style="display:flex;gap:24px">
+        <div>
+          <div style="font-size:.73rem;color:#94a3b8;font-weight:600">SALIDA</div>
+          <div style="font-size:1.3rem;font-weight:800;color:var(--navy)">{{ remision.hora_salida }}</div>
+        </div>
+        {% if remision.hora_llegada %}
+        <div>
+          <div style="font-size:.73rem;color:#94a3b8;font-weight:600">REGRESO</div>
+          <div style="font-size:1.3rem;font-weight:800;color:#16a34a">{{ remision.hora_llegada }}</div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    {# ── Motivo ── #}
+    <div style="background:white;border-radius:14px;padding:20px 22px;box-shadow:0 2px 12px rgba(0,0,0,.06);border:1px solid #e2e8f0;grid-column:1/-1">
+      <div style="font-weight:700;color:var(--navy);font-size:.85rem;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">
+        <i class="bi bi-clipboard2-pulse-fill" style="color:#8b5cf6"></i> Motivo de la remisión
+      </div>
+      <p style="margin:0;color:#374151;line-height:1.6">{{ remision.motivo }}</p>
+    </div>
+
+    {# ── Acompañante ── #}
+    <div style="background:white;border-radius:14px;padding:20px 22px;box-shadow:0 2px 12px rgba(0,0,0,.06);border:1px solid #e2e8f0">
+      <div style="font-weight:700;color:var(--navy);font-size:.85rem;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">
+        <i class="bi bi-person-fill" style="color:#f59e0b"></i> Acompañante
+      </div>
+      <div style="font-size:1rem;color:#374151;font-weight:600">{{ remision.acompanante }}</div>
+    </div>
+
+    {# ── Estado ── #}
+    <div style="background:white;border-radius:14px;padding:20px 22px;box-shadow:0 2px 12px rgba(0,0,0,.06);border:1px solid #e2e8f0">
+      <div style="font-weight:700;color:var(--navy);font-size:.85rem;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">
+        <i class="bi bi-activity" style="color:#10b981"></i> Cambiar estado
+      </div>
+      <form method="post" action="{% url 'cambiar_estado_remision' remision.pk %}" style="display:flex;gap:8px;flex-wrap:wrap">
+        {% csrf_token %}
+        <select name="nuevo_estado" class="form-select form-select-sm" style="max-width:160px">
+          <option value="pendiente"   {% if remision.estado == 'pendiente'   %}selected{% endif %}>⏳ Pendiente</option>
+          <option value="en_proceso"  {% if remision.estado == 'en_proceso'  %}selected{% endif %}>🔄 En proceso</option>
+          <option value="resuelto"    {% if remision.estado == 'resuelto'    %}selected{% endif %}>✅ Resuelto</option>
+        </select>
+        <button type="submit" class="btn btn-primary btn-sm">Guardar</button>
+      </form>
+    </div>
+
+    {# ── Observaciones ── #}
+    {% if remision.observaciones %}
+    <div style="background:white;border-radius:14px;padding:20px 22px;box-shadow:0 2px 12px rgba(0,0,0,.06);border:1px solid #e2e8f0;grid-column:1/-1">
+      <div style="font-weight:700;color:var(--navy);font-size:.85rem;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">
+        <i class="bi bi-chat-text-fill" style="color:#64748b"></i> Observaciones
+      </div>
+      <p style="margin:0;color:#374151;line-height:1.6">{{ remision.observaciones }}</p>
+    </div>
+    {% endif %}
+
+    {# ── Seguimiento posterior ── #}
+    {% if remision.seguimiento_posterior %}
+    <div style="background:#f0fdf4;border-radius:14px;padding:20px 22px;border:1px solid #bbf7d0;grid-column:1/-1">
+      <div style="font-weight:700;color:#166534;font-size:.85rem;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">
+        <i class="bi bi-journal-check"></i> Seguimiento posterior / Diagnóstico recibido
+      </div>
+      <p style="margin:0;color:#166534;line-height:1.6">{{ remision.seguimiento_posterior }}</p>
+    </div>
+    {% endif %}
+
+    {# ── Consulta de origen ── #}
+    {% if remision.consulta_origen %}
+    <div style="background:#eff6ff;border-radius:14px;padding:18px 22px;border:1px solid #bfdbfe;grid-column:1/-1">
+      <div style="font-weight:700;color:#1e40af;font-size:.85rem;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">
+        <i class="bi bi-link-45deg"></i> Consulta de origen
+      </div>
+      <a href="{% url 'detalle_consulta' remision.consulta_origen.pk %}"
+         style="font-weight:600;color:#1d4ed8;text-decoration:none">
+        Consulta #{{ remision.consulta_origen.pk }} — {{ remision.consulta_origen.get_motivo_display }}
+        <span style="font-size:.8rem;color:#64748b">({{ remision.consulta_origen.fecha_hora|date:"d/m/Y H:i" }})</span>
+      </a>
+    </div>
+    {% endif %}
+
+    {# ── Consentimiento digital ── #}
+    <div style="background:white;border-radius:14px;padding:20px 22px;box-shadow:0 2px 12px rgba(0,0,0,.06);border:1px solid #e2e8f0;grid-column:1/-1">
+      <div style="font-weight:700;color:var(--navy);font-size:.85rem;text-transform:uppercase;letter-spacing:.05em;margin-bottom:14px">
+        <i class="bi bi-pen-fill" style="color:#8b5cf6"></i> Consentimiento digital
+      </div>
+      {% if consentimiento %}
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div>
+            <div style="font-size:.75rem;color:#94a3b8;font-weight:600;margin-bottom:4px">ACUDIENTE: {{ consentimiento.nombre_acudiente }}</div>
+            <div style="border:1.5px solid #e2e8f0;border-radius:10px;padding:8px;background:#fafafa">
+              <img src="{{ consentimiento.firma_acudiente }}" style="max-width:100%;max-height:80px">
+            </div>
+          </div>
+          <div>
+            <div style="font-size:.75rem;color:#94a3b8;font-weight:600;margin-bottom:4px">ENFERMERA: {{ consentimiento.nombre_enfermera }}</div>
+            <div style="border:1.5px solid #e2e8f0;border-radius:10px;padding:8px;background:#fafafa">
+              <img src="{{ consentimiento.firma_enfermera }}" style="max-width:100%;max-height:80px">
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:10px;font-size:.78rem;color:#94a3b8">
+          Firmado el {{ consentimiento.fecha_firma|date:"d/m/Y H:i" }}
+          {% if consentimiento.cc_acudiente %} · CC Acudiente: {{ consentimiento.cc_acudiente }}{% endif %}
+        </div>
+      {% else %}
+        <div style="text-align:center;padding:20px;color:#94a3b8">
+          <i class="bi bi-pen" style="font-size:2rem"></i>
+          <p style="margin:8px 0 14px;font-size:.88rem">Aún no hay consentimiento firmado para esta remisión.</p>
+          <a href="{% url 'consentimiento_remision' remision.pk %}" class="btn btn-sm"
+             style="background:#8b5cf6;color:white;border:none">
+            <i class="bi bi-pen"></i> Firmar consentimiento
+          </a>
+        </div>
+      {% endif %}
+    </div>
+
+  </div>{# /grid #}
+</div>
+{% endblock %}

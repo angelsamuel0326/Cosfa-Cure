@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Carnet — {{ estudiante.nombre }}</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
+*, *::before, *::after { box-sizing: border-box; margin:0; padding:0; }
+body { font-family: 'DM Sans', sans-serif; background: #e8f0fb; display:flex; align-items:center; justify-content:center; min-height:100vh; flex-direction:column; gap:20px; }
+.print-btn { background:var(--teal-dark); color:white; border:none; padding:10px 24px; border-radius:8px; font-size:0.9rem; font-weight:700; cursor:pointer; }
+.carnet {
+  width: 340px; border-radius: 18px; overflow:hidden;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+}
+.carnet-head {
+  background: linear-gradient(135deg, var(--sidebar-bg), var(--teal-dark));
+  padding: 18px 20px;
+  display:flex; align-items:center; gap:14px;
+}
+.carnet-logo { width:44px; height:44px; background:rgba(255,255,255,0.15); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1.4rem; }
+.carnet-school { color:white; }
+.carnet-school h3 { font-size:0.85rem; font-weight:800; }
+.carnet-school p  { font-size:0.65rem; opacity:0.65; }
+.carnet-body {
+  background: white; padding: 18px 20px;
+  display:flex; gap:14px; align-items:flex-start;
+}
+.carnet-photo { width:72px; height:72px; border-radius:12px; object-fit:cover; border:3px solid var(--teal-light); flex-shrink:0; }
+.carnet-nophoto { width:72px; height:72px; border-radius:12px; background:var(--teal-pale); border:3px solid var(--teal-light); display:flex; align-items:center; justify-content:center; font-size:2rem; flex-shrink:0; }
+.carnet-info h2 { font-size:0.95rem; font-weight:800; color:#1a2b3c; margin-bottom:4px; line-height:1.2; }
+.carnet-grado { background:var(--teal-light); color:var(--teal-dark); font-size:0.65rem; font-weight:700; padding:2px 9px; border-radius:12px; display:inline-block; margin-bottom:8px; }
+.carnet-row { display:flex; gap:6px; font-size:0.7rem; margin-bottom:3px; }
+.carnet-row span { color:#6b86a0; }
+.carnet-row strong { color:#1a2b3c; }
+.carnet-footer {
+  background:var(--teal-pale); padding:10px 20px;
+  display:flex; justify-content:space-between; align-items:center;
+}
+.carnet-footer .label { font-size:0.6rem; color:#6b86a0; text-transform:uppercase; letter-spacing:0.5px; }
+.carnet-footer .value { font-size:0.75rem; font-weight:800; color:var(--sidebar-bg); }
+.carnet-sangre { width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg,#e05c5c,#b91c1c); display:flex; align-items:center; justify-content:center; color:white; font-weight:800; font-size:0.75rem; }
+.warn { background:#fff5f5; border-left:3px solid #e05c5c; padding:7px 10px; font-size:0.68rem; color:#b91c1c; border-radius:0 8px 8px 0; margin-top:8px; }
+@media print {
+  body { background:white; }
+  .print-btn { display:none; }
+}
+</style>
+</head>
+<body>
+<button class="print-btn" onclick="window.print()">🖨️ Imprimir Carnet</button>
+<div class="carnet">
+  <div class="carnet-head">
+    <div class="carnet-logo">🏥</div>
+    <div class="carnet-school">
+      <h3>Colegio San Francisco de Asís</h3>
+      <p>COSFA CURE — Carnet de Salud Escolar</p>
+    </div>
+  </div>
+  <div class="carnet-body">
+    {% if estudiante.foto %}
+    <img src="{{ estudiante.foto.url }}" class="carnet-photo">
+    {% else %}
+    <div class="carnet-nophoto">👤</div>
+    {% endif %}
+    <div class="carnet-info" style="flex:1">
+      <h2>{{ estudiante.nombre }}</h2>
+      <div class="carnet-grado">{{ estudiante.grado }}</div>
+      <div class="carnet-row"><span>Documento:</span><strong>{{ estudiante.numero_documento }}</strong></div>
+      <div class="carnet-row"><span>EPS:</span><strong>{{ estudiante.eps|default:"N/A" }}</strong></div>
+      <div class="carnet-row"><span>Acudiente:</span><strong>{{ estudiante.acudiente }}</strong></div>
+      <div class="carnet-row"><span>Tel:</span><strong>{{ estudiante.telefono_acudiente }}</strong></div>
+      {% if estudiante.alergias %}
+      <div class="warn">⚠️ Alergia: {{ estudiante.alergias|truncatechars:80 }}</div>
+      {% endif %}
+      {% if estudiante.condiciones_medicas %}
+      <div class="warn" style="border-color:#d97706;color:#92400e;background:#fff7ed">🏥 {{ estudiante.condiciones_medicas|truncatechars:80 }}</div>
+      {% endif %}
+    </div>
+  </div>
+  <div class="carnet-footer">
+    <div><div class="label">Nacimiento</div><div class="value">{{ estudiante.fecha_nacimiento|date:"d/m/Y" }}</div></div>
+    <div class="carnet-sangre">{{ estudiante.tipo_sangre|default:"?" }}</div>
+    <div style="text-align:right"><div class="label">Registro</div><div class="value">{{ estudiante.fecha_registro|date:"d/m/Y" }}</div></div>
+  </div>
+</div>
+</body>
+</html>

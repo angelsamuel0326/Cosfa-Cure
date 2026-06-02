@@ -1,0 +1,261 @@
+{% extends 'enfermeria/base.html' %}
+{% block title %}Gestión de Grados — COSFA CURE{% endblock %}
+{% block page_title %}Gestión de Grados{% endblock %}
+{% block content %}
+
+<style>
+.grados-wrap{max-width:720px;margin:0 auto}
+.grado-card{background:white;border-radius:16px;box-shadow:0 2px 16px rgba(15,36,68,.07);border:1px solid rgba(15,36,68,.06);overflow:hidden;margin-bottom:20px}
+.grado-card-head{padding:14px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(14,165,160,.08)}
+.grado-card-title{font-family:'Sora',sans-serif;font-weight:800;font-size:.95rem;color:var(--navy);display:flex;align-items:center;gap:9px}
+.grado-table{width:100%;border-collapse:collapse}
+.grado-table th{background:linear-gradient(135deg,var(--navy),var(--teal));color:white;font-size:.68rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:10px 16px;text-align:left}
+.grado-table td{padding:11px 16px;border-bottom:1px solid rgba(14,165,160,.07);font-size:.82rem;vertical-align:middle}
+.grado-table tr:last-child td{border-bottom:none}
+.grado-table tr:hover td{background:rgba(14,165,160,.04)}
+.badge-activo{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:.65rem;font-weight:700;background:rgba(22,163,74,.1);color:#15803d;border:1px solid rgba(22,163,74,.25)}
+.badge-inactivo{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:.65rem;font-weight:700;background:rgba(100,116,139,.1);color:#475569;border:1px solid #e2e8f0}
+.badge-grado-n{display:inline-flex;align-items:center;justify-content:center;min-width:46px;height:28px;padding:0 12px;background:linear-gradient(135deg,var(--teal),#067a76);color:white;font-size:.7rem;font-weight:800;border-radius:20px;box-shadow:0 2px 8px rgba(14,165,160,.3)}
+.btn-icon{width:30px;height:30px;border-radius:8px;border:1.5px solid;display:inline-flex;align-items:center;justify-content:center;font-size:.8rem;cursor:pointer;transition:all .2s;background:white;text-decoration:none}
+.btn-icon-del{border-color:#fca5a5;color:#dc2626}.btn-icon-del:hover{background:#dc2626;color:white;border-color:#dc2626}
+.btn-icon-tog{border-color:#e2e8f0;color:#64748b}.btn-icon-tog:hover{background:var(--teal);color:white;border-color:var(--teal)}
+.crear-form{padding:18px 20px;background:rgba(14,165,160,.04);border-top:1px solid rgba(14,165,160,.08)}
+.crear-row{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}
+.crear-field{display:flex;flex-direction:column;gap:5px}
+.crear-field label{font-size:.68rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.4px}
+.crear-field input{padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:.82rem;width:140px;outline:none;color:var(--navy);transition:border-color .2s}
+.crear-field input:focus{border-color:var(--teal)}
+.crear-field input[name="orden"]{width:80px}
+.btn-crear-grado{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,var(--teal),#067a76);color:white;border:none;padding:9px 18px;border-radius:10px;font-size:.8rem;font-weight:700;cursor:pointer;box-shadow:0 3px 10px rgba(14,165,160,.3)}
+.empty-grados{text-align:center;padding:30px;color:#94a3b8;font-size:.82rem}
+.info-box{background:rgba(14,165,160,.07);border:1.5px solid rgba(14,165,160,.2);border-radius:12px;padding:13px 16px;font-size:.78rem;color:#0d6e6b;margin-bottom:16px;display:flex;align-items:flex-start;gap:9px}
+</style>
+
+{% if messages %}
+  {% for msg in messages %}
+    <div class="alert alert-{{ msg.tags|default:'info' }}" style="margin-bottom:14px">
+      <i class="bi bi-{% if msg.tags == 'success' %}check-circle-fill{% elif msg.tags == 'error' or msg.tags == 'danger' %}exclamation-triangle-fill{% else %}info-circle-fill{% endif %}"></i>
+      {{ msg }}
+    </div>
+  {% endfor %}
+{% endif %}
+
+<div class="grados-wrap">
+  <!-- Info -->
+  <div class="info-box">
+    <i class="bi bi-info-circle-fill" style="font-size:1rem;flex-shrink:0;margin-top:1px"></i>
+    <div>
+      <strong>¿Cómo funciona?</strong> Los grados creados aquí aparecen en el formulario de estudiantes y en los filtros.
+      Solo puedes <strong>eliminar</strong> un grado si no tiene estudiantes activos asignados.
+      Usa <strong>Activar/Desactivar</strong> para ocultarlo temporalmente sin borrar datos.
+    </div>
+  </div>
+
+  <!-- Tabla de grados -->
+  <div class="grado-card">
+    <div class="grado-card-head">
+      <div class="grado-card-title">
+        <i class="bi bi-mortarboard-fill" style="color:var(--teal)"></i>
+        Grados registrados
+        <span style="background:rgba(14,165,160,.1);color:var(--teal);border-radius:20px;padding:2px 10px;font-size:.7rem">{{ grados.count }}</span>
+      </div>
+      <a href="{% url 'lista_estudiantes' %}" class="btn btn-outline btn-sm" style="font-size:.75rem">
+        <i class="bi bi-arrow-left"></i> Volver a estudiantes
+      </a>
+    </div>
+
+    {% if grados %}
+    <table class="grado-table">
+      <thead>
+        <tr>
+          <th>Grado</th>
+          <th>Orden</th>
+          <th>Estudiantes activos</th>
+          <th>Estado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for g in grados %}
+        <tr>
+          <td><span class="badge-grado-n">{{ g.nombre }}</span></td>
+          <td style="color:#94a3b8;font-size:.78rem">{{ g.orden }}</td>
+          <td>
+            <span style="font-weight:700;color:var(--navy)">{{ g.total_estudiantes }}</span>
+            <span style="color:#94a3b8;font-size:.74rem"> est.</span>
+          </td>
+          <td>
+            {% if g.activo %}
+              <span class="badge-activo"><i class="bi bi-check-circle-fill"></i> Activo</span>
+            {% else %}
+              <span class="badge-inactivo"><i class="bi bi-dash-circle"></i> Inactivo</span>
+            {% endif %}
+          </td>
+          <td>
+            <div style="display:flex;gap:5px">
+              <!-- Toggle activo -->
+              <form method="post" action="{% url 'toggle_grado' g.pk %}" style="display:inline">
+                {% csrf_token %}
+                <button type="submit" class="btn-icon btn-icon-tog"
+                        title="{% if g.activo %}Desactivar{% else %}Activar{% endif %}">
+                  <i class="bi bi-{% if g.activo %}toggle-on{% else %}toggle-off{% endif %}"></i>
+                </button>
+              </form>
+              <!-- Eliminar -->
+              <form method="post" action="{% url 'eliminar_grado' g.pk %}" style="display:inline"
+                    onsubmit="return confirm('¿Eliminar el grado «{{ g.nombre }}»? Esta acción no se puede deshacer.')">
+                {% csrf_token %}
+                <button type="submit" class="btn-icon btn-icon-del" title="Eliminar grado"
+                        {% if g.total_estudiantes > 0 %}disabled style="opacity:.4;cursor:not-allowed"{% endif %}>
+                  <i class="bi bi-trash3-fill"></i>
+                </button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-grados">
+      <i class="bi bi-mortarboard" style="font-size:2rem;display:block;margin-bottom:8px"></i>
+      No hay grados registrados aún. Crea el primero abajo.
+    </div>
+    {% endif %}
+
+    <!-- Formulario para crear nuevo grado -->
+    <div class="crear-form">
+      <div style="font-size:.78rem;font-weight:700;color:var(--navy);margin-bottom:12px;display:flex;align-items:center;gap:7px">
+        <i class="bi bi-plus-circle-fill" style="color:var(--teal)"></i> Crear nuevo grado
+      </div>
+      <form method="post" action="{% url 'crear_grado' %}" id="form-crear-grado">
+        {% csrf_token %}
+        <!-- Campo oculto que recibe el nombre final combinado -->
+        <input type="hidden" name="nombre" id="nombre-final-grado">
+        <div class="crear-row" style="flex-wrap:wrap;gap:10px">
+
+          <!-- Modo rápido: número + letra -->
+          <div class="crear-field">
+            <label><i class="bi bi-123"></i> Número</label>
+            <select id="grado-num" style="padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:.82rem;width:80px;outline:none;color:var(--navy);background:#f8fafc;transition:border-color .2s" onchange="actualizarPreview()">
+              <option value="">—</option>
+              {% for n in "0123456789101112" %}{% endfor %}
+              <option value="PRE">PRE</option>
+              <option value="KIN">KIN</option>
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+              <option value="6">6</option>
+              <option value="7">7</option>
+              <option value="8">8</option>
+              <option value="9">9</option>
+              <option value="10">10</option>
+              <option value="11">11</option>
+            </select>
+          </div>
+
+          <div class="crear-field">
+            <label><i class="bi bi-alphabet-uppercase"></i> Letra</label>
+            <select id="grado-letra" style="padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:.82rem;width:70px;outline:none;color:var(--navy);background:#f8fafc;transition:border-color .2s" onchange="actualizarPreview()">
+              <option value="">—</option>
+              <option value="A">A</option>
+              <option value="B">B</option>
+              <option value="C">C</option>
+              <option value="D">D</option>
+              <option value="E">E</option>
+              <option value="F">F</option>
+            </select>
+          </div>
+
+          <!-- Separador -->
+          <div style="display:flex;align-items:flex-end;padding-bottom:2px;color:#94a3b8;font-weight:700;font-size:1.1rem">o</div>
+
+          <!-- Modo manual libre -->
+          <div class="crear-field" style="flex:1;min-width:130px">
+            <label><i class="bi bi-pencil"></i> Nombre libre</label>
+            <input type="text" id="grado-libre" placeholder="Ej: KINDER, PRE-A…" maxlength="10"
+                   style="padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:.82rem;outline:none;color:var(--navy);background:#f8fafc;transition:border-color .2s;text-transform:uppercase;width:140px"
+                   oninput="actualizarPreview()">
+          </div>
+
+          <!-- Preview del nombre final -->
+          <div class="crear-field" style="align-items:center">
+            <label style="visibility:hidden">preview</label>
+            <div id="grado-preview" style="display:none;align-items:center;justify-content:center;min-width:54px;height:36px;padding:0 14px;background:linear-gradient(135deg,var(--teal),#067a76);color:white;font-size:.9rem;font-weight:800;border-radius:20px;box-shadow:0 2px 8px rgba(14,165,160,.3);font-family:'Sora',sans-serif;letter-spacing:.03em">
+              —
+            </div>
+          </div>
+
+          <div class="crear-field">
+            <label>Orden</label>
+            <input type="number" name="orden" placeholder="0" min="0" max="999" value="0"
+                   style="padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:.82rem;width:70px;outline:none;color:var(--navy)">
+          </div>
+
+          <div style="display:flex;align-items:flex-end">
+            <button type="submit" class="btn-crear-grado" id="btn-crear-grado" disabled style="opacity:.5;cursor:not-allowed">
+              <i class="bi bi-plus-lg"></i> Crear grado
+            </button>
+          </div>
+        </div>
+        <div style="font-size:.68rem;color:#94a3b8;margin-top:8px">
+          Selecciona número + letra (Ej: <strong>1A</strong>, <strong>10B</strong>) o escribe un nombre libre (Ej: <strong>KINDER</strong>). El nombre se convierte a mayúsculas automáticamente.
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+function actualizarPreview() {
+  const num = document.getElementById('grado-num').value.trim();
+  const letra = document.getElementById('grado-letra').value.trim();
+  const libre = document.getElementById('grado-libre').value.trim().toUpperCase();
+  const preview = document.getElementById('grado-preview');
+  const btnCrear = document.getElementById('btn-crear-grado');
+  const nombreFinal = document.getElementById('nombre-final-grado');
+
+  let nombre = '';
+  if (libre) {
+    nombre = libre;
+    document.getElementById('grado-num').value = '';
+    document.getElementById('grado-letra').value = '';
+  } else if (num) {
+    nombre = num + letra;
+  }
+
+  if (nombre) {
+    preview.textContent = nombre;
+    preview.style.display = 'flex';
+    nombreFinal.value = nombre;
+    btnCrear.disabled = false;
+    btnCrear.style.opacity = '1';
+    btnCrear.style.cursor = 'pointer';
+  } else {
+    preview.style.display = 'none';
+    nombreFinal.value = '';
+    btnCrear.disabled = true;
+    btnCrear.style.opacity = '.5';
+    btnCrear.style.cursor = 'not-allowed';
+  }
+}
+
+document.getElementById('grado-num').addEventListener('change', function() {
+  if (this.value) { document.getElementById('grado-libre').value = ''; actualizarPreview(); }
+});
+document.getElementById('grado-letra').addEventListener('change', function() {
+  if (this.value) { document.getElementById('grado-libre').value = ''; actualizarPreview(); }
+});
+
+document.getElementById('form-crear-grado').addEventListener('submit', function(e) {
+  const nombre = document.getElementById('nombre-final-grado').value.trim();
+  if (!nombre) {
+    e.preventDefault();
+    alert('Por favor selecciona número + letra o escribe un nombre libre para el grado.');
+  }
+});
+</script>
+
+{% endblock %}

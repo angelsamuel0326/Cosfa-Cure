@@ -1,0 +1,619 @@
+{% extends 'enfermeria/base.html' %}
+{% block title %}Calendario — COSFA CURE{% endblock %}
+{% block page_title %}Calendario Médico{% endblock %}
+{% block content %}
+
+<style>
+@keyframes slideUp  { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:none} }
+@keyframes fadeIn   { from{opacity:0} to{opacity:1} }
+@keyframes scaleIn  { from{opacity:0;transform:scale(.93)} to{opacity:1;transform:scale(1)} }
+
+/* ── Layout ── */
+.cal-wrap { max-width:1000px; margin:0 auto; display:flex; flex-direction:column; gap:16px; }
+.cal-header {
+  display:flex; align-items:center; justify-content:space-between;
+  background:linear-gradient(135deg,#0f2444,#0e7490);
+  border-radius:18px; padding:18px 24px;
+  animation:slideUp .3s ease;
+}
+.cal-title { font-size:1.1rem; font-weight:800; color:white; }
+.cal-subtitle { font-size:.76rem; color:rgba(255,255,255,.55); margin-top:2px; }
+.cal-header-right { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+
+/* ── Calendario grid ── */
+.cal-card {
+  background:white; border-radius:18px;
+  border:1px solid #e8eef6; box-shadow:0 2px 16px rgba(0,0,0,.06);
+  overflow:hidden; animation:slideUp .35s ease;
+}
+.cal-nav {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px 20px; border-bottom:1px solid #f1f5fb;
+}
+.cal-nav-btn {
+  width:36px; height:36px; border-radius:10px; border:1.5px solid #e2e8f0;
+  background:white; cursor:pointer; font-size:1rem;
+  display:flex; align-items:center; justify-content:center;
+  transition:all .2s;
+}
+.cal-nav-btn:hover { background:#f0f9ff; border-color:#93c5fd; transform:scale(1.08); }
+.cal-month-label { font-size:1rem; font-weight:800; color:#0f2444; }
+
+.cal-weekdays {
+  display:grid; grid-template-columns:repeat(7,1fr);
+  background:#f8faff; border-bottom:1px solid #f1f5fb;
+}
+.cal-wd { padding:9px 0; text-align:center; font-size:.66rem; font-weight:700; color:#6b7280; text-transform:uppercase; letter-spacing:.5px; }
+
+.cal-grid { display:grid; grid-template-columns:repeat(7,1fr); }
+.cal-day {
+  min-height:80px; padding:6px; border-right:1px solid #f1f5fb; border-bottom:1px solid #f1f5fb;
+  cursor:pointer; transition:background .15s; position:relative;
+}
+.cal-day:nth-child(7n) { border-right:none; }
+.cal-day:hover { background:#f0f9ff; }
+.cal-day.other-month { background:#fafafa; }
+.cal-day.other-month .cal-day-num { color:#d1d5db; }
+.cal-day-num { font-size:.78rem; font-weight:700; color:#374151; margin-bottom:4px; display:inline-block;
+  width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; }
+.cal-day.today .cal-day-num { background:linear-gradient(135deg,#0ea5e9,#0e7490); color:white; font-weight:800; }
+.cal-day.selected { background:#eff6ff; }
+.cal-day.selected .cal-day-num { background:linear-gradient(135deg,#3b82f6,#2563eb); color:white; }
+.cal-day.has-events { }
+.cal-day.weekend .cal-day-num { color:#9ca3af; }
+
+/* Dots / eventos en celda */
+.cal-dots { display:flex; gap:3px; flex-wrap:wrap; margin-top:3px; }
+.dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+.dot.consulta   { background:#3b82f6; }
+.dot.remision   { background:#ef4444; }
+.dot.seguimiento{ background:#f59e0b; }
+.dot.medicamento{ background:#22c55e; }
+
+.cal-event-chip {
+  font-size:.6rem; font-weight:700; padding:2px 5px; border-radius:5px;
+  margin-bottom:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  max-width:100%;
+}
+.chip-blue   { background:#dbeafe; color:#1d4ed8; }
+.chip-red    { background:#fee2e2; color:#b91c1c; }
+.chip-amber  { background:#fef3c7; color:#92400e; }
+.chip-green  { background:#d1fae5; color:#065f46; }
+
+/* ── Panel lateral del día ── */
+.day-panel {
+  background:white; border-radius:18px; border:1px solid #e8eef6;
+  box-shadow:0 2px 16px rgba(0,0,0,.06); overflow:hidden;
+  animation:slideUp .3s ease;
+  position:sticky; top:72px;
+}
+.day-panel-head {
+  background:linear-gradient(135deg,#0f2444,#1e40af);
+  padding:16px 18px;
+}
+.day-panel-date { font-size:1.6rem; font-weight:900; color:white; line-height:1; }
+.day-panel-month { font-size:.8rem; color:rgba(255,255,255,.6); margin-top:3px; text-transform:uppercase; letter-spacing:.6px; }
+.day-panel-count { font-size:.75rem; color:rgba(255,255,255,.7); margin-top:6px; }
+
+.day-panel-body { max-height:480px; overflow-y:auto; padding:12px; display:flex; flex-direction:column; gap:8px; }
+.day-panel-body::-webkit-scrollbar { width:5px; }
+.day-panel-body::-webkit-scrollbar-track { background:#f1f5fb; }
+.day-panel-body::-webkit-scrollbar-thumb { background:#cbd5e1; border-radius:3px; }
+
+.day-item {
+  border-radius:12px; padding:11px 13px;
+  transition:all .2s; cursor:pointer; text-decoration:none; display:block; color:inherit;
+}
+.day-item:hover { transform:translateX(4px); }
+.day-item.consulta-item { background:#eff6ff; border:1px solid #bfdbfe; }
+.day-item.remision-item { background:#fef2f2; border:1px solid #fecaca; }
+.day-item.seguimiento-item { background:#fffbeb; border:1px solid #fde68a; }
+.day-item.medicamento-item { background:#f0fdf4; border:1px solid #bbf7d0; }
+.day-item-type { font-size:.62rem; font-weight:800; text-transform:uppercase; letter-spacing:.5px; margin-bottom:4px; }
+.consulta-item .day-item-type   { color:#1d4ed8; }
+.remision-item .day-item-type   { color:#b91c1c; }
+.seguimiento-item .day-item-type{ color:#92400e; }
+.medicamento-item .day-item-type{ color:#065f46; }
+.day-item-title { font-size:.82rem; font-weight:700; color:#0f2444; margin-bottom:2px; }
+.day-item-meta  { font-size:.72rem; color:#6b7280; }
+
+.day-empty {
+  text-align:center; padding:32px 20px; color:#9ca3af;
+  display:flex; flex-direction:column; align-items:center; gap:8px;
+}
+.day-empty-icon { font-size:2.2rem; opacity:.3; }
+
+/* ── Leyenda y stats ── */
+.legend-row { display:flex; gap:12px; align-items:center; flex-wrap:wrap; padding:12px 18px; border-top:1px solid #f1f5fb; }
+.legend-item { display:flex; align-items:center; gap:5px; font-size:.72rem; color:#6b7280; }
+.legend-dot  { width:9px; height:9px; border-radius:50%; }
+
+/* ── Responsive ── */
+.cal-layout { display:grid; grid-template-columns:1fr 280px; gap:14px; align-items:start; }
+@media(max-width:700px) { .cal-layout{grid-template-columns:1fr} .cal-day{min-height:55px} }
+
+/* Button styles */
+.btn-cal { display:inline-flex;align-items:center;gap:7px;padding:9px 16px;border-radius:11px;font-size:.8rem;font-weight:700;cursor:pointer;transition:all .2s;text-decoration:none;border:none; }
+.btn-primary-cal { background:rgba(255,255,255,.2);color:white;border:1.5px solid rgba(255,255,255,.35)!important; }
+.btn-primary-cal:hover { background:rgba(255,255,255,.3);transform:translateY(-1px); }
+
+/* Resaltado seguimientos vencidos */
+.cal-day.vencido-day::before {
+  content:''; position:absolute; top:3px; right:3px;
+  width:7px; height:7px; border-radius:50%; background:#ef4444;
+}
+</style>
+
+<!-- Datos del calendario en JSON -->
+<script>
+const CAL_DATA = {
+  consultas: [
+    {% for c in consultas_mes %}
+    {
+      fecha: "{{ c.fecha_hora|date:'Y-m-d' }}",
+      hora:  "{{ c.fecha_hora|date:'H:i' }}",
+      tipo:  "consulta",
+      titulo:"{{ c.estudiante.nombre|escapejs }}",
+      sub:   "{{ c.get_motivo_display|escapejs }} — {{ c.get_estado_display|escapejs }}",
+      url:   "{% url 'detalle_consulta' c.pk %}"
+    }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+  ],
+  remisiones: [
+    {% for r in remisiones_mes %}
+    {
+      fecha: "{{ r.fecha_hora|date:'Y-m-d' }}",
+      hora:  "{{ r.fecha_hora|date:'H:i' }}",
+      tipo:  "remision",
+      titulo:"{{ r.estudiante.nombre|escapejs }}",
+      sub:   "→ {{ r.hospital_destino|escapejs }}",
+      url:   "#"
+    }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+  ],
+  seguimientos: [
+    {% for s in seguimientos_mes %}
+    {
+      fecha: "{{ s.fecha|date:'Y-m-d' }}",
+      hora:  "",
+      tipo:  "seguimiento",
+      titulo:"{{ s.estudiante.nombre|escapejs }}",
+      sub:   "{{ s.get_tipo_display|escapejs }}",
+      completado: {{ s.completado|yesno:"true,false" }},
+      vencido: {{ s.vencido|yesno:"true,false" }},
+      pk: {{ s.pk }},
+      est_pk: {{ s.estudiante.pk }},
+      url:   "{% url 'detalle_seguimiento' s.pk %}"
+    }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+  ],
+  movimientos: [
+    {% for m in movimientos_mes %}
+    {
+      fecha: "{{ m.fecha|date:'Y-m-d' }}",
+      hora:  "{{ m.fecha|date:'H:i' }}",
+      tipo:  "medicamento",
+      titulo:"{{ m.medicamento.nombre|escapejs }}",
+      sub:   "{{ m.get_tipo_display|escapejs }} — {{ m.cantidad }} uds. · {{ m.motivo|escapejs|truncatechars:40 }}",
+      url:   "#"
+    }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+  ]
+};
+
+const HOY_STR = "{{ hoy|date:'Y-m-d' }}";
+</script>
+
+<div class="cal-wrap">
+
+  <!-- Header -->
+  <div class="cal-header">
+    <div>
+      <div class="cal-title">📅 Calendario Médico</div>
+      <div class="cal-subtitle">Consultas · Remisiones · Seguimientos · Inventario</div>
+    </div>
+    <div class="cal-header-right">
+      {% if vencidos %}
+      <div style="background:rgba(239,68,68,.25);border:1px solid rgba(239,68,68,.5);color:white;padding:7px 13px;border-radius:10px;font-size:.78rem;font-weight:700">
+        ⚠ {{ vencidos|length }} seguimiento(s) vencido(s)
+      </div>
+      {% endif %}
+      <a href="{% url 'nuevo_seguimiento' %}" class="btn-cal btn-primary-cal"><i class="bi bi-calendar-plus"></i> Nuevo seguimiento</a>
+      <button onclick="enviarAlertaSeguimientos()" class="btn-cal btn-primary-cal" id="btn-alertas-seg" title="Enviar correo con seguimientos vencidos y próximos">
+        <i class="bi bi-bell-fill"></i> Alertar por correo
+      </button>
+    </div>
+  </div>
+
+  <div class="cal-layout">
+
+    <!-- Calendario -->
+    <div class="cal-card">
+      <div class="cal-nav">
+        <button class="cal-nav-btn" onclick="cambiarMes(-1)">‹</button>
+        <div class="cal-month-label" id="cal-month-label"></div>
+        <button class="cal-nav-btn" onclick="cambiarMes(1)">›</button>
+      </div>
+      <div class="cal-weekdays">
+        <div class="cal-wd">Dom</div><div class="cal-wd">Lun</div>
+        <div class="cal-wd">Mar</div><div class="cal-wd">Mié</div>
+        <div class="cal-wd">Jue</div><div class="cal-wd">Vie</div>
+        <div class="cal-wd">Sáb</div>
+      </div>
+      <div class="cal-grid" id="cal-grid"></div>
+      <div class="legend-row">
+        <div class="legend-item"><div class="legend-dot" style="background:#3b82f6"></div> Consultas</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#ef4444"></div> Remisiones</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div> Seguimientos</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#22c55e"></div> Inventario</div>
+      </div>
+    </div>
+
+    <!-- Panel lateral -->
+    <div class="day-panel">
+      <div class="day-panel-head">
+        <div class="day-panel-date" id="dp-day">—</div>
+        <div class="day-panel-month" id="dp-month"></div>
+        <div class="day-panel-count" id="dp-count"></div>
+      </div>
+      <div class="day-panel-body" id="dp-body">
+        <div class="day-empty">
+          <div class="day-empty-icon">📅</div>
+          <div style="font-size:.82rem">Selecciona un día para ver la actividad</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const hoyDate = new Date(HOY_STR + 'T00:00:00');
+
+let curYear  = hoyDate.getFullYear();
+let curMonth = hoyDate.getMonth(); // 0-based
+let selectedDate = null;
+
+// Merge all events
+const ALL_EVENTS = [
+  ...CAL_DATA.consultas,
+  ...CAL_DATA.remisiones,
+  ...CAL_DATA.seguimientos,
+  ...CAL_DATA.movimientos
+];
+
+// Build date → events index
+function buildIndex(year, month) {
+  const idx = {};
+  ALL_EVENTS.forEach(ev => {
+    const d = new Date(ev.fecha + 'T00:00:00');
+    if (d.getFullYear() === year && d.getMonth() === month) {
+      const key = ev.fecha;
+      if (!idx[key]) idx[key] = [];
+      idx[key].push(ev);
+    }
+  });
+  return idx;
+}
+
+function dateStr(y, m, d) {
+  return y+'-'+(m+1).toString().padStart(2,'0')+'-'+d.toString().padStart(2,'0');
+}
+
+function renderCalendar() {
+  const idx = buildIndex(curYear, curMonth);
+  document.getElementById('cal-month-label').textContent = MESES[curMonth] + ' ' + curYear;
+
+  const grid = document.getElementById('cal-grid');
+  grid.innerHTML = '';
+
+  const firstDay = new Date(curYear, curMonth, 1).getDay(); // 0=Sun
+  const daysInMonth = new Date(curYear, curMonth+1, 0).getDate();
+  const daysInPrev  = new Date(curYear, curMonth, 0).getDate();
+
+  const todayStr = HOY_STR;
+
+  // Prev month padding
+  for (let i = firstDay - 1; i >= 0; i--) {
+    const d = daysInPrev - i;
+    const m = curMonth - 1 < 0 ? 11 : curMonth - 1;
+    const y = curMonth - 1 < 0 ? curYear - 1 : curYear;
+    const ds = dateStr(y, m, d);
+    grid.appendChild(makeDay(d, ds, true, idx));
+  }
+
+  // Current month
+  for (let d = 1; d <= daysInMonth; d++) {
+    const ds = dateStr(curYear, curMonth, d);
+    grid.appendChild(makeDay(d, ds, false, idx));
+  }
+
+  // Next month padding
+  const total = firstDay + daysInMonth;
+  const rem   = total % 7 === 0 ? 0 : 7 - (total % 7);
+  for (let d = 1; d <= rem; d++) {
+    const m = curMonth + 1 > 11 ? 0 : curMonth + 1;
+    const y = curMonth + 1 > 11 ? curYear + 1 : curYear;
+    const ds = dateStr(y, m, d);
+    grid.appendChild(makeDay(d, ds, true, idx));
+  }
+
+  // Re-highlight selected
+  if (selectedDate) {
+    const el = document.querySelector('.cal-day[data-date="'+selectedDate+'"]');
+    if (el) el.classList.add('selected');
+  }
+}
+
+function makeDay(dayNum, ds, otherMonth, idx) {
+  const cell = document.createElement('div');
+  cell.className = 'cal-day' + (otherMonth ? ' other-month' : '');
+  cell.dataset.date = ds;
+
+  const todayStr = HOY_STR;
+  if (ds === todayStr) cell.classList.add('today');
+
+  const wd = new Date(ds + 'T00:00:00').getDay();
+  if (wd === 0 || wd === 6) cell.classList.add('weekend');
+
+  // Day number
+  const numDiv = document.createElement('div');
+  numDiv.className = 'cal-day-num';
+  numDiv.textContent = dayNum;
+  cell.appendChild(numDiv);
+
+  // Events
+  const events = idx[ds] || [];
+  if (events.length > 0) {
+    cell.classList.add('has-events');
+
+    // Show up to 2 chips on desktop
+    const maxChips = 2;
+    events.slice(0, maxChips).forEach(ev => {
+      const chip = document.createElement('div');
+      chip.className = 'cal-event-chip ' + chipClass(ev.tipo);
+      chip.textContent = ev.titulo.split(' ')[0];
+      cell.appendChild(chip);
+    });
+
+    if (events.length > maxChips) {
+      const more = document.createElement('div');
+      more.className = 'cal-event-chip';
+      more.style.cssText = 'background:#f1f5f9;color:#6b7280;font-size:.58rem';
+      more.textContent = '+' + (events.length - maxChips) + ' más';
+      cell.appendChild(more);
+    }
+
+    // Check for vencido seguimiento
+    const hasVencido = events.some(e => e.tipo === 'seguimiento' && e.vencido);
+    if (hasVencido) cell.classList.add('vencido-day');
+  }
+
+  cell.addEventListener('click', () => selectDay(ds, events));
+  return cell;
+}
+
+function chipClass(tipo) {
+  return { consulta:'chip-blue', remision:'chip-red', seguimiento:'chip-amber', medicamento:'chip-green' }[tipo] || '';
+}
+
+function selectDay(ds, events) {
+  // Remove previous selection
+  document.querySelectorAll('.cal-day.selected').forEach(el => el.classList.remove('selected'));
+  selectedDate = ds;
+  const el = document.querySelector('.cal-day[data-date="'+ds+'"]');
+  if (el) el.classList.add('selected');
+
+  // Parse date
+  const date = new Date(ds + 'T00:00:00');
+  const dayNum = date.getDate();
+  const monthName = MESES[date.getMonth()];
+  const year = date.getFullYear();
+
+  document.getElementById('dp-day').textContent = dayNum;
+  document.getElementById('dp-month').textContent = monthName + ' ' + year;
+  document.getElementById('dp-count').textContent = events.length === 0
+    ? 'Sin actividad registrada'
+    : events.length + ' actividad' + (events.length !== 1 ? 'es' : '') + ' registrada' + (events.length !== 1 ? 's' : '');
+
+  const body = document.getElementById('dp-body');
+  if (events.length === 0) {
+    body.innerHTML = '<div class="day-empty"><div class="day-empty-icon">🌿</div><div style="font-size:.82rem">Sin registros para este día</div></div>';
+    return;
+  }
+
+  body.innerHTML = '';
+  events.forEach(ev => {
+    const item = document.createElement('a');
+    // Seguimientos no completados → abrir modal de gestión
+    if (ev.tipo === 'seguimiento' && !ev.completado) {
+      item.href = '#';
+      item.addEventListener('click', function(e) {
+        e.preventDefault();
+        abrirModalSeguimientoCalendario(ev.pk, ev.sub, ev.est_pk, ev.vencido);
+      });
+    } else {
+      item.href = ev.url || '#';
+    }
+    item.className = 'day-item ' + ev.tipo + '-item';
+    const typeLabel = { consulta:'Consulta', remision:'Remision', seguimiento:'Seguimiento', medicamento:'Inventario' }[ev.tipo] || ev.tipo;
+    item.innerHTML = `
+      <div class="day-item-type">${typeLabel}${ev.hora ? ' · ' + ev.hora : ''}</div>
+      <div class="day-item-title">${ev.titulo}</div>
+      <div class="day-item-meta">${ev.sub}</div>
+      ${ev.completado === true ? '<div style="font-size:.68rem;color:#16a34a;margin-top:3px;font-weight:700">✓ Completado</div>' : ''}
+      ${ev.vencido === true ? '<div style="font-size:.68rem;color:#dc2626;margin-top:3px;font-weight:700">⚠ Vencido</div>' : ''}
+      ${ev.tipo === 'seguimiento' && !ev.completado ? '<div style="font-size:.66rem;color:#0284c7;margin-top:4px;font-weight:700">Toca para gestionar →</div>' : ''}
+    `;
+    body.appendChild(item);
+  });
+}
+
+function cambiarMes(delta) {
+  curMonth += delta;
+  if (curMonth > 11) { curMonth = 0; curYear++; }
+  if (curMonth < 0)  { curMonth = 11; curYear--; }
+  selectedDate = null;
+  renderCalendar();
+  // Reset panel
+  document.getElementById('dp-day').textContent = '—';
+  document.getElementById('dp-month').textContent = '';
+  document.getElementById('dp-count').textContent = '';
+  document.getElementById('dp-body').innerHTML = '<div class="day-empty"><div class="day-empty-icon">📅</div><div style="font-size:.82rem">Selecciona un día para ver la actividad</div></div>';
+}
+
+// Init
+renderCalendar();
+
+// Auto-select today
+const todayEvents = ALL_EVENTS.filter(e => e.fecha === HOY_STR);
+selectDay(HOY_STR, todayEvents);
+
+// ── Alerta por correo de seguimientos ────────────────────────────────────────
+function enviarAlertaSeguimientos() {
+  const btn = document.getElementById('btn-alertas-seg');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Enviando…';
+  fetch('{% url "notificaciones_seguimiento" %}', {
+    method: 'POST',
+    headers: {'X-CSRFToken': '{{ csrf_token }}'},
+  })
+  .then(r => r.json())
+  .then(data => {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="bi bi-bell-fill"></i> Alertar por correo';
+    if (data.ok) {
+      alert('✅ ' + data.mensaje);
+    } else {
+      alert('⚠️ ' + data.mensaje);
+    }
+  })
+  .catch(() => {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="bi bi-bell-fill"></i> Alertar por correo';
+    alert('Error al conectar con el servidor.');
+  });
+}
+</script>
+
+<!-- ══ MODAL SEGUIMIENTO DESDE CALENDARIO ══ -->
+<div id="cal-modal-seguimiento" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);backdrop-filter:blur(3px);z-index:9999;align-items:center;justify-content:center;padding:16px">
+  <div id="cal-modal-seg-inner" style="background:#fff;border-radius:20px;padding:0;max-width:460px;width:100%;box-shadow:0 24px 64px rgba(0,0,0,.22);animation:calFadeIn .2s ease;overflow:hidden">
+    <div style="padding:20px 24px 16px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;gap:12px">
+      <div id="cal-modal-seg-icon" style="width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:#eff6ff">
+        <i id="cal-modal-seg-icon-i" class="bi bi-clipboard2-pulse" style="font-size:1.3rem;color:#2563eb"></i>
+      </div>
+      <div style="flex:1;min-width:0">
+        <div id="cal-modal-seg-title" style="font-size:.9rem;font-weight:800;color:#0f172a">Gestionar seguimiento</div>
+        <div id="cal-modal-seg-tipo" style="font-size:.76rem;color:#64748b;margin-top:2px"></div>
+      </div>
+      <button id="cal-btn-modal-seg-x" style="width:32px;height:32px;border-radius:8px;border:1.5px solid #e2e8f0;background:#f8fafc;color:#64748b;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:.9rem">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+    <div style="padding:20px 24px">
+      <p id="cal-modal-seg-desc" style="font-size:.84rem;color:#374151;margin:0 0 18px;line-height:1.6">Registra la evolución del estudiante y cierra el seguimiento, o extiéndelo si aún requiere atención.</p>
+      <button id="cal-btn-continuar-seg" style="width:100%;padding:12px 16px;margin-bottom:10px;background:linear-gradient(135deg,#0ea5e9,#0284c7);color:#fff;border:none;border-radius:11px;font-size:.86rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
+        <i class="bi bi-arrow-clockwise"></i> Extender 7 días más
+      </button>
+      <button id="cal-btn-mostrar-evolucion" style="width:100%;padding:12px 16px;margin-bottom:10px;background:#f8fafc;color:#374151;border:1.5px solid #e2e8f0;border-radius:11px;font-size:.86rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
+        <i class="bi bi-check2-circle"></i> Registrar cierre
+      </button>
+      <div id="cal-evolucion-wrap" style="display:none;margin-bottom:10px">
+        <label style="font-size:.77rem;font-weight:700;color:#374151;display:block;margin-bottom:6px">
+          <i class="bi bi-journal-text"></i>&nbsp; Notas de cierre <span style="font-weight:400;color:#94a3b8">(opcional)</span>
+        </label>
+        <textarea id="cal-inp-evolucion" rows="3" placeholder="Ej: Estudiante mejoró. Alta. Sin novedades..."
+          style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:.81rem;resize:none;box-sizing:border-box;outline:none"></textarea>
+        <button id="cal-btn-confirmar-cierre" style="width:100%;margin-top:8px;padding:12px 16px;background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;border:none;border-radius:11px;font-size:.86rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
+          <i class="bi bi-check-lg"></i> Confirmar cierre
+        </button>
+      </div>
+      <button id="cal-btn-modal-seg-cancelar" style="width:100%;padding:9px;background:none;border:none;color:#94a3b8;font-size:.79rem;cursor:pointer;border-radius:8px">
+        <i class="bi bi-x"></i> Cancelar
+      </button>
+    </div>
+  </div>
+</div>
+
+<form id="cal-form-seguimiento-modal" method="post" action="" style="display:none">
+  {% csrf_token %}
+  <input type="hidden" name="continuar" id="cal-seg-continuar-val" value="0">
+  <input type="hidden" name="evolucion" id="cal-seg-evolucion-val" value="">
+  <input type="hidden" name="next" value="{% url 'calendario_seguimientos' %}">
+</form>
+
+<style>
+@keyframes calFadeIn { from{opacity:0;transform:scale(.95)} to{opacity:1;transform:scale(1)} }
+</style>
+
+<script>
+let _calSegPk = null;
+
+function cerrarModalCal() {
+  document.getElementById('cal-modal-seguimiento').style.display = 'none';
+}
+
+function abrirModalSeguimientoCalendario(pk, tipo, estPk, esVencido) {
+  _calSegPk = pk;
+  var icon  = document.getElementById('cal-modal-seg-icon');
+  var iconI = document.getElementById('cal-modal-seg-icon-i');
+  var title = document.getElementById('cal-modal-seg-title');
+  var desc  = document.getElementById('cal-modal-seg-desc');
+  if (esVencido) {
+    icon.style.background = '#fef2f2';
+    iconI.className       = 'bi bi-exclamation-circle';
+    iconI.style.color     = '#dc2626';
+    title.textContent     = 'Seguimiento vencido';
+    title.style.color     = '#dc2626';
+    desc.textContent      = 'El período de este seguimiento ya venció. Puedes extenderlo 7 días más o registrar el cierre con notas de evolución.';
+  } else {
+    icon.style.background = '#eff6ff';
+    iconI.className       = 'bi bi-clipboard2-pulse';
+    iconI.style.color     = '#2563eb';
+    title.textContent     = 'Gestionar seguimiento';
+    title.style.color     = '#0f172a';
+    desc.textContent      = 'Registra la evolución del estudiante y cierra el seguimiento, o extiéndelo si aún requiere atención.';
+  }
+  document.getElementById('cal-modal-seg-tipo').textContent = tipo;
+  document.getElementById('cal-evolucion-wrap').style.display = 'none';
+  document.getElementById('cal-btn-mostrar-evolucion').style.display = 'flex';
+  document.getElementById('cal-inp-evolucion').value = '';
+  document.getElementById('cal-modal-seguimiento').style.display = 'flex';
+}
+
+function calEnviarSeguimiento(continuar) {
+  var f = document.getElementById('cal-form-seguimiento-modal');
+  f.action = '/seguimientos/' + _calSegPk + '/completar/';
+  document.getElementById('cal-seg-continuar-val').value = continuar;
+  document.getElementById('cal-seg-evolucion-val').value = document.getElementById('cal-inp-evolucion').value;
+  f.submit();
+}
+
+(function() {
+  var modal      = document.getElementById('cal-modal-seguimiento');
+  var inner      = document.getElementById('cal-modal-seg-inner');
+  var btnX       = document.getElementById('cal-btn-modal-seg-x');
+  var btnCanc    = document.getElementById('cal-btn-modal-seg-cancelar');
+  var btnCont    = document.getElementById('cal-btn-continuar-seg');
+  var btnMostrar = document.getElementById('cal-btn-mostrar-evolucion');
+  var btnConfirm = document.getElementById('cal-btn-confirmar-cierre');
+
+  btnX.addEventListener('click', function(e) { e.stopPropagation(); cerrarModalCal(); });
+  btnCanc.addEventListener('click', function(e) { e.stopPropagation(); cerrarModalCal(); });
+  btnCont.addEventListener('click', function(e) { e.stopPropagation(); calEnviarSeguimiento(1); });
+  btnMostrar.addEventListener('click', function(e) {
+    e.stopPropagation();
+    document.getElementById('cal-btn-mostrar-evolucion').style.display = 'none';
+    document.getElementById('cal-evolucion-wrap').style.display = 'block';
+  });
+  btnConfirm.addEventListener('click', function(e) { e.stopPropagation(); calEnviarSeguimiento(0); });
+  inner.addEventListener('click', function(e) { e.stopPropagation(); });
+  modal.addEventListener('click', function(e) { if (e.target === modal) cerrarModalCal(); });
+})();
+</script>
+
+
+{% endblock %}

@@ -1,0 +1,347 @@
+{% extends 'enfermeria/base.html' %}
+{% block title %}Promoción de Año — COSFA CURE{% endblock %}
+{% block page_title %}Promoción de Año Escolar{% endblock %}
+{% block content %}
+
+<style>
+.promo-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px}
+.promo-titulo{font-family:'Sora',sans-serif;font-size:1.1rem;font-weight:800;color:var(--navy);display:flex;align-items:center;gap:9px}
+.promo-card{background:white;border-radius:16px;box-shadow:0 2px 16px rgba(15,36,68,.07);border:1px solid rgba(15,36,68,.06);margin-bottom:20px;overflow:hidden}
+.promo-card-head{padding:14px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(14,165,160,.08);flex-wrap:wrap;gap:8px}
+.promo-card-title{font-weight:800;font-size:.88rem;color:var(--navy);display:flex;align-items:center;gap:8px}
+
+/* Filtro por grado */
+.filtro-grado-bar{display:flex;gap:8px;flex-wrap:wrap;padding:14px 20px;background:rgba(14,165,160,.04);border-bottom:1px solid rgba(14,165,160,.06);align-items:center}
+.filtro-grado-bar label{font-size:.7rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.4px}
+.filtro-grado-bar select{padding:7px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:.8rem;color:var(--navy);background:#f8fafc;outline:none;transition:border-color .2s}
+.filtro-grado-bar select:focus{border-color:var(--teal)}
+.btn-filtrar{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,var(--teal),#067a76);color:white;border:none;padding:8px 16px;border-radius:9px;font-size:.78rem;font-weight:700;cursor:pointer}
+.btn-limpiar{display:inline-flex;align-items:center;gap:5px;background:white;border:1.5px solid #e2e8f0;color:#64748b;padding:7px 14px;border-radius:9px;font-size:.78rem;font-weight:600;cursor:pointer;text-decoration:none}
+
+/* Promoción masiva */
+.masivo-box{background:linear-gradient(135deg,rgba(124,58,237,.06),rgba(109,40,217,.04));border:1.5px solid rgba(124,58,237,.2);border-radius:14px;padding:18px 20px;margin:14px 20px}
+.masivo-title{font-weight:800;font-size:.84rem;color:#5b21b6;display:flex;align-items:center;gap:7px;margin-bottom:14px}
+.masivo-row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+.masivo-field{display:flex;flex-direction:column;gap:5px}
+.masivo-field label{font-size:.68rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.4px}
+.masivo-field select,.masivo-field input{padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:.8rem;color:var(--navy);background:#f8fafc;outline:none;transition:border-color .2s;min-width:120px}
+.masivo-field select:focus,.masivo-field input:focus{border-color:#7c3aed}
+.btn-masivo{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:white;border:none;padding:9px 18px;border-radius:10px;font-size:.8rem;font-weight:700;cursor:pointer;box-shadow:0 3px 10px rgba(124,58,237,.3)}
+.masivo-hint{font-size:.68rem;color:#94a3b8;margin-top:8px}
+
+/* Tabla estudiantes */
+.tbl-promo{width:100%;border-collapse:collapse}
+.tbl-promo thead tr{background:linear-gradient(135deg,var(--navy),var(--teal))}
+.tbl-promo thead th{color:white;font-size:.65rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;padding:11px 14px;border:none;text-align:left}
+.tbl-promo tbody td{padding:10px 14px;border-bottom:1px solid rgba(14,165,160,.06);vertical-align:middle;font-size:.81rem;color:var(--text)}
+.tbl-promo tbody tr:hover td{background:rgba(14,165,160,.04)}
+.tbl-promo tbody tr:last-child td{border-bottom:none}
+.badge-grado-p{display:inline-flex;align-items:center;justify-content:center;min-width:40px;height:24px;padding:0 10px;background:linear-gradient(135deg,var(--teal),#067a76);color:white;font-size:.64rem;font-weight:800;border-radius:20px}
+.badge-estado{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:.63rem;font-weight:700}
+.badge-activo{background:rgba(22,163,74,.1);color:#15803d;border:1px solid rgba(22,163,74,.2)}
+.badge-graduado{background:rgba(99,102,241,.1);color:#4338ca;border:1px solid rgba(99,102,241,.2)}
+.badge-retirado{background:rgba(239,68,68,.1);color:#b91c1c;border:1px solid rgba(239,68,68,.2)}
+.badge-trasladado{background:rgba(249,115,22,.1);color:#c2410c;border:1px solid rgba(249,115,22,.2)}
+
+/* Modal de promoción individual */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;align-items:center;justify-content:center}
+.modal-box{background:white;border-radius:20px;padding:28px;max-width:460px;width:92%;box-shadow:0 24px 64px rgba(0,0,0,.2);position:relative;animation:slideUp .25s ease}
+@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.modal-title{font-family:'Sora',sans-serif;font-weight:800;font-size:.95rem;color:var(--navy);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.modal-field{margin-bottom:13px}
+.modal-field label{display:block;font-size:.68rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px}
+.modal-field select,.modal-field input{width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:.82rem;color:var(--navy);outline:none;background:#f8fafc}
+.modal-field select:focus,.modal-field input:focus{border-color:var(--teal)}
+.modal-actions{display:flex;gap:8px;margin-top:18px}
+.btn-guardar-promo{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:7px;background:linear-gradient(135deg,var(--teal),#067a76);color:white;border:none;padding:10px;border-radius:11px;font-size:.83rem;font-weight:700;cursor:pointer;box-shadow:0 3px 10px rgba(14,165,160,.3)}
+.btn-cancelar-modal{background:white;border:1.5px solid #e2e8f0;color:#64748b;padding:10px 16px;border-radius:11px;font-size:.82rem;font-weight:600;cursor:pointer}
+.stu-avatar-sm{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--teal),var(--navy));display:flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-size:.8rem;font-weight:800;color:white;flex-shrink:0}
+.info-year{background:rgba(14,165,160,.07);border:1.5px solid rgba(14,165,160,.2);border-radius:11px;padding:11px 14px;font-size:.76rem;color:#0d6e6b;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.sel-all-row{padding:8px 14px;background:rgba(14,165,160,.03);border-bottom:1px solid rgba(14,165,160,.06);display:flex;align-items:center;gap:8px;font-size:.74rem;color:#64748b}
+.sel-all-row input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--teal)}
+</style>
+
+{% if messages %}
+  {% for msg in messages %}
+    <div class="alert alert-{{ msg.tags|default:'info' }}" style="margin-bottom:14px">
+      <i class="bi bi-{% if msg.tags == 'success' %}check-circle-fill{% elif msg.tags == 'error' or msg.tags == 'danger' %}exclamation-triangle-fill{% else %}info-circle-fill{% endif %}"></i>
+      {{ msg }}
+    </div>
+  {% endfor %}
+{% endif %}
+
+<div class="promo-header">
+  <div class="promo-titulo">
+    <i class="bi bi-arrow-up-circle-fill" style="color:var(--teal);font-size:1.3rem"></i>
+    Promoción de Año Escolar
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <a href="{% url 'grados_lista' %}" class="btn btn-outline btn-sm">
+      <i class="bi bi-mortarboard"></i> Gestionar grados
+    </a>
+    <a href="{% url 'lista_estudiantes' %}" class="btn btn-outline btn-sm">
+      <i class="bi bi-people"></i> Lista de estudiantes
+    </a>
+  </div>
+</div>
+
+<!-- INFO ANIO ACTUAL -->
+<div class="info-year">
+  <i class="bi bi-calendar3" style="font-size:1rem;flex-shrink:0"></i>
+  <div>
+    <strong>Año lectivo actual: {{ anio_actual }}</strong>
+    — Aquí puedes promover estudiantes al siguiente grado, cambiarlos de grupo,
+    marcarlos como <em>Graduados</em> o <em>Retirados</em>, individualmente o en bloque.
+  </div>
+</div>
+
+<!-- PROMOCIÓN MASIVA -->
+<div class="promo-card">
+  <div class="promo-card-head">
+    <div class="promo-card-title">
+      <i class="bi bi-lightning-charge-fill" style="color:#7c3aed"></i>
+      Promoción masiva de grado
+    </div>
+  </div>
+  <div class="masivo-box">
+    <div class="masivo-title">
+      <i class="bi bi-people-fill"></i> Mover todos (o seleccionados) de un grado a otro
+    </div>
+    <form method="post" action="{% url 'promover_masivo' %}"
+          onsubmit="return confirmarMasivo()">
+      {% csrf_token %}
+      <div class="masivo-row">
+        <div class="masivo-field">
+          <label>Grado de origen *</label>
+          <select name="grado_origen" id="masivo-origen" required>
+            <option value="">-- Seleccionar --</option>
+            {% for g in grados %}
+              <option value="{{ g.nombre }}" {% if f_grado == g.nombre %}selected{% endif %}>{{ g.nombre }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="masivo-field">
+          <label>Nuevo grado (destino)</label>
+          <select name="grado_destino">
+            <option value="">-- Sin cambio de grado --</option>
+            {% for g in grados %}
+              <option value="{{ g.nombre }}">{{ g.nombre }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="masivo-field">
+          <label>Nuevo estado</label>
+          <select name="estado_masivo">
+            {% for val,lbl in estado_choices %}
+              <option value="{{ val }}" {% if val == 'activo' %}selected{% endif %}>{{ lbl }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="masivo-field">
+          <label>Año lectivo</label>
+          <input type="number" name="anio_lectivo_masivo" placeholder="{{ anio_actual }}"
+                 min="2000" max="2100" value="{{ anio_actual }}">
+        </div>
+        <button type="submit" class="btn-masivo">
+          <i class="bi bi-arrow-up-circle-fill"></i> Aplicar
+        </button>
+      </div>
+      <div class="masivo-hint">
+        Si marcas estudiantes individuales en la tabla de abajo, solo se moverán esos.
+        De lo contrario se aplica a <strong>todos los activos</strong> del grado de origen.
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- FILTRO POR GRADO -->
+<div class="promo-card">
+  <div class="promo-card-head">
+    <div class="promo-card-title">
+      <i class="bi bi-person-check-fill" style="color:var(--teal)"></i>
+      Estudiantes activos
+      <span style="background:rgba(14,165,160,.1);color:var(--teal);border-radius:20px;padding:2px 10px;font-size:.68rem">{{ estudiantes.count }}</span>
+    </div>
+  </div>
+
+  <!-- Filtro -->
+  <div class="filtro-grado-bar">
+    <form method="get" style="display:contents">
+      <label><i class="bi bi-funnel"></i> Filtrar por grado:</label>
+      <select name="grado">
+        <option value="">Todos los grados</option>
+        {% for g in grados %}
+          <option value="{{ g.nombre }}" {% if f_grado == g.nombre %}selected{% endif %}>{{ g.nombre }}</option>
+        {% endfor %}
+      </select>
+      <button type="submit" class="btn-filtrar"><i class="bi bi-funnel-fill"></i> Filtrar</button>
+      {% if f_grado %}
+        <a href="{% url 'promocion_anio' %}" class="btn-limpiar"><i class="bi bi-x-circle"></i> Ver todos</a>
+      {% endif %}
+    </form>
+  </div>
+
+  <!-- Tabla -->
+  {% if estudiantes %}
+  <form method="post" action="{% url 'promover_masivo' %}" id="form-sel-masivo">
+    {% csrf_token %}
+    <input type="hidden" name="grado_origen" id="h-grado-origen" value="{{ f_grado }}">
+    <input type="hidden" name="grado_destino" id="h-grado-destino" value="">
+    <input type="hidden" name="estado_masivo" id="h-estado-masivo" value="activo">
+    <input type="hidden" name="anio_lectivo_masivo" id="h-anio-masivo" value="{{ anio_actual }}">
+    <div class="sel-all-row">
+      <input type="checkbox" id="sel-all" onchange="toggleAll(this)">
+      <label for="sel-all" style="cursor:pointer;user-select:none">Seleccionar todos para acción masiva</label>
+    </div>
+    <table class="tbl-promo">
+      <thead>
+        <tr>
+          <th style="width:38px"></th>
+          <th>Estudiante</th>
+          <th>Grado actual</th>
+          <th>Año lectivo</th>
+          <th>Estado</th>
+          <th>Acción individual</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for e in estudiantes %}
+      <tr>
+        <td>
+          <input type="checkbox" name="ids_estudiantes" value="{{ e.pk }}" class="sel-cb"
+                 style="width:15px;height:15px;cursor:pointer;accent-color:var(--teal)">
+        </td>
+        <td>
+          <div style="display:flex;align-items:center;gap:9px">
+            {% if e.foto %}
+              <img src="{{ e.foto.url }}" style="width:34px;height:34px;border-radius:50%;object-fit:cover;border:2px solid rgba(14,165,160,.2)">
+            {% else %}
+              <div class="stu-avatar-sm">{{ e.nombre|first|upper }}</div>
+            {% endif %}
+            <div>
+              <div style="font-weight:700;color:var(--navy);font-size:.82rem">{{ e.nombre }}</div>
+              <div style="font-size:.67rem;color:#94a3b8">{{ e.numero_documento }}</div>
+            </div>
+          </div>
+        </td>
+        <td><span class="badge-grado-p">{{ e.grado }}</span></td>
+        <td style="color:#94a3b8;font-size:.78rem">{{ e.anio_lectivo|default:"—" }}</td>
+        <td>
+          {% if e.estado_academico == 'activo' %}<span class="badge-estado badge-activo"><i class="bi bi-check-circle-fill"></i> Activo</span>
+          {% elif e.estado_academico == 'graduado' %}<span class="badge-estado badge-graduado"><i class="bi bi-mortarboard-fill"></i> Graduado</span>
+          {% elif e.estado_academico == 'retirado' %}<span class="badge-estado badge-retirado"><i class="bi bi-x-circle-fill"></i> Retirado</span>
+          {% else %}<span class="badge-estado badge-trasladado"><i class="bi bi-arrow-right-circle-fill"></i> Trasladado</span>
+          {% endif %}
+        </td>
+        <td>
+          <button type="button" class="btn btn-sm btn-outline"
+                  style="font-size:.72rem;padding:5px 11px"
+                  onclick="abrirModal({{ e.pk }}, '{{ e.nombre|escapejs }}', '{{ e.grado }}', '{{ e.estado_academico }}', '{{ e.anio_lectivo|default:anio_actual }}')">
+            <i class="bi bi-pencil-square"></i> Editar
+          </button>
+        </td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </form>
+  {% else %}
+  <div style="text-align:center;padding:48px 24px;color:#94a3b8">
+    <i class="bi bi-people" style="font-size:2.2rem;display:block;margin-bottom:12px;color:#cbd5e1"></i>
+    <div style="font-size:.85rem">
+      {% if f_grado %}
+        No hay estudiantes activos en el grado <strong>{{ f_grado }}</strong>.
+      {% else %}
+        No hay estudiantes activos registrados.
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<!-- MODAL PROMOCIÓN INDIVIDUAL -->
+<div class="modal-overlay" id="modal-promo">
+  <div class="modal-box">
+    <button onclick="cerrarModal()"
+            style="position:absolute;top:14px;right:16px;background:none;border:none;font-size:1.3rem;cursor:pointer;color:#94a3b8">✕</button>
+    <div class="modal-title">
+      <i class="bi bi-arrow-up-circle-fill" style="color:var(--teal)"></i>
+      Actualizar estudiante
+    </div>
+    <div id="modal-stu-info" style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding:10px 14px;background:rgba(14,165,160,.07);border-radius:11px">
+      <div class="stu-avatar-sm" id="modal-avatar">?</div>
+      <div>
+        <div id="modal-nombre" style="font-weight:700;color:var(--navy);font-size:.85rem"></div>
+        <div id="modal-grado-actual" style="font-size:.72rem;color:#64748b"></div>
+      </div>
+    </div>
+    <form method="post" id="form-promo-individual" action="">
+      {% csrf_token %}
+      <div class="modal-field">
+        <label>Nuevo grado</label>
+        <select name="nuevo_grado" id="modal-nuevo-grado">
+          {% for g in grados %}
+            <option value="{{ g.nombre }}">{{ g.nombre }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="modal-field">
+        <label>Estado académico</label>
+        <select name="estado_academico" id="modal-estado">
+          {% for val,lbl in estado_choices %}
+            <option value="{{ val }}">{{ lbl }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="modal-field">
+        <label>Año lectivo</label>
+        <input type="number" name="anio_lectivo" id="modal-anio"
+               min="2000" max="2100" value="{{ anio_actual }}">
+      </div>
+      <div class="modal-actions">
+        <button type="submit" class="btn-guardar-promo">
+          <i class="bi bi-check-circle-fill"></i> Guardar cambios
+        </button>
+        <button type="button" class="btn-cancelar-modal" onclick="cerrarModal()">Cancelar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function abrirModal(pk, nombre, grado, estado, anio) {
+  document.getElementById('form-promo-individual').action = '/estudiantes/' + pk + '/promover/';
+  document.getElementById('modal-nombre').textContent = nombre;
+  document.getElementById('modal-grado-actual').textContent = 'Grado actual: ' + grado;
+  document.getElementById('modal-avatar').textContent = nombre.charAt(0).toUpperCase();
+  // Select nuevo_grado
+  const selGrado = document.getElementById('modal-nuevo-grado');
+  for (let o of selGrado.options) { o.selected = (o.value === grado); }
+  // Select estado
+  const selEst = document.getElementById('modal-estado');
+  for (let o of selEst.options) { o.selected = (o.value === estado); }
+  // Año
+  document.getElementById('modal-anio').value = anio || {{ anio_actual }};
+  document.getElementById('modal-promo').style.display = 'flex';
+}
+
+function cerrarModal() {
+  document.getElementById('modal-promo').style.display = 'none';
+}
+
+document.getElementById('modal-promo').addEventListener('click', function(e) {
+  if (e.target === this) cerrarModal();
+});
+
+function toggleAll(cb) {
+  document.querySelectorAll('.sel-cb').forEach(c => c.checked = cb.checked);
+}
+
+function confirmarMasivo() {
+  const origen = document.getElementById('masivo-origen').value;
+  if (!origen) { alert('Selecciona el grado de origen.'); return false; }
+  return confirm('¿Aplicar promoción masiva a todos los estudiantes activos de grado ' + origen + '?');
+}
+</script>
+
+{% endblock %}

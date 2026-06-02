@@ -1,0 +1,239 @@
+{% extends 'enfermeria/base.html' %}
+{% block title %}{% if editar %}Editar{% else %}Nueva{% endif %} Consulta Docente — COSFA CURE{% endblock %}
+{% block page_title %}{% if editar %}Editar Consulta Docente{% else %}Nueva Consulta Docente{% endif %}{% endblock %}
+{% block content %}
+<style>
+.estado-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:4px}
+.estado-card{border:2px solid var(--border);border-radius:12px;padding:12px 14px;cursor:pointer;transition:all .18s;display:flex;align-items:flex-start;gap:10px;background:white;position:relative}
+.estado-card:hover{border-color:var(--teal);box-shadow:var(--shadow-md);transform:translateY(-1px)}
+.estado-card.selected{box-shadow:var(--shadow-md);transform:translateY(-1px)}
+.estado-card.selected.verde{border-color:#10b981;background:#f0fdf4}
+.estado-card.selected.azul{border-color:#3b82f6;background:#eff6ff}
+.estado-card.selected.naranja{border-color:#f59e0b;background:#fffbeb}
+.estado-card.selected.rojo{border-color:#ef4444;background:#fef2f2}
+.estado-card input[type=radio]{display:none}
+.estado-icon{font-size:1.5rem;flex-shrink:0;margin-top:1px}
+.estado-label{font-size:.82rem;font-weight:700;color:var(--text)}
+.estado-desc{font-size:.72rem;color:var(--text-muted);margin-top:2px;line-height:1.4}
+.estado-check{position:absolute;top:8px;right:10px;width:18px;height:18px;border-radius:50%;border:2px solid #cbd5e1;display:flex;align-items:center;justify-content:center;font-size:.65rem}
+.estado-card.selected .estado-check{background:currentColor;border-color:transparent}
+.estado-card.selected.verde .estado-check{color:#10b981}
+.estado-card.selected.azul .estado-check{color:#3b82f6}
+.estado-card.selected.naranja .estado-check{color:#f59e0b}
+.estado-card.selected.rojo .estado-check{color:#ef4444}
+.doc-info-panel{background:linear-gradient(135deg,#f5f3ff,#ede9fe);border:1.5px solid rgba(124,58,237,.25);border-radius:12px;padding:14px 16px;display:flex;gap:14px;align-items:center;margin-top:8px}
+.doc-info-avatar{width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#5b21b6);display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:800;color:white;font-family:'Sora',sans-serif;flex-shrink:0}
+.doc-info-name{font-weight:700;color:#4c1d95;font-size:.88rem}
+.doc-info-sub{font-size:.73rem;color:#7c3aed;margin-top:2px}
+.doc-info-tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:5px}
+.doc-info-tag{font-size:.64rem;font-weight:700;background:rgba(124,58,237,.12);color:#5b21b6;padding:2px 8px;border-radius:20px}
+.doc-alerta{background:linear-gradient(135deg,#fff7ed,#ffedd5);border:1.5px solid #fed7aa;border-radius:10px;padding:10px 14px;margin-top:8px}
+</style>
+
+<div class="page-title">
+  {% if docente %}Consulta para <span>{{ docente.nombre }}</span>
+  {% elif editar %}Editar <span>Consulta Docente</span>
+  {% else %}Nueva <span>Consulta Docente</span>{% endif %}
+</div>
+
+<div class="card" style="max-width:720px;margin:0 auto">
+  <div class="card-head" style="background:linear-gradient(135deg,#5b21b6,#7c3aed)">
+    <div class="card-head-title" style="color:white"><i class="bi bi-clipboard2-pulse-fill"></i> Datos de la Consulta</div>
+  </div>
+  <div style="padding:20px">
+    <form method="post" id="consultaDocenteForm">{% csrf_token %}
+    <script>
+    document.addEventListener('DOMContentLoaded',function(){
+      var h=document.querySelector('[name="hora_atencion"]');
+      if(h&&!h.value){var n=new Date();h.value=String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');}
+    });
+    </script>
+
+      <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#5b21b6;margin-bottom:10px;padding-bottom:5px;border-bottom:1.5px solid #ede9fe">{% if docente %}👤 Docente: {{ docente.nombre }}{% else %}👤 Seleccionar Docente{% endif %}</div>
+      <div style="margin-bottom:14px">
+        <label class="form-label">Docente <span style="color:#e05c5c">*</span></label>
+        {{ form.docente }}
+        <div id="doc-panel" style="display:none" class="doc-info-panel">
+          <div class="doc-info-avatar" id="doc-avatar-ph"></div>
+          <div style="flex:1;min-width:0">
+            <div class="doc-info-name" id="doc-panel-name"></div>
+            <div class="doc-info-sub" id="doc-panel-sub"></div>
+            <div class="doc-info-tags" id="doc-panel-tags"></div>
+          </div>
+        </div>
+        <div id="doc-alerta-panel" style="display:none" class="doc-alerta">
+          <div style="font-weight:700;color:#c2410c;font-size:.78rem;margin-bottom:4px">⚠️ Alertas médicas</div>
+          <div id="doc-alerta-content" style="font-size:.75rem;color:#9a3412"></div>
+        </div>
+      </div>
+
+      <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--blue-dark);margin-bottom:10px;padding-bottom:5px;border-bottom:1.5px solid var(--blue-pale)">📋 Información de la consulta</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+        <div style="grid-column:1/-1">
+          <label class="form-label"><i class="bi bi-clock-fill" style="color:var(--teal)"></i> Hora de atención <span style="color:#e05c5c">*</span></label>
+          {{ form.hora_atencion }}
+        </div>
+        <div style="grid-column:1/-1"><label class="form-label">Motivo <span style="color:#e05c5c">*</span></label>{{ form.motivo }}</div>
+        <div style="grid-column:1/-1"><label class="form-label">Descripción de síntomas <span style="color:#e05c5c">*</span></label>{{ form.descripcion_sintomas }}</div>
+        <div style="grid-column:1/-1"><label class="form-label">Tratamiento aplicado <span style="color:#e05c5c">*</span></label>{{ form.tratamiento }}</div>
+        <div style="grid-column:1/-1"><label class="form-label">Observaciones</label>{{ form.observaciones }}</div>
+      </div>
+
+      <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--blue-dark);margin-bottom:10px;padding-bottom:5px;border-bottom:1.5px solid var(--blue-pale)">📌 Estado <span style="color:#e05c5c">*</span></div>
+      <div style="display:none">{{ form.estado }}</div>
+      <div class="estado-grid" style="margin-bottom:14px">
+        <label class="estado-card verde {% if form.estado.value == 'atendido' or not form.estado.value %}selected{% endif %}" data-val="atendido">
+          <div class="estado-icon">🏥</div><div><div class="estado-label">Atendido en enfermería</div><div class="estado-desc">El docente fue atendido y continúa en el colegio.</div></div><div class="estado-check">✓</div>
+        </label>
+        <label class="estado-card azul {% if form.estado.value == 'regreso_clase' %}selected{% endif %}" data-val="regreso_clase">
+          <div class="estado-icon">📚</div><div><div class="estado-label">Regresa a sus actividades</div><div class="estado-desc">Fue atendido y regresa a sus labores.</div></div><div class="estado-check">✓</div>
+        </label>
+        <label class="estado-card naranja {% if form.estado.value == 'remitido_casa' %}selected{% endif %}" data-val="remitido_casa">
+          <div class="estado-icon">🏠</div><div><div class="estado-label">Remitido a casa</div><div class="estado-desc">El docente debe retirarse a recuperarse.</div></div><div class="estado-check">✓</div>
+        </label>
+        <label class="estado-card rojo {% if form.estado.value == 'remitido_hospital' %}selected{% endif %}" data-val="remitido_hospital">
+          <div class="estado-icon">🚑</div><div><div class="estado-label">Remitido al hospital</div><div class="estado-desc">Requiere atención médica externa urgente.</div></div><div class="estado-check">✓</div>
+        </label>
+      </div>
+
+      <hr class="section-divider">
+      <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--blue-dark);margin-bottom:6px">🩹 Insumos aplicados</div>
+      <div style="background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.2);color:#b91c1c;border-radius:9px;padding:9px 13px;font-size:.77rem;margin-bottom:10px">
+        <i class="bi bi-shield-exclamation"></i> Solo insumos de primeros auxilios de forma autónoma.
+      </div>
+      <div id="meds-container" style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px"></div>
+      <button type="button" id="btn-add-med" class="btn btn-outline btn-sm" style="margin-bottom:14px"><i class="bi bi-plus-circle"></i> Agregar insumo</button>
+
+      <hr class="section-divider">
+      <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--blue-dark);margin-bottom:10px">💓 Signos vitales <span style="font-weight:400;color:var(--muted)">(opcional)</span></div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">
+        <div><label class="form-label">Temperatura °C</label>{{ form.temperatura }}</div>
+        <div><label class="form-label">Presión arterial</label>{{ form.presion_arterial }}</div>
+        <div><label class="form-label">Frec. cardíaca (lpm)</label>{{ form.frecuencia_cardiaca }}</div>
+        <div><label class="form-label">Frec. resp. (rpm)</label>{{ form.frecuencia_respiratoria }}</div>
+        <div><label class="form-label">Peso (kg)</label>{{ form.peso }}</div>
+        <div><label class="form-label">Talla (cm)</label>{{ form.talla }}</div>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:18px">
+        <button type="submit" class="btn btn-primary"><i class="bi bi-check-circle"></i> {% if editar %}Actualizar{% else %}Registrar{% endif %} consulta</button>
+        <a href="{% if docente %}{% url 'historial_docente' docente.pk %}{% elif editar and consulta.docente %}{% url 'historial_docente' consulta.docente.pk %}{% else %}{% url 'lista_consultas_docentes' %}{% endif %}" class="btn btn-outline">Cancelar</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+var DOCENTES_DATA = {};
+{% for d in form.docente.field.queryset %}
+DOCENTES_DATA["{{ d.pk }}"] = {
+  nombre: "{{ d.nombre|escapejs }}",
+  area: "{{ d.get_area_display|escapejs }}",
+  tipo: "{{ d.tipo|escapejs }}",
+  cedula: "{{ d.cedula|escapejs }}",
+  eps: "{{ d.eps|escapejs }}",
+  alergias: "{{ d.alergias|escapejs }}",
+  condiciones: "{{ d.condiciones_medicas|escapejs }}",
+  medicamentos: "{{ d.medicamentos_perm|escapejs }}",
+};
+{% endfor %}
+
+var meds = {{ medicamentos_json|safe }};
+
+var estadoInput = document.querySelector('[name="estado"]');
+document.querySelectorAll('.estado-card').forEach(function(card){
+  card.addEventListener('click', function(){
+    estadoInput.value = card.dataset.val;
+    document.querySelectorAll('.estado-card').forEach(function(c){ c.classList.toggle('selected', c.dataset.val === card.dataset.val); });
+  });
+});
+if(!estadoInput.value) estadoInput.value = 'atendido';
+
+var docSelect = document.querySelector('[name="docente"]');
+function updateDocPanel(){
+  var id = docSelect.value;
+  var panel = document.getElementById('doc-panel');
+  var alertPanel = document.getElementById('doc-alerta-panel');
+  if(!id || !DOCENTES_DATA[id]){ panel.style.display='none'; alertPanel.style.display='none'; return; }
+  var d = DOCENTES_DATA[id];
+  panel.style.display = 'flex';
+  document.getElementById('doc-panel-name').textContent = d.nombre;
+  document.getElementById('doc-panel-sub').textContent = d.area + ' · CC ' + d.cedula;
+  document.getElementById('doc-avatar-ph').textContent = d.nombre.charAt(0).toUpperCase();
+  var tags = document.getElementById('doc-panel-tags');
+  tags.innerHTML = '';
+  if(d.tipo){ var t=document.createElement('span'); t.className='doc-info-tag'; t.textContent=d.tipo; tags.appendChild(t); }
+  if(d.eps){ var t2=document.createElement('span'); t2.className='doc-info-tag'; t2.textContent=d.eps; tags.appendChild(t2); }
+  var alertas = [];
+  if(d.alergias) alertas.push('<strong>Alergias:</strong> ' + d.alergias);
+  if(d.condiciones) alertas.push('<strong>Condiciones:</strong> ' + d.condiciones);
+  if(d.medicamentos) alertas.push('<strong>Medicamentos:</strong> ' + d.medicamentos);
+  if(alertas.length){ document.getElementById('doc-alerta-content').innerHTML = alertas.join('<br>'); alertPanel.style.display='block'; }
+  else { alertPanel.style.display='none'; }
+}
+docSelect.addEventListener('change', updateDocPanel);
+updateDocPanel();
+
+function buildOptions(sel){ var h='<option value="">— Sin insumo —</option>'; for(var id in meds){ var m=meds[id]; var w=m.categoria==='medicamento'?' ⚠️':''; h+='<option value="'+id+'"'+(id==sel?' selected':'')+'>'+m.nombre+w+' ('+m.stock+' '+m.unidad+')</option>'; } return h; }
+function addRow(sid,cant,dosis){ sid=sid||''; cant=cant||1; dosis=dosis||'';
+  var row=document.createElement('div');
+  row.style.cssText='display:grid;grid-template-columns:2fr 80px 1fr auto;gap:8px;align-items:end;background:var(--blue-pale);padding:10px;border-radius:8px';
+  row.innerHTML='<div><label class="form-label" style="font-size:.75rem">Insumo</label><select name="med_ids[]" class="form-select med-sel">'+buildOptions(sid)+'</select><div style="font-size:.68rem;color:var(--muted);margin-top:2px"><span class="stk"></span><span class="mw" style="display:none;color:#dc2626;font-weight:700"> ⚠️ Prescripción</span></div></div><div><label class="form-label" style="font-size:.75rem">Cantidad</label><input type="number" name="med_cants[]" class="form-control" min="1" value="'+cant+'"></div><div><label class="form-label" style="font-size:.75rem">Indicación</label><input type="text" name="med_dosis[]" class="form-control" placeholder="Ej: Limpiar herida" value="'+dosis+'"></div><div style="padding-bottom:2px"><button type="button" class="btn btn-outline btn-xs rm-btn"><i class="bi bi-trash"></i></button></div>';
+  var sel=row.querySelector('.med-sel'),stk=row.querySelector('.stk'),mw=row.querySelector('.mw');
+  function us(){ var v=sel.value; if(v&&meds[v]){stk.textContent='Stock: '+meds[v].stock+' '+meds[v].unidad; mw.style.display=meds[v].categoria==='medicamento'?'inline':'none';}else{stk.textContent='';mw.style.display='none';} }
+  sel.addEventListener('change',us); us();
+  row.querySelector('.rm-btn').addEventListener('click',function(){ row.remove(); });
+  document.getElementById('meds-container').appendChild(row);
+}
+document.getElementById('btn-add-med').addEventListener('click',function(){ addRow(); });
+</script>
+
+<!-- ══ Tom Select: búsqueda rápida de docente ══ -->
+<link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+<style>
+.ts-wrapper.single .ts-control{
+  border:1.5px solid var(--border,#e2e8f0) !important;border-radius:10px !important;
+  padding:9px 14px !important;font-size:.85rem !important;font-family:inherit !important;
+  background:#fff !important;box-shadow:none !important;min-height:42px !important;
+}
+.ts-wrapper.single.focus .ts-control,.ts-wrapper.single:focus-within .ts-control{
+  border-color:#7c3aed !important;box-shadow:0 0 0 3px rgba(124,58,237,.13) !important;
+}
+.ts-dropdown{border-radius:12px !important;border:1.5px solid #e2e8f0 !important;
+  box-shadow:0 8px 30px rgba(0,0,0,.13) !important;font-family:inherit !important;overflow:hidden;margin-top:4px !important;}
+.ts-dropdown .option{padding:9px 14px !important;font-size:.84rem !important;border-bottom:1px solid rgba(0,0,0,.04);cursor:pointer;}
+.ts-dropdown .option:hover,.ts-dropdown .option.active{background:#f5f3ff !important;color:#3b0764 !important;}
+.ts-dropdown .cosfa-area{
+  display:inline-block;background:#ede9fe;color:#5b21b6;border-radius:5px;
+  padding:1px 7px;font-size:.71rem;font-weight:700;margin-left:7px;vertical-align:middle;
+}
+.ts-dropdown-content{max-height:260px !important;}
+</style>
+<script>
+(function(){
+  var sel = document.querySelector('[name="docente"]');
+  if(!sel || sel.dataset.tsLoaded) return;
+  sel.dataset.tsLoaded = '1';
+
+  // Construir mapa area desde DOCENTES_DATA para mostrar en la opción
+  var ts = new TomSelect(sel, {
+    placeholder: '🔍 Escribe nombre, cédula o área…',
+    maxOptions: 300,
+    render: {
+      option: function(data, escape){
+        var d = DOCENTES_DATA[data.value];
+        var area = d ? '<span class="cosfa-area">'+escape(d.area)+'</span>' : '';
+        return '<div style="display:flex;align-items:center">'+escape(data.text)+area+'</div>';
+      },
+      item: function(data, escape){ return '<div>'+escape(data.text)+'</div>'; }
+    },
+    onChange: function(value){
+      // Dispara el panel de info del docente existente
+      sel.value = value;
+      sel.dispatchEvent(new Event('change'));
+    }
+  });
+})();
+</script>
+{% endblock %}

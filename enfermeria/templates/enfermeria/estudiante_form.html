@@ -1,0 +1,279 @@
+{% extends 'enfermeria/base.html' %}
+{% block title %}{{ titulo }} — COSFA CURE{% endblock %}
+{% block page_title %}{{ titulo }}{% endblock %}
+{% block content %}
+<div class="page-title">{{ titulo|default:"Estudiante" }}</div>
+
+<style>
+.section-card{background:white;border-radius:14px;border:1px solid var(--border);overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.04);margin-bottom:18px}
+.section-head{padding:12px 18px;display:flex;align-items:center;gap:9px;border-bottom:1px solid var(--border)}
+.section-head i{font-size:1rem;width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.section-head-title{font-weight:700;font-size:.8rem;color:var(--blue-dark)}
+.section-head-sub{font-size:.7rem;color:var(--muted);margin-left:auto}
+.section-body{padding:18px;display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.field-full{grid-column:1/-1}
+.field-label{display:block;font-size:.7rem;font-weight:700;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.3px}
+.field-hint{font-size:.67rem;color:#94a3b8;margin-top:3px}
+.required-star{color:#e05c5c;margin-left:2px}
+.sh-id{background:linear-gradient(135deg,#eef5fd,#ddeeff)}.sh-id i{background:var(--blue);color:white}
+.sh-salud{background:linear-gradient(135deg,#f0fdf4,#d1fae5)}.sh-salud i{background:#4caf82;color:white}
+.sh-eps{background:linear-gradient(135deg,#fdf4ff,#ede9fe)}.sh-eps i{background:#8b7fd4;color:white}
+.sh-acudiente{background:linear-gradient(135deg,#fff7ed,#fed7aa)}.sh-acudiente i{background:#e8954a;color:white}
+.sh-emergencia{background:linear-gradient(135deg,#fef2f2,#fecaca)}.sh-emergencia i{background:#e05c5c;color:white}
+.sh-foto{background:linear-gradient(135deg,#f8fafc,#f1f5f9)}.sh-foto i{background:#64748b;color:white}
+.imc-box{background:var(--blue-pale);border:1px solid var(--blue-mid);border-radius:9px;padding:10px 14px;font-size:.75rem;color:var(--blue-dark);display:none}
+.imc-box strong{font-size:1rem;font-weight:800}
+.foto-preview{width:72px;height:72px;border-radius:50%;object-fit:cover;border:3px solid var(--blue-mid);display:block;margin-top:10px}
+.form-actions{display:flex;gap:10px;margin-top:6px;padding:16px 0 4px}
+</style>
+
+<form method="post" enctype="multipart/form-data" id="estForm">
+{% csrf_token %}
+
+<!-- ① IDENTIFICACIÓN -->
+<div class="section-card">
+  <div class="section-head sh-id">
+    <i class="bi bi-person-badge-fill"></i>
+    <div><div class="section-head-title">Identificación del Estudiante</div></div>
+    <span class="section-head-sub">Campos obligatorios marcados con *</span>
+  </div>
+  <div class="section-body">
+    <div class="field-full">
+      <label class="field-label">Nombre completo<span class="required-star">*</span></label>
+      {{ form.nombre }}
+    </div>
+    <div>
+      <label class="field-label">Número de documento<span class="required-star">*</span></label>
+      {{ form.numero_documento }}
+      <div class="field-hint">TI, CC o pasaporte</div>
+    </div>
+    <div>
+      <label class="field-label">Grado<span class="required-star">*</span></label>
+      {{ form.grado }}
+    </div>
+    <div>
+      <label class="field-label">Fecha de nacimiento<span class="required-star">*</span></label>
+      {{ form.fecha_nacimiento }}
+      <div class="field-hint" id="edad-hint"></div>
+    </div>
+    <div>
+      <label class="field-label">Sexo biológico</label>
+      {{ form.sexo }}
+    </div>
+  </div>
+</div>
+
+<!-- ② SALUD -->
+<div class="section-card">
+  <div class="section-head sh-salud">
+    <i class="bi bi-heart-pulse-fill"></i>
+    <div><div class="section-head-title">Información de Salud</div></div>
+  </div>
+  <div class="section-body">
+    <div>
+      <label class="field-label">Tipo de sangre</label>
+      {{ form.tipo_sangre }}
+    </div>
+    <div style="grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;align-items:end">
+      <div>
+        <label class="field-label">Peso (kg)</label>
+        {{ form.peso_kg }}
+      </div>
+      <div>
+        <label class="field-label">Talla (cm)</label>
+        {{ form.talla_cm }}
+      </div>
+      <div>
+        <div class="imc-box" id="imc-box">
+          IMC: <strong id="imc-val">—</strong>
+          <div id="imc-cat" style="font-size:.68rem;margin-top:2px"></div>
+        </div>
+      </div>
+    </div>
+    <div class="field-full">
+      <label class="field-label">Alergias conocidas</label>
+      {{ form.alergias }}
+      <div class="field-hint">Medicamentos, alimentos, picaduras, látex, etc.</div>
+    </div>
+    <div class="field-full">
+      <label class="field-label">Condiciones médicas crónicas</label>
+      {{ form.condiciones_medicas }}
+      <div class="field-hint">Asma, diabetes, epilepsia, cardiopatías, etc.</div>
+    </div>
+    <div class="field-full">
+      <label class="field-label">Medicamentos de uso permanente</label>
+      {{ form.medicamentos_perm }}
+      <div class="field-hint">Nombre, dosis y frecuencia de administración</div>
+    </div>
+    <div class="field-full">
+      <label class="field-label">Discapacidad o necesidad especial</label>
+      {{ form.discapacidad }}
+      <div class="field-hint">Motriz, visual, auditiva, cognitiva, TEA, etc.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ③ EPS / SEGURO -->
+<div class="section-card">
+  <div class="section-head sh-eps">
+    <i class="bi bi-shield-plus-fill"></i>
+    <div><div class="section-head-title">Seguro de Salud / EPS</div></div>
+  </div>
+  <div class="section-body">
+    <div>
+      <label class="field-label">EPS / Aseguradora</label>
+      {{ form.eps }}
+    </div>
+    <div>
+      <label class="field-label">Régimen de salud</label>
+      {{ form.regimen }}
+    </div>
+    <div class="field-full">
+      <label class="field-label">N.° de póliza o carné EPS</label>
+      {{ form.numero_poliza }}
+    </div>
+    <div class="field-full">
+      <label class="field-label">Teléfono de contacto / urgencias EPS <span style="font-size:.75rem;font-weight:400;color:#94a3b8">(opcional)</span></label>
+      {{ form.tel_contacto_eps }}
+    </div>
+  </div>
+</div>
+
+<!-- ④ ACUDIENTE PRINCIPAL -->
+<div class="section-card">
+  <div class="section-head sh-acudiente">
+    <i class="bi bi-people-fill"></i>
+    <div><div class="section-head-title">Acudiente Principal</div></div>
+  </div>
+  <div class="section-body">
+    <div>
+      <label class="field-label">Nombre del acudiente<span class="required-star">*</span></label>
+      {{ form.acudiente }}
+    </div>
+    <div>
+      <label class="field-label">Cédula de ciudadanía (CC)</label>
+      {{ form.cc_acudiente }}
+      <div class="field-hint">Documento de identidad del acudiente</div>
+    </div>
+    <div>
+      <label class="field-label">Parentesco o relación</label>
+      {{ form.parentesco_acudiente }}
+    </div>
+    <div>
+      <label class="field-label">Teléfono principal<span class="required-star">*</span></label>
+      {{ form.telefono_acudiente }}
+    </div>
+    <div>
+      <label class="field-label">Teléfono alternativo</label>
+      {{ form.telefono_alternativo }}
+    </div>
+    <div>
+      <label class="field-label">Correo electrónico</label>
+      {{ form.correo_acudiente }}
+      <div class="field-hint">Para notificaciones y comunicados importantes</div>
+    </div>
+    <div class="field-full">
+      <label class="field-label">Dirección de residencia</label>
+      {{ form.direccion_residencia }}
+      <div class="field-hint">Calle, barrio, municipio donde vive el estudiante</div>
+    </div>
+  </div>
+</div>
+
+<!-- ⑤ CONTACTO DE EMERGENCIA ADICIONAL -->
+<div class="section-card">
+  <div class="section-head sh-emergencia">
+    <i class="bi bi-telephone-fill"></i>
+    <div><div class="section-head-title">Contacto de Emergencia Adicional</div></div>
+  </div>
+  <div class="section-body">
+    <div>
+      <label class="field-label">Nombre</label>
+      {{ form.contacto_emergencia }}
+      <div class="field-hint">Otro familiar o tutor a quien llamar</div>
+    </div>
+    <div>
+      <label class="field-label">Teléfono</label>
+      {{ form.tel_emergencia }}
+    </div>
+  </div>
+</div>
+
+<!-- ⑥ FOTO -->
+<div class="section-card">
+  <div class="section-head sh-foto">
+    <i class="bi bi-camera-fill"></i>
+    <div><div class="section-head-title">Foto del Estudiante</div></div>
+  </div>
+  <div style="padding:18px">
+    {{ form.foto }}
+    {% if estudiante.foto %}
+      <img src="{{ estudiante.foto.url }}" class="foto-preview" id="foto-prev">
+    {% else %}
+      <img src="" class="foto-preview" id="foto-prev" style="display:none">
+    {% endif %}
+    <div class="field-hint" style="margin-top:6px">JPG o PNG, máx. 2 MB. Se usará en el carné.</div>
+  </div>
+</div>
+
+<div class="form-actions">
+  <button type="submit" class="btn btn-primary"><i class="bi bi-check-circle-fill"></i> Guardar estudiante</button>
+  <a href="{% url 'lista_estudiantes' %}" class="btn btn-outline"><i class="bi bi-x"></i> Cancelar</a>
+</div>
+
+{% if form.errors %}
+<div class="alert alert-danger" style="margin-top:12px">
+  <i class="bi bi-exclamation-triangle-fill"></i>
+  <div>
+    <strong>Por favor corrige los siguientes errores:</strong>
+    <ul style="margin:4px 0 0 14px;font-size:.78rem">
+      {% for field in form %}{% for error in field.errors %}<li><strong>{{ field.label }}:</strong> {{ error }}</li>{% endfor %}{% endfor %}
+      {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+    </ul>
+  </div>
+</div>
+{% endif %}
+</form>
+
+<script>
+document.getElementById('id_fecha_nacimiento').addEventListener('change', function(){
+  const dob = new Date(this.value);
+  if (isNaN(dob)) return;
+  const hoy = new Date();
+  let age = hoy.getFullYear() - dob.getFullYear();
+  const m = hoy.getMonth() - dob.getMonth();
+  if (m < 0 || (m === 0 && hoy.getDate() < dob.getDate())) age--;
+  const hint = document.getElementById('edad-hint');
+  hint.textContent = age >= 0 ? `Edad actual: ${age} año${age !== 1 ? 's' : ''}` : '';
+});
+function calcIMC(){
+  const peso = parseFloat(document.getElementById('id_peso_kg').value);
+  const talla = parseFloat(document.getElementById('id_talla_cm').value);
+  const box = document.getElementById('imc-box');
+  const val = document.getElementById('imc-val');
+  const cat = document.getElementById('imc-cat');
+  if (peso > 0 && talla > 0) {
+    const imc = peso / Math.pow(talla / 100, 2);
+    let categoria = '', color = '';
+    if (imc < 18.5)      { categoria = 'Bajo peso';       color = '#3b82f6'; }
+    else if (imc < 25)   { categoria = 'Peso normal ✓';   color = '#4caf82'; }
+    else if (imc < 30)   { categoria = 'Sobrepeso';        color = '#e8954a'; }
+    else                 { categoria = 'Obesidad';         color = '#e05c5c'; }
+    val.textContent = imc.toFixed(1);
+    cat.textContent = categoria;
+    cat.style.color = color;
+    box.style.display = 'block';
+  } else { box.style.display = 'none'; }
+}
+document.getElementById('id_peso_kg').addEventListener('input', calcIMC);
+document.getElementById('id_talla_cm').addEventListener('input', calcIMC);
+document.querySelector('input[name="foto"]').addEventListener('change', function(){
+  const prev = document.getElementById('foto-prev');
+  if (this.files && this.files[0]) {
+    const reader = new FileReader();
+    reader.onload = e => { prev.src = e.target.result; prev.style.display = 'block'; };
+    reader.readAsDataURL(this.files[0]);
+  }
+});
+</script>
+{% endblock %}

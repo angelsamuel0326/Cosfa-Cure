@@ -1,0 +1,123 @@
+{% extends 'enfermeria/base.html' %}
+{% block title %}Búsqueda — COSFA CURE{% endblock %}
+{% block page_title %}Búsqueda Global{% endblock %}
+{% block content %}
+<style>
+.busq-filters{background:white;border-radius:16px;border:1px solid var(--border-soft);box-shadow:var(--shadow-sm);margin-bottom:18px;overflow:hidden;animation:scaleIn .35s ease both}
+.busq-filters-head{padding:13px 20px;background:linear-gradient(135deg,rgba(240,244,248,.8),rgba(255,255,255,.9));border-bottom:1px solid var(--border-soft);display:flex;align-items:center;gap:10px;font-family:'Sora',sans-serif;font-size:.84rem;font-weight:700;color:var(--navy)}
+.busq-filters-body{padding:16px 20px;display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}
+.bf-group{display:flex;flex-direction:column;gap:5px;min-width:140px;flex:1}
+.bf-group label{font-size:.65rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px}
+.bf-group select,.bf-group input{padding:8px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:.8rem;color:var(--text);background:rgba(248,251,255,.8);outline:none;transition:all .2s;font-family:'DM Sans',sans-serif}
+.bf-group select:focus,.bf-group input:focus{border-color:var(--teal);background:white;box-shadow:0 0 0 3px rgba(14,165,160,.1)}
+.busq-section{margin-bottom:16px;animation:fadeInUp .35s ease both}
+.busq-section:nth-child(1){animation-delay:.05s}.busq-section:nth-child(2){animation-delay:.12s}.busq-section:nth-child(3){animation-delay:.19s}
+.tbl-busq thead tr{background:linear-gradient(135deg,#0f2444 0%,#0e7490 100%)!important}
+.tbl-busq thead th{background:transparent!important;color:white!important;font-family:'Sora',sans-serif;font-size:.65rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:12px 16px;border:none!important}
+.tbl-busq tbody tr{transition:all .2s cubic-bezier(.4,0,.2,1);border-bottom:1px solid rgba(14,165,160,.08);animation:rowSlideB .32s ease both}
+.tbl-busq tbody tr:nth-child(even){background:rgba(14,165,160,.025)}
+.tbl-busq tbody tr:hover{background:rgba(14,165,160,.06)!important;box-shadow:inset 3px 0 0 var(--teal);transform:translateX(2px)}
+@keyframes rowSlideB{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}
+.tbl-busq tbody tr:nth-child(1){animation-delay:.03s}.tbl-busq tbody tr:nth-child(2){animation-delay:.07s}.tbl-busq tbody tr:nth-child(3){animation-delay:.11s}.tbl-busq tbody tr:nth-child(n+4){animation-delay:.15s}
+.tbl-busq tbody td{padding:12px 16px;vertical-align:middle;border:none!important;font-size:.82rem;color:var(--text)}
+.result-chip{display:inline-flex;align-items:center;gap:5px;background:var(--teal-pale);color:var(--teal);border:1px solid var(--teal-dim);border-radius:20px;padding:3px 11px;font-size:.68rem;font-weight:700;animation:bounceIn .4s ease both}
+</style>
+
+<div class="busq-filters">
+  <div class="busq-filters-head">
+    <i class="bi bi-search" style="color:var(--teal);font-size:1rem"></i>
+    Búsqueda avanzada
+    {% if q %}<span class="result-chip"><i class="bi bi-check-circle-fill"></i> "{{ q }}"</span>{% endif %}
+  </div>
+  <div class="busq-filters-body">
+    <form method="get" style="display:contents">
+      <div class="bf-group" style="min-width:220px;flex:2">
+        <label><i class="bi bi-search"></i> Término de búsqueda</label>
+        <input type="text" name="q" value="{{ q }}" placeholder="Nombre, documento, motivo..." autocomplete="off" autofocus>
+      </div>
+      <div class="bf-group">
+        <label><i class="bi bi-funnel"></i> Buscar en</label>
+        <select name="tipo">
+          <option value="">Todo</option>
+          <option value="estudiantes" {% if request.GET.tipo == 'estudiantes' %}selected{% endif %}>Solo estudiantes</option>
+          <option value="consultas" {% if request.GET.tipo == 'consultas' %}selected{% endif %}>Solo consultas</option>
+          <option value="medicamentos" {% if request.GET.tipo == 'medicamentos' %}selected{% endif %}>Solo medicamentos</option>
+        </select>
+      </div>
+      <div class="bf-group">
+        <label><i class="bi bi-calendar3"></i> Fecha consulta</label>
+        <input type="date" name="fecha" value="{{ request.GET.fecha }}">
+      </div>
+      <button type="submit" class="btn btn-primary" style="align-self:flex-end;padding:9px 20px"><i class="bi bi-search"></i> Buscar</button>
+      {% if q %}<a href="{% url 'busqueda_global' %}" class="btn btn-outline" style="align-self:flex-end"><i class="bi bi-x-circle"></i> Limpiar</a>{% endif %}
+    </form>
+  </div>
+</div>
+
+{% if q %}
+  {% if resultados.estudiantes %}
+  <div class="busq-section card">
+    <div class="card-head"><div class="card-head-title"><i class="bi bi-people-fill"></i> Estudiantes <span class="result-chip">{{ resultados.estudiantes|length }}</span></div></div>
+    <div class="table-wrap"><table class="tbl-busq">
+      <thead><tr><th>Nombre</th><th>Documento</th><th>Grado</th><th></th></tr></thead>
+      <tbody>{% for e in resultados.estudiantes %}<tr>
+        <td><strong>{{ e.nombre }}</strong></td>
+        <td><span style="font-family:monospace;font-size:.8rem;color:var(--text-mid)">{{ e.numero_documento }}</span></td>
+        <td><span class="badge badge-teal">{{ e.grado }}</span></td>
+        <td><div style="display:flex;gap:4px">
+          <a href="{% url 'historial_estudiante' e.pk %}" class="btn btn-outline btn-xs"><i class="bi bi-eye"></i> Ver</a>
+          <a href="{% url 'nueva_consulta' %}?estudiante={{ e.pk }}" class="btn btn-primary btn-xs"><i class="bi bi-plus"></i></a>
+        </div></td>
+      </tr>{% endfor %}</tbody>
+    </table></div>
+  </div>
+  {% endif %}
+  {% if resultados.consultas %}
+  <div class="busq-section card">
+    <div class="card-head"><div class="card-head-title"><i class="bi bi-clipboard2-pulse-fill"></i> Consultas <span class="result-chip">{{ resultados.consultas|length }}</span></div></div>
+    <div class="table-wrap"><table class="tbl-busq">
+      <thead><tr><th>Estudiante</th><th>Motivo</th><th>Diagnóstico</th><th>Fecha</th><th></th></tr></thead>
+      <tbody>{% for c in resultados.consultas %}<tr>
+        <td><strong>{{ c.estudiante.nombre }}</strong></td>
+        <td><span class="badge badge-blue" style="font-size:.65rem">{{ c.get_motivo_display }}</span></td>
+        <td style="font-size:.78rem;color:var(--text-mid);max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ c.diagnostico|default:"—"|truncatechars:30 }}</td>
+        <td style="font-size:.75rem;color:var(--text-muted);white-space:nowrap"><i class="bi bi-calendar3" style="font-size:.7rem"></i> {{ c.fecha_hora|date:"d/m/Y" }}</td>
+        <td><a href="{% url 'detalle_consulta' c.pk %}" class="btn btn-outline btn-xs"><i class="bi bi-eye"></i> Ver</a></td>
+      </tr>{% endfor %}</tbody>
+    </table></div>
+  </div>
+  {% endif %}
+  {% if resultados.medicamentos %}
+  <div class="busq-section card">
+    <div class="card-head"><div class="card-head-title"><i class="bi bi-capsule-pill"></i> Medicamentos <span class="result-chip">{{ resultados.medicamentos|length }}</span></div></div>
+    <div class="table-wrap"><table class="tbl-busq">
+      <thead><tr><th>Nombre</th><th>Stock</th><th>Vencimiento</th><th></th></tr></thead>
+      <tbody>{% for m in resultados.medicamentos %}<tr>
+        <td><strong>{{ m.nombre }}</strong></td>
+        <td><span style="font-family:'Sora',sans-serif;font-weight:700;font-size:.9rem;color:{% if m.cantidad_actual < 5 %}var(--danger){% elif m.cantidad_actual < 15 %}var(--warning){% else %}var(--success){% endif %}">{{ m.cantidad_actual }}</span> <span style="font-size:.72rem;color:var(--text-muted)">{{ m.get_unidad_display }}</span></td>
+        <td style="font-size:.75rem;color:var(--text-muted)">{{ m.fecha_vencimiento|date:"d/m/Y" }}</td>
+        <td><a href="{% url 'editar_medicamento' m.pk %}" class="btn btn-outline btn-xs"><i class="bi bi-pencil"></i></a></td>
+      </tr>{% endfor %}</tbody>
+    </table></div>
+  </div>
+  {% endif %}
+  {% if not resultados.estudiantes and not resultados.consultas and not resultados.medicamentos %}
+  <div class="card" style="text-align:center;padding:56px 30px;animation:scaleIn .4s ease">
+    <div style="width:72px;height:72px;border-radius:50%;background:rgba(14,165,160,.08);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:2rem;animation:float 3s ease-in-out infinite">🔍</div>
+    <div style="font-family:'Sora',sans-serif;font-size:1rem;font-weight:700;color:var(--navy);margin-bottom:6px">Sin resultados</div>
+    <p style="color:var(--text-muted);font-size:.84rem;max-width:320px;margin:0 auto">No encontramos nada para <strong>"{{ q }}"</strong>. Intenta con otro término o revisa la ortografía.</p>
+  </div>
+  {% endif %}
+{% else %}
+<div class="card" style="text-align:center;padding:56px 30px;animation:scaleIn .4s ease">
+  <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,rgba(14,165,160,.1),rgba(14,165,160,.05));display:flex;align-items:center;justify-content:center;margin:0 auto 18px;font-size:2.4rem;animation:float 4s ease-in-out infinite">🔎</div>
+  <div style="font-family:'Sora',sans-serif;font-size:1.1rem;font-weight:800;color:var(--navy);margin-bottom:8px">Búsqueda avanzada</div>
+  <p style="color:var(--text-muted);font-size:.85rem;max-width:360px;margin:0 auto 20px">Busca por nombre, documento, diagnóstico, motivo de consulta o medicamento. Usa los filtros para refinar los resultados.</p>
+  <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+    <span class="badge badge-blue" style="font-size:.72rem;padding:5px 12px"><i class="bi bi-people-fill"></i> Estudiantes</span>
+    <span class="badge badge-teal" style="font-size:.72rem;padding:5px 12px"><i class="bi bi-clipboard2-pulse-fill"></i> Consultas</span>
+    <span class="badge badge-purple" style="font-size:.72rem;padding:5px 12px"><i class="bi bi-capsule-pill"></i> Medicamentos</span>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

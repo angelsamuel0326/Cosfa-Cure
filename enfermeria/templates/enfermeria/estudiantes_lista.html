@@ -1,0 +1,374 @@
+{% extends 'enfermeria/base.html' %}
+{% block title %}Estudiantes — COSFA CURE{% endblock %}
+{% block page_title %}Estudiantes{% endblock %}
+{% block content %}
+
+<style>
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+@media(max-width:900px){.stat-grid{grid-template-columns:repeat(2,1fr)}}
+.stat-card{background:white;border-radius:16px;padding:18px 20px;box-shadow:0 2px 16px rgba(15,36,68,.07);display:flex;align-items:center;gap:14px;position:relative;overflow:hidden;border:1px solid rgba(15,36,68,.06);transition:transform .2s,box-shadow .2s}
+.stat-card:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(15,36,68,.12)}
+.stat-card::before{content:'';position:absolute;right:-14px;top:-14px;width:70px;height:70px;border-radius:50%;opacity:.07}
+.stat-card.c-teal::before{background:var(--teal)}.stat-card.c-navy::before{background:#1a3a6e}.stat-card.c-orange::before{background:#f97316}.stat-card.c-red::before{background:#ef4444}
+.stat-icon{width:46px;height:46px;border-radius:12px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:1.3rem}
+.stat-icon.c-teal{background:rgba(14,165,160,.12)}.stat-icon.c-navy{background:rgba(26,58,110,.1)}.stat-icon.c-orange{background:rgba(249,115,22,.1)}.stat-icon.c-red{background:rgba(239,68,68,.1)}
+.stat-num{font-family:'Sora',sans-serif;font-size:1.6rem;font-weight:800;color:var(--navy);line-height:1;margin-bottom:3px}
+.stat-lbl{font-size:.72rem;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+.stat-sub{font-size:.7rem;color:#94a3b8;margin-top:2px}
+
+.filtros-stu-wrap{background:white;border-radius:16px;box-shadow:0 2px 16px rgba(15,36,68,.06);border:1px solid rgba(15,36,68,.06);margin-bottom:16px;overflow:hidden}
+.filtros-stu-header{padding:13px 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(15,36,68,.06);cursor:pointer;user-select:none}
+.filtros-stu-body{padding:16px 18px;display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}
+.filtros-stu-body.hidden{display:none}
+.filter-group{display:flex;flex-direction:column;gap:5px;min-width:150px}
+.filter-group label{font-size:.68rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.4px}
+.filter-group input,.filter-group select{padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:.8rem;color:var(--navy);background:#f8fafc;outline:none;transition:border-color .2s}
+.filter-group input:focus,.filter-group select:focus{border-color:var(--teal);background:white}
+.btn-filtrar-stu{display:inline-flex;align-items:center;gap:7px;background:linear-gradient(135deg,var(--teal),#0d8c88);color:white;border:none;padding:9px 20px;border-radius:10px;font-size:.8rem;font-weight:700;cursor:pointer;align-self:flex-end;box-shadow:0 3px 10px rgba(14,165,160,.3)}
+.btn-limpiar-stu{display:inline-flex;align-items:center;gap:6px;background:white;border:1.5px solid #e2e8f0;color:#64748b;padding:8px 16px;border-radius:10px;font-size:.8rem;font-weight:600;cursor:pointer;text-decoration:none;align-self:flex-end}
+.filtro-badge-stu{display:inline-flex;align-items:center;gap:4px;background:rgba(14,165,160,.1);color:var(--teal);border:1px solid rgba(14,165,160,.25);border-radius:20px;padding:3px 10px;font-size:.68rem;font-weight:700}
+
+.tbl-students thead tr{background:linear-gradient(135deg,var(--navy) 0%,var(--teal) 100%)!important}
+.tbl-students thead th{background:transparent!important;color:white!important;font-family:'Sora',sans-serif;font-size:.65rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:13px 16px;border:none!important}
+.tbl-students tbody tr{transition:all .2s cubic-bezier(.4,0,.2,1);border-bottom:1px solid rgba(14,165,160,.08);animation:rowSlide .32s ease both;cursor:pointer}
+.tbl-students tbody tr:nth-child(even){background:rgba(14,165,160,.025)}
+.tbl-students tbody tr:hover{background:rgba(14,165,160,.06)!important;box-shadow:inset 3px 0 0 var(--teal)}
+@keyframes rowSlide{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}
+.tbl-students tbody tr:nth-child(1){animation-delay:.03s}.tbl-students tbody tr:nth-child(2){animation-delay:.07s}
+.tbl-students tbody tr:nth-child(3){animation-delay:.11s}.tbl-students tbody tr:nth-child(n+4){animation-delay:.15s}
+.tbl-students tbody td{padding:13px 16px;vertical-align:middle;border:none!important;font-size:.82rem;color:var(--text)}
+.stu-avatar-ph{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--teal),var(--navy));border:2.5px solid rgba(14,165,160,.2);display:flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-size:.85rem;font-weight:800;color:white;transition:all .3s cubic-bezier(.34,1.56,.64,1)}
+.stu-avatar-img{width:40px;height:40px;border-radius:50%;object-fit:cover;border:2.5px solid rgba(14,165,160,.2);transition:all .3s cubic-bezier(.34,1.56,.64,1)}
+.tbl-students tbody tr:hover .stu-avatar-ph,.tbl-students tbody tr:hover .stu-avatar-img{transform:scale(1.12) rotate(4deg);border-color:var(--teal);box-shadow:0 4px 14px rgba(14,165,160,.35)}
+.badge-grado{display:inline-flex;align-items:center;justify-content:center;min-width:38px;height:26px;padding:0 10px;background:linear-gradient(135deg,var(--teal),#067a76);color:white;font-size:.65rem;font-weight:800;border-radius:20px;box-shadow:0 2px 8px rgba(14,165,160,.3);transition:all .3s cubic-bezier(.34,1.56,.64,1)}
+.tbl-students tbody tr:hover .badge-grado{transform:scale(1.1)}
+.stu-name{font-weight:700;color:var(--navy);text-decoration:none;transition:color .15s}
+.stu-name:hover{color:var(--teal)}
+.stu-actions{display:flex;gap:5px;align-items:center;opacity:0;transition:opacity .2s}
+.tbl-students tbody tr:hover .stu-actions{opacity:1}
+.stu-act{width:30px;height:30px;border-radius:8px;border:1.5px solid var(--border);display:inline-flex;align-items:center;justify-content:center;font-size:.8rem;cursor:pointer;transition:all .25s cubic-bezier(.34,1.56,.64,1);background:white;color:var(--text-muted);text-decoration:none}
+.stu-act:hover{transform:scale(1.15)}
+.stu-act-view:hover{background:rgba(59,130,246,.08);color:#3b82f6;border-color:#bfdbfe}
+.stu-act-add:hover{background:var(--teal);color:white;border-color:var(--teal);box-shadow:0 4px 10px rgba(14,165,160,.35)}
+.stu-act-edit:hover{background:rgba(14,165,160,.1);color:var(--teal);border-color:rgba(14,165,160,.3)}
+.badge-alerta{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:.64rem;font-weight:700;background:rgba(239,68,68,.1);color:#991b1b;border:1px solid #fca5a5}
+.tbl-footer{padding:11px 16px;font-size:.74rem;color:var(--text-muted);font-weight:500;background:rgba(14,165,160,.04);border-top:1px solid rgba(14,165,160,.1);display:flex;align-items:center;gap:6px}
+.empty-icon-wrap-stu{width:72px;height:72px;border-radius:50%;background:rgba(14,165,160,.08);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:1.8rem}
+</style>
+
+<!-- 1. STAT CARDS -->
+<div class="stat-grid">
+  <div class="stat-card c-teal">
+    <div class="stat-icon c-teal"><i class="bi bi-people-fill" style="color:var(--teal)"></i></div>
+    <div>
+      <div class="stat-num">{{ total_estudiantes }}</div>
+      <div class="stat-lbl">Total</div>
+      <div class="stat-sub">Estudiantes registrados</div>
+    </div>
+  </div>
+  <div class="stat-card c-navy">
+    <div class="stat-icon c-navy"><i class="bi bi-mortarboard-fill" style="color:#1a3a6e"></i></div>
+    <div>
+      <div class="stat-num">{{ page_obj.paginator.count }}</div>
+      <div class="stat-lbl">{% if hay_filtros %}Filtrados{% else %}Activos{% endif %}</div>
+      <div class="stat-sub">En esta búsqueda</div>
+    </div>
+  </div>
+  <div class="stat-card c-orange">
+    <div class="stat-icon c-orange"><i class="bi bi-exclamation-triangle-fill" style="color:#f97316"></i></div>
+    <div>
+      <div class="stat-num">{{ con_alertas }}</div>
+      <div class="stat-lbl">Con alertas</div>
+      <div class="stat-sub">Alergias o condiciones</div>
+    </div>
+  </div>
+  <div class="stat-card c-red">
+    <div class="stat-icon c-red"><i class="bi bi-bar-chart-fill" style="color:#ef4444"></i></div>
+    <div>
+      <div class="stat-num" style="font-size:.9rem;padding-top:6px">
+        {% if total_estudiantes > 0 %}
+          {% widthratio con_alertas total_estudiantes 100 %}%
+        {% else %}—{% endif %}
+      </div>
+      <div class="stat-lbl">% Alertas</div>
+      <div class="stat-sub">Del total registrado</div>
+    </div>
+  </div>
+</div>
+
+<!-- 2. FILTROS AVANZADOS -->
+<div class="filtros-stu-wrap">
+  <div class="filtros-stu-header" onclick="toggleFiltrosStu(this)">
+    <div style="display:flex;align-items:center;gap:8px;font-size:.84rem;font-weight:700;color:var(--navy)">
+      <i class="bi bi-funnel-fill" style="color:var(--teal)"></i>
+      Filtros de búsqueda
+      {% if hay_filtros %}<span class="filtro-badge-stu"><i class="bi bi-check-circle-fill"></i> Activos</span>{% endif %}
+    </div>
+    <i class="bi bi-chevron-down" id="fchev-stu" style="color:#94a3b8;transition:transform .2s{% if hay_filtros %};transform:rotate(180deg){% endif %}"></i>
+  </div>
+  <div class="filtros-stu-body {% if not hay_filtros %}hidden{% endif %}" id="fbody-stu">
+    <form method="get" style="display:contents">
+      <div class="filter-group" style="min-width:220px;flex:1">
+        <label><i class="bi bi-search"></i> Buscar</label>
+        <input type="text" name="q" id="q-estudiantes" value="{{ query }}" placeholder="Nombre, documento o grado..." autocomplete="off">
+      </div>
+      <div class="filter-group">
+        <label><i class="bi bi-mortarboard"></i> Grado</label>
+        <select name="grado">
+          <option value="">Todos</option>
+          {% for val,lbl in grado_choices %}
+            <option value="{{ val }}"{% if f_grado == val %} selected{% endif %}>{{ lbl }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="filter-group">
+        <label><i class="bi bi-person"></i> Sexo</label>
+        <select name="sexo">
+          <option value="">Todos</option>
+          {% for val,lbl in sexo_choices %}
+            <option value="{{ val }}"{% if f_sexo == val %} selected{% endif %}>{{ lbl }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="filter-group">
+        <label><i class="bi bi-exclamation-triangle"></i> Alertas</label>
+        <select name="alerta">
+          <option value="">Todos</option>
+          <option value="si"{% if f_alerta == 'si' %} selected{% endif %}>Con alertas</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label><i class="bi bi-hospital"></i> EPS</label>
+        <input type="text" name="eps" value="{{ f_eps }}" placeholder="Nombre de la EPS..." list="eps-sugerencias" autocomplete="off">
+        <datalist id="eps-sugerencias">
+          {% for eps in eps_lista %}<option value="{{ eps }}">{% endfor %}
+        </datalist>
+      </div>
+      <div class="filter-group">
+        <label><i class="bi bi-heart-pulse"></i> Condición médica</label>
+        <input type="text" name="condicion" value="{{ f_condicion }}" placeholder="Ej: diabetes, asma..." autocomplete="off">
+      </div>
+      <div class="filter-group">
+        <label><i class="bi bi-person-check"></i> Estado</label>
+        <select name="estado_academico">
+          <option value="">Todos</option>
+          {% for val,lbl in estado_academico_choices %}
+            <option value="{{ val }}"{% if f_estado_academico == val %} selected{% endif %}>{{ lbl }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <button type="submit" class="btn-filtrar-stu"><i class="bi bi-funnel-fill"></i> Filtrar</button>
+      {% if hay_filtros %}<a href="{% url 'lista_estudiantes' %}" class="btn-limpiar-stu"><i class="bi bi-x-circle"></i> Limpiar</a>{% endif %}
+    </form>
+  </div>
+</div>
+
+<!-- 3. TABLA -->
+<div class="card">
+  <div class="card-head">
+    <div class="card-head-title">
+      <i class="bi bi-people-fill"></i> Estudiantes registrados
+      {% if hay_filtros %}<span class="filtro-badge-stu" style="margin-left:6px">Filtrado</span>{% endif %}
+    </div>
+    <div style="display:flex;gap:6px">
+      {% if usuario_es_admin %}<a href="{% url 'nuevo_estudiante' %}" class="btn btn-primary btn-sm"><i class="bi bi-person-plus"></i> Nuevo</a>{% endif %}
+      <!-- Botones PDF / Exportar / Importar -->
+      <a href="{% url 'pdf_reportes' %}" target="_blank"
+         class="btn btn-sm" style="background:linear-gradient(135deg,#ef4444,#dc2626);color:white;border:none">
+        <i class="bi bi-file-earmark-pdf-fill"></i> PDF
+      </a>
+      <a href="{% url 'exportar_estudiantes_xlsx' %}{% if query %}?q={{ query }}{% endif %}{% if f_grado %}&grado={{ f_grado }}{% endif %}{% if f_sexo %}&sexo={{ f_sexo }}{% endif %}"
+         class="btn btn-sm" style="background:linear-gradient(135deg,#16a34a,#15803d);color:white;border:none">
+        <i class="bi bi-file-earmark-excel-fill"></i> Exportar
+      </a>
+      <button type="button" onclick="document.getElementById('modalImportarEst').style.display='flex'"
+              class="btn btn-sm" style="background:linear-gradient(135deg,#7c3aed,#6d28d9);color:white;border:none">
+        <i class="bi bi-file-earmark-arrow-up-fill"></i> Importar
+      </button>
+      <a href="{% url 'promocion_anio' %}" class="btn btn-sm"
+         style="background:linear-gradient(135deg,#f97316,#ea580c);color:white;border:none">
+        <i class="bi bi-arrow-up-circle-fill"></i> Promoción
+      </a>
+      <a href="{% url 'grados_lista' %}" class="btn btn-sm"
+         style="background:linear-gradient(135deg,#0891b2,#0e7490);color:white;border:none">
+        <i class="bi bi-mortarboard-fill"></i> Grados
+      </a>
+    </div>
+  </div>
+
+
+  <div class="table-wrap">
+    {% if estudiantes %}
+    <table class="tbl-students" style="width:100%">
+      <thead>
+        <tr>
+          <th>Foto</th>
+          <th>Nombre</th>
+          <th>Documento</th>
+          <th>Grado</th>
+          <th>EPS</th>
+          <th>Acudiente</th>
+          <th>Alertas</th>
+          <th>Estado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for e in estudiantes %}
+      <tr onclick="window.location='{% url 'historial_estudiante' e.pk %}'">
+        <td onclick="event.stopPropagation()">
+          {% if e.foto %}
+            <img src="{{ e.foto.url }}" class="stu-avatar-img" alt="{{ e.nombre }}">
+          {% else %}
+            <div class="stu-avatar-ph">{{ e.nombre|first|upper }}</div>
+          {% endif %}
+        </td>
+        <td>
+          <div>
+            <a href="{% url 'historial_estudiante' e.pk %}" class="stu-name" onclick="event.stopPropagation()">{{ e.nombre }}</a>
+            {% if e.fecha_nacimiento %}
+            <div style="font-size:.68rem;color:#94a3b8;margin-top:1px">{{ e.fecha_nacimiento|date:"d/m/Y" }}</div>
+            {% endif %}
+          </div>
+        </td>
+        <td style="font-size:.77rem;color:var(--text-muted)">{{ e.numero_documento }}</td>
+        <td><span class="badge-grado">{{ e.grado }}</span></td>
+        <td style="font-size:.79rem;color:var(--text-mid)">{{ e.eps|default:"—" }}</td>
+        <td style="font-size:.8rem;color:var(--text-mid)">{{ e.acudiente }}</td>
+        <td>
+          {% if e.alergias or e.condiciones_medicas %}
+            <span class="badge-alerta"><i class="bi bi-exclamation-triangle-fill"></i> Ver</span>
+          {% else %}
+            <span style="color:var(--text-muted);font-size:1.1rem">—</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if e.estado_academico == 'graduado' %}
+            <span style="display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:20px;font-size:.62rem;font-weight:700;background:rgba(99,102,241,.1);color:#4338ca;border:1px solid rgba(99,102,241,.2)"><i class="bi bi-mortarboard-fill"></i> Graduado</span>
+          {% elif e.estado_academico == 'retirado' %}
+            <span style="display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:20px;font-size:.62rem;font-weight:700;background:rgba(239,68,68,.1);color:#b91c1c;border:1px solid rgba(239,68,68,.2)"><i class="bi bi-x-circle-fill"></i> Retirado</span>
+          {% elif e.estado_academico == 'trasladado' %}
+            <span style="display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:20px;font-size:.62rem;font-weight:700;background:rgba(249,115,22,.1);color:#c2410c;border:1px solid rgba(249,115,22,.2)"><i class="bi bi-arrow-right-circle-fill"></i> Trasladado</span>
+          {% else %}
+            <span style="color:#15803d;font-size:.7rem;font-weight:700">✓ Activo</span>
+          {% endif %}
+        </td>
+        <td onclick="event.stopPropagation()">
+          <div class="stu-actions">
+            <a href="{% url 'historial_estudiante' e.pk %}" class="stu-act stu-act-view" title="Ver historial"><i class="bi bi-clipboard2-pulse"></i></a>
+            {% if usuario_es_admin %}<a href="{% url 'nueva_consulta_estudiante' e.pk %}" class="stu-act stu-act-add" title="Nueva consulta"><i class="bi bi-plus-lg"></i></a>{% endif %}
+            {% if usuario_es_admin %}<a href="{% url 'editar_estudiante' e.pk %}" class="stu-act stu-act-edit" title="Editar estudiante"><i class="bi bi-pencil"></i></a>{% endif %}
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    <div class="tbl-footer">
+      <i class="bi bi-people"></i>
+      <strong>{{ page_obj.paginator.count }}</strong> estudiante(s)
+      {% if hay_filtros %}&nbsp;·&nbsp;<span class="filtro-badge-stu">Filtrado</span>{% endif %}
+    </div>
+
+    {% if page_obj.has_other_pages %}
+    <div style="display:flex;align-items:center;justify-content:center;gap:6px;padding:12px 16px;border-top:1px solid rgba(14,165,160,.1)">
+      {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}{% if f_grado %}&grado={{ f_grado }}{% endif %}{% if f_sexo %}&sexo={{ f_sexo }}{% endif %}{% if f_alerta %}&alerta={{ f_alerta }}{% endif %}" class="btn btn-outline btn-sm"><i class="bi bi-chevron-left"></i></a>
+      {% endif %}
+      {% for num in page_obj.paginator.page_range %}
+        {% if page_obj.number == num %}
+          <span class="btn btn-sm" style="background:var(--teal);color:white;border:none;min-width:34px">{{ num }}</span>
+        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+          <a href="?page={{ num }}{% if query %}&q={{ query }}{% endif %}{% if f_grado %}&grado={{ f_grado }}{% endif %}{% if f_sexo %}&sexo={{ f_sexo }}{% endif %}{% if f_alerta %}&alerta={{ f_alerta }}{% endif %}" class="btn btn-outline btn-sm" style="min-width:34px">{{ num }}</a>
+        {% endif %}
+      {% endfor %}
+      {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}{% if f_grado %}&grado={{ f_grado }}{% endif %}{% if f_sexo %}&sexo={{ f_sexo }}{% endif %}{% if f_alerta %}&alerta={{ f_alerta }}{% endif %}" class="btn btn-outline btn-sm"><i class="bi bi-chevron-right"></i></a>
+      {% endif %}
+      <span style="font-size:.75rem;color:var(--text-muted);margin-left:4px">Pág. {{ page_obj.number }}/{{ page_obj.paginator.num_pages }}</span>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <!-- 4. EMPTY STATE MEJORADO -->
+    <div style="text-align:center;padding:60px 24px">
+      <div class="empty-icon-wrap-stu"><i class="bi bi-people" style="color:var(--teal)"></i></div>
+      {% if hay_filtros %}
+        <h3 style="font-family:'Sora',sans-serif;font-size:1rem;font-weight:800;color:var(--navy);margin:0 0 8px">Sin resultados</h3>
+        <p style="font-size:.82rem;color:var(--text-muted);margin-bottom:16px">No hay estudiantes con los filtros aplicados</p>
+        <a href="{% url 'lista_estudiantes' %}" class="btn btn-outline btn-sm"><i class="bi bi-x-circle"></i> Limpiar filtros</a>
+      {% else %}
+        <h3 style="font-family:'Sora',sans-serif;font-size:1rem;font-weight:800;color:var(--navy);margin:0 0 8px">No hay estudiantes registrados aún</h3>
+        <p style="font-size:.82rem;color:var(--text-muted);margin-bottom:16px">Registra el primer estudiante para comenzar</p>
+        {% if usuario_es_admin %}<a href="{% url 'nuevo_estudiante' %}" class="btn btn-primary btn-sm"><i class="bi bi-person-plus-fill"></i> Registrar primero</a>{% endif %}
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+function toggleFiltrosStu(el){
+  const body=document.getElementById('fbody-stu');
+  const chev=document.getElementById('fchev-stu');
+  body.classList.toggle('hidden');
+  chev.style.transform=body.classList.contains('hidden')?'':'rotate(180deg)';
+}
+// Búsqueda en tiempo real
+(function(){
+  const inp = document.getElementById('q-estudiantes');
+  if(!inp) return;
+  let timer;
+  inp.addEventListener('input', function(){
+    clearTimeout(timer);
+    timer = setTimeout(function(){
+      const form = inp.closest('form');
+      if(form) form.submit();
+    }, 500);
+  });
+})();
+</script>
+  <!-- MODAL IMPORTAR ESTUDIANTES -->
+  <div id="modalImportarEst" style="display:none;position:fixed;inset:0;background:rgba(15,36,68,.4);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);z-index:9999;align-items:center;justify-content:center">
+    <div style="background:white;border-radius:20px;padding:32px 28px;max-width:480px;width:90%;box-shadow:0 24px 64px rgba(0,0,0,.2);position:relative">
+      <button onclick="document.getElementById('modalImportarEst').style.display='none'"
+              style="position:absolute;top:14px;right:16px;background:none;border:none;font-size:1.3rem;cursor:pointer;color:#94a3b8">✕</button>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px">
+        <div style="width:46px;height:46px;border-radius:12px;background:linear-gradient(135deg,#7c3aed,#6d28d9);display:flex;align-items:center;justify-content:center;font-size:1.4rem">
+          <i class="bi bi-file-earmark-excel-fill" style="color:white"></i>
+        </div>
+        <div>
+          <div style="font-weight:800;font-size:1rem;color:var(--navy)">Importar Estudiantes</div>
+          <div style="font-size:.74rem;color:var(--muted)">Carga masiva desde Excel</div>
+        </div>
+      </div>
+      <div style="background:rgba(124,58,237,.06);border:1.5px solid rgba(124,58,237,.2);border-radius:12px;padding:14px 16px;margin-bottom:18px">
+        <div style="font-size:.78rem;font-weight:700;color:#5b21b6;margin-bottom:6px"><i class="bi bi-info-circle-fill"></i> ¿Cómo funciona?</div>
+        <div style="font-size:.75rem;color:#64748b;line-height:1.6">
+          Este formulario de Excel es para rellenar datos e ingresarlos de forma <strong>masiva y rápida</strong>.<br>
+          1. Descarga la plantilla oficial.<br>
+          2. Rellena los datos de cada estudiante (uno por fila).<br>
+          3. Sube el archivo y los datos se cargan automáticamente.
+        </div>
+      </div>
+      <a href="{% url 'plantilla_importar_estudiantes' %}"
+         style="display:flex;align-items:center;gap:8px;background:rgba(22,163,74,.08);border:1.5px solid rgba(22,163,74,.3);border-radius:10px;padding:10px 14px;text-decoration:none;color:#15803d;font-size:.82rem;font-weight:700;margin-bottom:14px">
+        <i class="bi bi-download"></i> Descargar plantilla Excel (.xlsx)
+        <span style="margin-left:auto;font-size:.68rem;font-weight:400;color:#94a3b8">Con instrucciones incluidas</span>
+      </a>
+      <form method="post" action="{% url 'importar_estudiantes_excel' %}" enctype="multipart/form-data">
+        {% csrf_token %}
+        <label style="font-size:.75rem;font-weight:700;color:#64748b;display:block;margin-bottom:6px">SUBIR ARCHIVO EXCEL COMPLETADO</label>
+        <input type="file" name="archivo_excel" accept=".xlsx,.xls"
+               style="width:100%;padding:9px 12px;border:1.5px dashed #c4b5fd;border-radius:10px;font-size:.8rem;background:#faf5ff;cursor:pointer;margin-bottom:14px" required>
+        <div style="display:flex;gap:8px">
+          <button type="submit" class="btn btn-primary" style="flex:1;background:linear-gradient(135deg,#7c3aed,#6d28d9);border:none">
+            <i class="bi bi-upload"></i> Cargar datos al sistema
+          </button>
+          <button type="button" onclick="document.getElementById('modalImportarEst').style.display='none'"
+                  class="btn btn-outline" style="flex:0;min-width:100px;white-space:nowrap">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}

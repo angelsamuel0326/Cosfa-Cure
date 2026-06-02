@@ -1,0 +1,479 @@
+{% extends 'enfermeria/base.html' %}
+{% block title %}{% if editar %}Editar{% else %}Nueva{% endif %} Remisión — COSFA CURE{% endblock %}
+{% block page_title %}{% if editar %}Editar Remisión{% else %}Nueva Remisión{% endif %}{% endblock %}
+{% block content %}
+
+<style>
+/* ── Estado cards ── */
+.estado-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 10px; margin-bottom: 4px; }
+.estado-card {
+  border: 2px solid var(--border); border-radius: 12px; padding: 12px 14px;
+  cursor: pointer; transition: all .18s; display: flex; align-items: flex-start; gap: 10px;
+  background: white; position: relative;
+}
+.estado-card:hover { border-color: var(--teal); box-shadow: var(--shadow-md); transform: translateY(-1px); }
+.estado-card.selected { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+.estado-card.selected.naranja{ border-color: #f59e0b; background: #fffbeb; }
+.estado-card.selected.rojo   { border-color: #ef4444; background: #fef2f2; }
+.estado-card input[type=radio] { display:none; }
+.estado-icon { font-size: 1.5rem; flex-shrink: 0; margin-top: 1px; }
+.estado-label { font-size: .82rem; font-weight: 700; color: var(--text); }
+.estado-desc  { font-size: .72rem; color: var(--text-muted); margin-top: 2px; line-height: 1.4; }
+.estado-check { position: absolute; top: 8px; right: 10px; width: 18px; height: 18px; border-radius: 50%; border: 2px solid #cbd5e1; display: flex; align-items: center; justify-content: center; font-size: .65rem; }
+.estado-card.selected .estado-check { background: currentColor; border-color: transparent; }
+.estado-card.selected.naranja .estado-check { color: #f59e0b; }
+.estado-card.selected.rojo    .estado-check { color: #ef4444; }
+
+/* ── Modal PDF ── */
+#pdf-modal-overlay {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,.55);
+  z-index: 9999; align-items: center; justify-content: center; backdrop-filter: blur(4px);
+}
+#pdf-modal {
+  background: white; border-radius: 20px; padding: 32px 28px; max-width: 420px; width: 90%;
+  box-shadow: 0 32px 80px rgba(0,0,0,.25); text-align: center; animation: popIn .25s ease;
+}
+@keyframes popIn { from{opacity:0;transform:scale(.88)} to{opacity:1;transform:scale(1)} }
+#pdf-modal .modal-icon { font-size: 3rem; margin-bottom: 12px; }
+#pdf-modal h3 { font-size: 1.1rem; font-weight: 800; color: var(--navy); margin-bottom: 6px; }
+#pdf-modal p  { font-size: .86rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 22px; }
+#pdf-modal .modal-btns { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+</style>
+
+<!-- Modal PDF -->
+<div id="pdf-modal-overlay">
+  <div id="pdf-modal">
+    <div class="modal-icon">🏥</div>
+    <h3>¡Remisión guardada!</h3>
+    <p>La remisión fue registrada correctamente.<br>¿Deseas ver e imprimir el documento oficial?</p>
+    <div class="modal-btns">
+      <a id="pdf-modal-link" href="#" target="_blank" class="btn btn-primary">
+        <i class="bi bi-file-earmark-pdf-fill"></i> Ver PDF
+      </a>
+      <a id="pdf-modal-skip" href="{% url 'lista_remisiones' %}" class="btn btn-outline">
+        No, ir al historial
+      </a>
+    </div>
+  </div>
+</div>
+
+<div class="page-title">{% if editar %}Editar{% else %}Registrar{% endif %} <span>Remisión</span></div>
+<div class="card" style="max-width:720px;margin:0 auto">
+  <div class="card-head"><div class="card-head-title"><i class="bi bi-hospital-fill"></i> Datos de la Remisión</div></div>
+  <div style="padding:20px">
+    <form method="post" id="remisionForm">{% csrf_token %}
+    {% if form.errors %}
+    <div style="background:#fef2f2;border:1.5px solid #fca5a5;border-radius:12px;padding:14px 18px;margin-bottom:16px;font-size:.84rem;color:#991b1b">
+      <strong>⚠️ Por favor corrige los siguientes errores:</strong>
+      <ul style="margin:8px 0 0 16px;padding:0">
+        {% for field in form %}{% for error in field.errors %}<li><b>{{ field.label }}:</b> {{ error }}</li>{% endfor %}{% endfor %}
+        {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      var horaInput = document.querySelector('[name="hora_salida"]');
+      if (horaInput && !horaInput.value) {
+        var now = new Date();
+        horaInput.value = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+      }
+    });
+    </script>
+
+      <!-- ══ INFORMACIÓN BÁSICA ══ -->
+      <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--blue-dark);margin-bottom:10px;padding-bottom:5px;border-bottom:1.5px solid var(--blue-pale)">📋 Información básica</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+
+        <!-- Estudiante -->
+        <div style="grid-column:1/-1">
+          <label class="form-label">Estudiante *</label>
+          {{ form.estudiante }}
+          <div style="font-size:.72rem;color:var(--text-muted);margin-top:3px"><i class="bi bi-search"></i> Escribe el nombre o grado para filtrar rápidamente.</div>
+        </div>
+
+        <!-- EPS -->
+        <div>
+          <label class="form-label">EPS del estudiante</label>
+          {{ form.eps }}
+        </div>
+        <div>
+          <label class="form-label">N° de carné / póliza EPS <span style="font-size:.72rem;font-weight:400;color:var(--text-muted)">(opcional)</span></label>
+          {{ form.numero_eps }}
+        </div>
+        <div style="grid-column:1/-1">
+          <label class="form-label">Número de contacto EPS <span style="font-size:.72rem;font-weight:400;color:var(--text-muted)">(opcional)</span></label>
+          {{ form.numero_contacto_eps }}
+        </div>
+
+        <!-- Hora de atención -->
+        <div style="grid-column:1/-1">
+          <label class="form-label"><i class="bi bi-clock-fill" style="color:var(--teal)"></i> Hora de atención / salida *</label>
+          {{ form.hora_salida }}
+          <div style="font-size:.7rem;color:var(--text-muted);margin-top:4px"><i class="bi bi-info-circle"></i> Registra la hora exacta en que se atendió al estudiante.</div>
+        </div>
+
+        <!-- Motivo -->
+        <div style="grid-column:1/-1">
+          <label class="form-label">Motivo de la remisión *</label>
+          <select id="id_motivo_sel" class="form-select" style="margin-bottom:8px">
+            <option value="">— Seleccionar motivo —</option>
+            <option value="dolor_cabeza" {% if form.motivo.value == 'dolor_cabeza' %}selected{% endif %}>Dolor de cabeza</option>
+            <option value="dolor_estomago" {% if form.motivo.value == 'dolor_estomago' %}selected{% endif %}>Dolor de estómago</option>
+            <option value="fiebre" {% if form.motivo.value == 'fiebre' %}selected{% endif %}>Fiebre</option>
+            <option value="lesion" {% if form.motivo.value == 'lesion' %}selected{% endif %}>Lesión / Golpe</option>
+            <option value="mareo" {% if form.motivo.value == 'mareo' %}selected{% endif %}>Mareo</option>
+            <option value="nauseas" {% if form.motivo.value == 'nauseas' %}selected{% endif %}>Náuseas / Vómito</option>
+            <option value="dolor_garganta" {% if form.motivo.value == 'dolor_garganta' %}selected{% endif %}>Dolor de garganta</option>
+            <option value="alergias" {% if form.motivo.value == 'alergias' %}selected{% endif %}>Reacción alérgica</option>
+            <option value="otro" {% if form.motivo.value == 'otro' or not form.motivo.value %}selected{% endif %}>Otro</option>
+          </select>
+          <!-- Campo real oculto que guarda el valor final -->
+          <input type="hidden" name="motivo" id="id_motivo_real" value="{{ form.motivo.value|default:'' }}">
+          <!-- Textarea visible solo si motivo = otro -->
+          <div id="motivo-otro-box">
+            <label class="form-label" style="font-size:.75rem;color:var(--text-muted)">Describe el motivo *</label>
+            <textarea id="id_motivo_texto" class="form-control" rows="2" placeholder="Describe el motivo de la remisión…" style="font-size:.84rem">{% if form.motivo.value and form.motivo.value not in 'dolor_cabeza,dolor_estomago,fiebre,lesion,mareo,nauseas,dolor_garganta,alergias' %}{{ form.motivo.value }}{% endif %}</textarea>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ══ ESTADO / DESTINO ══ -->
+      <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--blue-dark);margin-bottom:10px;padding-bottom:5px;border-bottom:1.5px solid var(--blue-pale)">
+        📌 Estado / Destino *
+      </div>
+      <!-- Input oculto real del form -->
+      <div style="display:none">{{ form.tipo_destino }}{{ form.estado }}</div>
+
+      <div class="estado-grid" style="margin-bottom:14px">
+        <label class="estado-card naranja {% if form.tipo_destino.value == 'casa' %}selected{% endif %}" data-val="casa">
+          <div class="estado-icon">🏠</div>
+          <div>
+            <div class="estado-label">Remitido a casa</div>
+            <div class="estado-desc">El acudiente fue llamado y el estudiante va a casa.</div>
+          </div>
+          <div class="estado-check">✓</div>
+        </label>
+
+        <label class="estado-card rojo {% if form.tipo_destino.value == 'hospital' or not form.tipo_destino.value %}selected{% endif %}" data-val="hospital">
+          <div class="estado-icon">🚑</div>
+          <div>
+            <div class="estado-label">Remitido al hospital</div>
+            <div class="estado-desc">Requiere atención médica externa urgente.</div>
+          </div>
+          <div class="estado-check">✓</div>
+        </label>
+      </div>
+
+      <!-- ══ CORREOS DE NOTIFICACIÓN ══ -->
+      <div id="seccion-correos" style="margin-bottom:14px">
+        <hr class="section-divider">
+        <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--blue-dark);margin-bottom:10px;padding-bottom:5px;border-bottom:1.5px solid var(--blue-pale)">
+          <i class="bi bi-envelope-fill"></i> Correos de notificación
+          <span style="font-weight:400;color:var(--muted);text-transform:none;font-size:.75rem;margin-left:6px">(opcional — se enviarán al guardar)</span>
+        </div>
+
+        <div id="aviso-casa" style="display:none;background:linear-gradient(135deg,#fffbeb,#fef3c7);border:1px solid #fcd34d;border-radius:10px;padding:12px;margin-bottom:10px;font-size:.78rem;color:#92400e">
+          <i class="bi bi-house-door-fill"></i> Al registrar con estado <strong>"Remitido a casa"</strong>, se enviará una alerta al acudiente informando que debe recoger al estudiante.
+        </div>
+        <div id="aviso-hospital" style="background:linear-gradient(135deg,#fef2f2,#fee2e2);border:1px solid #fca5a5;border-radius:10px;padding:12px;margin-bottom:10px;font-size:.78rem;color:#991b1b">
+          <i class="bi bi-hospital-fill"></i> Al registrar con estado <strong>"Remitido al hospital"</strong>, se enviará una alerta urgente al acudiente.
+        </div>
+
+        {% if form.initial.correo_padre_madre %}
+        <div id="sugerencia-correo" style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:10px 13px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+          <div style="font-size:.79rem;color:#1e40af"><i class="bi bi-person-check-fill"></i> <strong>Correo del acudiente guardado:</strong> {{ form.initial.correo_padre_madre }}</div>
+          <div style="display:flex;gap:6px">
+            <button type="button" onclick="usarCorreoGuardado()" style="background:#1d4ed8;color:white;border:none;border-radius:7px;padding:5px 12px;font-size:.76rem;font-weight:700;cursor:pointer"><i class="bi bi-check-lg"></i> Usar este correo</button>
+            <button type="button" onclick="document.getElementById('sugerencia-correo').style.display='none'" style="background:#e2e8f0;color:#374151;border:none;border-radius:7px;padding:5px 10px;font-size:.76rem;cursor:pointer"><i class="bi bi-pencil"></i> Escribir otro</button>
+          </div>
+        </div>
+        <script>
+        function usarCorreoGuardado() {
+          document.querySelector('[name="correo_padre_madre"]').value = "{{ form.initial.correo_padre_madre }}";
+          document.getElementById('sugerencia-correo').style.display = 'none';
+        }
+        </script>
+        {% endif %}
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div>
+            <label class="form-label"><i class="bi bi-person-heart"></i> Correo padre / madre / acudiente</label>
+            {{ form.correo_padre_madre }}
+          </div>
+          <div>
+            <label class="form-label"><i class="bi bi-person-workspace"></i> Correo del docente</label>
+            {{ form.correo_docente }}
+          </div>
+        </div>
+        <div style="font-size:.7rem;color:var(--text-muted);margin-top:6px;padding:6px 8px;background:var(--bg2);border-radius:7px">
+          <i class="bi bi-lightbulb-fill" style="color:var(--accent)"></i> <strong>Tip:</strong> Puedes llenar uno, ambos o ninguno. Solo se enviará correo a los que tengan dirección válida.
+        </div>
+      </div>
+
+      <!-- ══ DATOS HOSPITAL (visible solo si destino = hospital) ══ -->
+      <div id="seccion-hospital" style="display:none;margin-bottom:14px">
+        <hr class="section-divider">
+        <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#dc2626;margin-bottom:10px;padding-bottom:5px;border-bottom:1.5px solid #fee2e2">
+          🚑 Datos de remisión al hospital
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div>
+            <label class="form-label">Hospital / Centro de salud destino *</label>
+            {{ form.hospital_destino }}
+          </div>
+          <div>
+            <label class="form-label">Acompañante <span style="font-size:.72rem;color:var(--text-muted)">(opcional)</span></label>
+            {{ form.acompanante }}
+          </div>
+          <div>
+            <label class="form-label">Hora de llegada / regreso</label>
+            {{ form.hora_llegada }}
+            <div style="font-size:.7rem;color:var(--text-muted);margin-top:3px">Completar cuando el estudiante regrese o llegue al destino.</div>
+          </div>
+          <div>
+            <label class="form-label">Seguimiento / diagnóstico recibido</label>
+            {{ form.seguimiento_posterior }}
+            <div style="font-size:.7rem;color:var(--text-muted);margin-top:3px">Ej: diagnóstico del hospital, indicaciones médicas, regresa a clases, etc.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ SIGNOS VITALES ══ -->
+      <hr class="section-divider">
+      <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--blue-dark);margin-bottom:10px">💓 Signos vitales <span style="font-weight:400;color:var(--muted)">(opcional)</span></div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">
+        <div><label class="form-label">Temperatura °C</label>{{ form.temperatura }}</div>
+        <div><label class="form-label">Presión arterial</label>{{ form.presion_arterial }}</div>
+        <div><label class="form-label">Frec. cardíaca (lpm)</label>{{ form.frecuencia_cardiaca }}</div>
+        <div><label class="form-label">Frec. resp. (rpm)</label>{{ form.frecuencia_respiratoria }}</div>
+        <div><label class="form-label">Peso (kg)</label>{{ form.peso }}</div>
+        <div><label class="form-label">Talla (cm)</label>{{ form.talla }}</div>
+      </div>
+
+      <!-- ══ NOTIFICACIÓN AL ACUDIENTE ══ -->
+      <hr class="section-divider">
+      <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--blue-dark);margin-bottom:10px">📞 Notificación al acudiente <span style="font-weight:400;color:var(--muted)">(si aplica)</span></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div style="grid-column:1/-1;display:flex;align-items:center;gap:8px;padding:10px;background:var(--blue-pale);border-radius:9px">
+          {{ form.acudiente_notificado }} <label style="font-size:.84rem;font-weight:600;cursor:pointer">¿Se notificó al acudiente?</label>
+        </div>
+        <div><label class="form-label">Hora de notificación</label>{{ form.hora_notificacion }}</div>
+        <div><label class="form-label">¿Quién atendió la llamada?</label>{{ form.quien_atendio_llamada }}</div>
+        <div style="grid-column:1/-1"><label class="form-label">Detalle de lo informado</label>{{ form.detalle_notificacion }}</div>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:18px">
+        <button type="submit" id="btn-submit-remision" class="btn btn-primary">
+          <i class="bi bi-check-circle"></i> {% if editar %}Actualizar{% else %}Guardar{% endif %} remisión
+        </button>
+        <a href="{% url 'lista_remisiones' %}" class="btn btn-outline">Cancelar</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+// ── Motivo: select + textarea para "otro" ──────────────────
+const motivoSel   = document.getElementById('id_motivo_sel');
+const motivoReal  = document.getElementById('id_motivo_real');
+const motivoOtro  = document.getElementById('motivo-otro-box');
+const motivoTexto = document.getElementById('id_motivo_texto');
+
+const MOTIVOS_FIJOS = ['dolor_cabeza','dolor_estomago','fiebre','lesion','mareo','nauseas','dolor_garganta','alergias'];
+
+function actualizarMotivo() {
+  const val = motivoSel.value;
+  const esOtro = (val === 'otro' || val === '');
+  motivoOtro.style.display = esOtro ? 'block' : 'none';
+  if (!esOtro) {
+    motivoReal.value = val;
+  } else {
+    motivoReal.value = motivoTexto.value.trim();
+  }
+}
+
+motivoTexto.addEventListener('input', function() {
+  if (motivoSel.value === 'otro' || motivoSel.value === '') {
+    motivoReal.value = motivoTexto.value.trim();
+  }
+});
+
+motivoSel.addEventListener('change', actualizarMotivo);
+
+// Inicializar al cargar
+(function init() {
+  const valActual = motivoReal.value;
+  if (valActual && MOTIVOS_FIJOS.includes(valActual)) {
+    motivoSel.value = valActual;
+    motivoOtro.style.display = 'none';
+  } else {
+    motivoSel.value = 'otro';
+    motivoOtro.style.display = 'block';
+    if (valActual) motivoTexto.value = valActual;
+  }
+})();
+
+// Sincronizar antes de submit
+document.getElementById('remisionForm').addEventListener('submit', function(e) {
+  if (motivoSel.value === 'otro' || motivoSel.value === '') {
+    motivoReal.value = motivoTexto.value.trim();
+    if (!motivoReal.value.trim()) {
+      e.preventDefault();
+      motivoTexto.focus();
+      motivoTexto.style.borderColor = '#ef4444';
+      return false;
+    }
+  } else {
+    motivoReal.value = motivoSel.value;
+  }
+  const btn = document.getElementById('btn-submit-remision');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Guardando…';
+});
+
+// ── Estado cards ──────────────────────────────────────────
+const tipoInput = document.getElementById('id_tipo_destino');
+const estadoInput = document.getElementById('id_estado');
+const cards = document.querySelectorAll('.estado-card');
+
+function selectEstado(val) {
+  if (tipoInput) tipoInput.value = val;
+  if (estadoInput) estadoInput.value = 'pendiente';
+  cards.forEach(c => c.classList.toggle('selected', c.dataset.val === val));
+  // Avisos
+  document.getElementById('aviso-casa').style.display     = val === 'casa'     ? 'block' : 'none';
+  document.getElementById('aviso-hospital').style.display = val === 'hospital' ? 'block' : 'none';
+  // Sección hospital
+  document.getElementById('seccion-hospital').style.display = val === 'hospital' ? 'block' : 'none';
+}
+
+cards.forEach(card => card.addEventListener('click', () => selectEstado(card.dataset.val)));
+
+// Init con valor actual (edición) o 'hospital' por defecto
+const initVal = tipoInput ? (tipoInput.value || 'hospital') : 'hospital';
+selectEstado(initVal);
+
+// ── Modal PDF ──────────────────────────────────────────────
+const urlParams = new URLSearchParams(window.location.search);
+const pdfPk = urlParams.get('pdf_remision_pk');
+const historialUrl = urlParams.get('historial_url');
+if (pdfPk) {
+  const overlay = document.getElementById('pdf-modal-overlay');
+  document.getElementById('pdf-modal-link').href = `/remisiones/${pdfPk}/pdf/`;
+  if (historialUrl) document.getElementById('pdf-modal-skip').href = historialUrl;
+  overlay.style.display = 'flex';
+  overlay.addEventListener('click', e => { if(e.target === overlay) overlay.style.display='none'; });
+}
+</script>
+
+<!-- ══ Tom Select: búsqueda rápida de estudiante ══ -->
+<link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+<style>
+.ts-wrapper.single .ts-control{
+  border:1.5px solid var(--border,#e2e8f0) !important;border-radius:10px !important;
+  padding:9px 14px !important;font-size:.85rem !important;font-family:inherit !important;
+  background:#fff !important;box-shadow:none !important;min-height:42px !important;
+}
+.ts-wrapper.single.focus .ts-control,.ts-wrapper.single:focus-within .ts-control{
+  border-color:#0d9488 !important;box-shadow:0 0 0 3px rgba(13,148,136,.13) !important;
+}
+.ts-dropdown{border-radius:12px !important;border:1.5px solid #e2e8f0 !important;
+  box-shadow:0 8px 30px rgba(0,0,0,.13) !important;font-family:inherit !important;overflow:hidden;margin-top:4px !important;}
+.ts-dropdown .option{padding:9px 14px !important;font-size:.84rem !important;border-bottom:1px solid rgba(0,0,0,.04);cursor:pointer;}
+.ts-dropdown .option:hover,.ts-dropdown .option.active{background:#f0fdfa !important;color:#1e3a5f !important;}
+.ts-dropdown .cosfa-grado{
+  display:inline-block;background:#dbeafe;color:#1d4ed8;border-radius:5px;
+  padding:1px 7px;font-size:.71rem;font-weight:700;margin-left:7px;vertical-align:middle;
+}
+.ts-dropdown-content{max-height:260px !important;}
+</style>
+<script>
+(function(){
+  var sel = document.getElementById('id_estudiante');
+  if(!sel || sel.dataset.tsLoaded) return;
+  sel.dataset.tsLoaded = '1';
+  var ts = new TomSelect(sel, {
+    placeholder: '🔍 Escribe nombre o grado para filtrar…',
+    maxOptions: 300,
+    render: {
+      option: function(data, escape){
+        var text = data.text || '';
+        var m = text.match(/^(.+?)\s*[-–]\s*(.+)$/);
+        var nombre = escape(m ? m[1].trim() : text);
+        var grado  = m ? '<span class="cosfa-grado">'+escape(m[2].trim())+'</span>' : '';
+        return '<div style="display:flex;align-items:center">'+nombre+grado+'</div>';
+      },
+      item: function(data, escape){ return '<div>'+escape(data.text)+'</div>'; }
+    },
+    onInitialize: function() {
+      // Si el estudiante viene preseleccionado (ej: /remisiones/nueva/500/), disparar autocomplete
+      var initialVal = this.getValue();
+      if (initialVal) {
+        fetch('/api/estudiante/' + initialVal + '/datos/', {
+          headers: {'X-Requested-With': 'XMLHttpRequest'}
+        })
+        .then(r => r.json())
+        .then(function(data) {
+          var fEps    = document.querySelector('[name="eps"]');
+          var fPoliza = document.querySelector('[name="numero_eps"]');
+          var fTel    = document.querySelector('[name="numero_contacto_eps"]');
+          if (fEps    && !fEps.value    && data.eps)             fEps.value    = data.eps;
+          if (fPoliza && !fPoliza.value && data.numero_poliza)   fPoliza.value = data.numero_poliza;
+          if (fTel    && !fTel.value    && data.tel_contacto_eps) fTel.value   = data.tel_contacto_eps;
+        })
+        .catch(function(){});
+      }
+    },
+    onChange: function(value) {
+      if (!value) return;
+      // Autocompletar campos EPS desde el API
+      fetch('/api/estudiante/' + value + '/datos/', {
+        headers: {'X-Requested-With': 'XMLHttpRequest'}
+      })
+      .then(r => r.json())
+      .then(data => {
+        var fEps    = document.querySelector('[name="eps"]');
+        var fPoliza = document.querySelector('[name="numero_eps"]');
+        var fTel    = document.querySelector('[name="numero_contacto_eps"]');
+        // Solo autocompletar si el campo está vacío (no sobreescribir lo que el usuario escribió)
+        if (fEps    && !fEps.value    && data.eps)             fEps.value    = data.eps;
+        if (fPoliza && !fPoliza.value && data.numero_poliza)   fPoliza.value = data.numero_poliza;
+        if (fTel    && !fTel.value    && data.tel_contacto_eps) fTel.value   = data.tel_contacto_eps;
+        // Si ya tenían valor, mostrar un badge de sugerencia
+        if (fEps && fEps.value !== data.eps && data.eps) {
+          mostrarSugerenciaEps(data);
+        }
+      })
+      .catch(() => {});
+    }
+  });
+
+  function mostrarSugerenciaEps(data) {
+    var existing = document.getElementById('eps-sugerencia');
+    if (existing) existing.remove();
+    if (!data.eps) return;
+    var box = document.createElement('div');
+    box.id = 'eps-sugerencia';
+    box.style.cssText = 'background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:10px 13px;margin-top:6px;font-size:.78rem;color:#1e40af;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap';
+    box.innerHTML = '<div><i class="bi bi-shield-plus-fill"></i> <strong>EPS del estudiante:</strong> ' + data.eps +
+      (data.numero_poliza ? ' — Póliza: ' + data.numero_poliza : '') +
+      (data.tel_contacto_eps ? ' — Tel: ' + data.tel_contacto_eps : '') + '</div>' +
+      '<button type="button" id="btn-usar-eps" style="background:#1d4ed8;color:white;border:none;border-radius:7px;padding:4px 11px;font-size:.75rem;font-weight:700;cursor:pointer"><i class="bi bi-check-lg"></i> Usar estos datos</button>';
+    var epsField = document.querySelector('[name="eps"]');
+    if (epsField) epsField.closest('div').after(box);
+    document.getElementById('btn-usar-eps').onclick = function() {
+      var fEps    = document.querySelector('[name="eps"]');
+      var fPoliza = document.querySelector('[name="numero_eps"]');
+      var fTel    = document.querySelector('[name="numero_contacto_eps"]');
+      if (fEps)    fEps.value    = data.eps || '';
+      if (fPoliza) fPoliza.value = data.numero_poliza || '';
+      if (fTel)    fTel.value    = data.tel_contacto_eps || '';
+      box.remove();
+    };
+  }
+})();
+</script>
+{% endblock %}

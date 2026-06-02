@@ -1,0 +1,168 @@
+{% extends 'enfermeria/base.html' %}
+{% block title %}Historial de apertura de correos — COSFA CURE{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+
+  <div class="d-flex align-items-center mb-4 gap-3">
+    <div>
+      <h2 class="mb-0 fw-bold" style="color:#003366;">
+        <i class="bi bi-envelope-check me-2"></i>Historial de apertura de correos
+      </h2>
+      <p class="text-muted mb-0 small">Seguimiento de lectura en tiempo real</p>
+    </div>
+  </div>
+
+  <!-- Estadísticas rápidas -->
+  {% with total=registros|length %}
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm text-center p-3">
+        <div style="font-size:2rem">📨</div>
+        <div class="fw-bold fs-4">{{ registros|length }}</div>
+        <div class="text-muted small">Correos enviados</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm text-center p-3">
+        <div style="font-size:2rem">👁️</div>
+        <div class="fw-bold fs-4 text-success">
+          {% with abiertos=registros|dictsort:"abierto" %}
+            {% for r in registros %}{% if r.abierto %}{% cycle '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' '' %}{% endif %}{% endfor %}
+          {% endwith %}
+          —
+        </div>
+        <div class="text-muted small">Abiertos</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm text-center p-3">
+        <div style="font-size:2rem">✅</div>
+        <div class="fw-bold fs-4 text-primary">—</div>
+        <div class="text-muted small">Confirmados manualmente</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm text-center p-3">
+        <div style="font-size:2rem">⏳</div>
+        <div class="fw-bold fs-4 text-warning">—</div>
+        <div class="text-muted small">Sin abrir</div>
+      </div>
+    </div>
+  </div>
+  {% endwith %}
+
+  <!-- Tabla principal -->
+  <div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead style="background:#f8fafc;border-bottom:2px solid #e2e8f0;">
+            <tr>
+              <th class="px-4 py-3 text-muted small fw-semibold">ESTADO</th>
+              <th class="px-3 py-3 text-muted small fw-semibold">TIPO</th>
+              <th class="px-3 py-3 text-muted small fw-semibold">DESTINATARIO</th>
+              <th class="px-3 py-3 text-muted small fw-semibold">ENVIADO POR</th>
+              <th class="px-3 py-3 text-muted small fw-semibold">ENVIADO</th>
+              <th class="px-3 py-3 text-muted small fw-semibold">ABIERTO</th>
+              <th class="px-3 py-3 text-muted small fw-semibold">MÉTODO</th>
+              <th class="px-3 py-3 text-muted small fw-semibold">VECES</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for reg in registros %}
+            <tr>
+              <!-- Estado -->
+              <td class="px-4 py-3">
+                {% if reg.abierto %}
+                  {% if reg.metodo_apertura == 'confirmacion' %}
+                    <span class="badge" style="background:#E8F5E9;color:#1B5E20;font-size:12px;padding:6px 10px;border-radius:20px;">
+                      ✅ Confirmado
+                    </span>
+                  {% else %}
+                    <span class="badge" style="background:#E3F2FD;color:#0D47A1;font-size:12px;padding:6px 10px;border-radius:20px;">
+                      👁️ Abierto
+                    </span>
+                  {% endif %}
+                {% else %}
+                  <span class="badge" style="background:#FFF8E1;color:#7B5800;font-size:12px;padding:6px 10px;border-radius:20px;">
+                    ⏳ Sin abrir
+                  </span>
+                {% endif %}
+              </td>
+
+              <!-- Tipo -->
+              <td class="px-3 py-3">
+                <span class="small">{{ reg.get_tipo_display }}</span>
+              </td>
+
+              <!-- Destinatario -->
+              <td class="px-3 py-3">
+                <div class="fw-semibold small" style="color:#1A2B4A;">
+                  {{ reg.destinatario_nombre|default:"—" }}
+                </div>
+                <div class="text-muted" style="font-size:11px;">{{ reg.destinatario_email }}</div>
+              </td>
+
+              <!-- Enviado por -->
+              <td class="px-3 py-3">
+                <span class="small text-muted">
+                  {{ reg.enviado_por.get_full_name|default:reg.enviado_por.username|default:"—" }}
+                </span>
+              </td>
+
+              <!-- Fecha envío -->
+              <td class="px-3 py-3">
+                <span class="small text-muted">{{ reg.fecha_envio|date:"d/m/Y H:i" }}</span>
+              </td>
+
+              <!-- Fecha apertura -->
+              <td class="px-3 py-3">
+                {% if reg.fecha_apertura %}
+                  <span class="small text-success">{{ reg.fecha_apertura|date:"d/m/Y H:i" }}</span>
+                {% else %}
+                  <span class="small text-muted">—</span>
+                {% endif %}
+              </td>
+
+              <!-- Método -->
+              <td class="px-3 py-3">
+                {% if reg.metodo_apertura == 'pixel' %}
+                  <span class="small text-muted">Automático</span>
+                {% elif reg.metodo_apertura == 'confirmacion' %}
+                  <span class="small text-primary">Manual</span>
+                {% else %}
+                  <span class="small text-muted">—</span>
+                {% endif %}
+              </td>
+
+              <!-- Veces abierto -->
+              <td class="px-3 py-3 text-center">
+                {% if reg.veces_abierto > 0 %}
+                  <span class="badge bg-secondary rounded-pill">{{ reg.veces_abierto }}</span>
+                {% else %}
+                  <span class="small text-muted">—</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="8" class="text-center py-5 text-muted">
+                <div style="font-size:2.5rem">📭</div>
+                <div class="mt-2">Aún no se han enviado correos con tracking.</div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// Auto-refresh cada 30 segundos para ver aperturas en tiempo real
+setTimeout(() => location.reload(), 30000);
+</script>
+{% endblock %}

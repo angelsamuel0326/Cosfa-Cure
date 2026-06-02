@@ -1,0 +1,140 @@
+{% extends 'enfermeria/base.html' %}
+{% block title %}{{ titulo }} — COSFA CURE{% endblock %}
+{% block page_title %}{{ titulo }}{% endblock %}
+{% block content %}
+<div class="page-title">{% if med %}Editar <span>Ítem del botiquín</span>{% else %}Nuevo <span>Ítem del botiquín</span>{% endif %}</div>
+<div class="card" style="max-width:620px;margin:0 auto">
+  <div class="card-head">
+    <div class="card-head-title"><i class="bi bi-capsule-pill"></i> Datos del ítem</div>
+  </div>
+  <div style="padding:22px">
+    <form method="post" enctype="multipart/form-data">{% csrf_token %}
+      <div style="display:flex;flex-direction:column;gap:13px">
+
+        <!-- CATEGORÍA — campo más importante -->
+        <div style="background:rgba(14,165,160,.06);border:1.5px solid rgba(14,165,160,.2);border-radius:12px;padding:14px">
+          <label class="form-label" style="font-weight:800;color:var(--navy)">
+            <i class="bi bi-tag-fill" style="color:var(--teal)"></i> Categoría del ítem *
+          </label>
+          {{ form.categoria }}
+          <div style="font-size:.74rem;color:#6b86a0;margin-top:6px">
+            <i class="bi bi-info-circle"></i>
+            <strong>Insumos:</strong> alcohol, gasas, vendas, micropore, agua oxigenada, suero fisiológico, termómetros, guantes, etc. —
+            <strong>Medicamentos:</strong> solo con prescripción médica y autorización escrita del acudiente.
+          </div>
+        </div>
+
+        <div><label class="form-label">Nombre *</label>{{ form.nombre }}</div>
+        <div><label class="form-label">Descripción / uso</label>{{ form.descripcion }}</div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div><label class="form-label">Cantidad actual *</label>{{ form.cantidad_actual }}</div>
+          <div><label class="form-label">Cantidad mínima *</label>{{ form.cantidad_minima }}</div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div><label class="form-label">Unidad *</label>{{ form.unidad }}</div>
+          <div><label class="form-label">Fecha de vencimiento *</label>{{ form.fecha_vencimiento }}</div>
+        </div>
+
+        <!-- SECCIÓN IMAGEN -->
+        <div style="background:#f8fafc;border:1.5px solid #cbd5e1;border-radius:12px;padding:16px">
+          <div style="font-weight:700;font-size:0.85rem;color:#475569;margin-bottom:12px">
+            <i class="bi bi-image"></i> Imagen del medicamento
+            <span style="font-weight:400;font-size:0.78rem;color:#94a3b8">(opcional)</span>
+          </div>
+
+          <!-- Preview -->
+          <div style="margin-bottom:12px;text-align:center">
+            {% if med and med.imagen %}
+              <img id="img-preview" src="{{ med.imagen.url }}"
+                   style="max-width:160px;max-height:160px;border-radius:10px;border:1px solid #e2e8f0;object-fit:contain;background:#fff;padding:6px">
+              <div id="no-img" style="display:none;width:110px;height:110px;border-radius:10px;border:1.5px dashed #cbd5e1;flex-direction:column;align-items:center;justify-content:center;gap:6px;margin:0 auto;color:#94a3b8">
+                <i class="bi bi-image" style="font-size:2rem"></i>
+                <span style="font-size:0.75rem">Sin imagen</span>
+              </div>
+            {% else %}
+              <img id="img-preview" src="" style="display:none;max-width:160px;max-height:160px;border-radius:10px;border:1px solid #e2e8f0;object-fit:contain;background:#fff;padding:6px">
+              <div id="no-img" style="width:110px;height:110px;border-radius:10px;border:1.5px dashed #cbd5e1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;margin:0 auto;color:#94a3b8">
+                <i class="bi bi-image" style="font-size:2rem"></i>
+                <span style="font-size:0.75rem">Sin imagen</span>
+              </div>
+            {% endif %}
+          </div>
+
+          <div>
+            <label class="form-label">Seleccionar imagen (JPG, PNG, WEBP)</label>
+            {{ form.imagen }}
+            {% if form.imagen.errors %}
+              <div style="color:#dc2626;font-size:0.8rem;margin-top:4px">{{ form.imagen.errors|join:", " }}</div>
+            {% endif %}
+          </div>
+
+          {% if med and med.imagen %}
+          <div style="margin-top:10px;display:flex;align-items:center;gap:8px">
+            <input type="checkbox" name="imagen-clear" id="imagen-clear" style="accent-color:#e05c5c">
+            <label for="imagen-clear" style="font-size:0.8rem;color:#dc2626;cursor:pointer">
+              <i class="bi bi-trash"></i> Eliminar imagen actual
+            </label>
+          </div>
+          {% endif %}
+
+          <p style="font-size:0.75rem;color:#94a3b8;margin-top:8px">
+            <i class="bi bi-info-circle"></i> Aparece en el inventario y en el detalle del medicamento.
+            Tamaño recomendado: cuadrada, mínimo 200×200 px.
+          </p>
+        </div>
+        <!-- FIN SECCIÓN IMAGEN -->
+
+        {% for field in form %}
+          {% if field.errors %}
+            <div style="color:#dc2626;font-size:0.8rem">{{ field.label }}: {{ field.errors|join:", " }}</div>
+          {% endif %}
+        {% endfor %}
+
+      </div>
+      <div style="display:flex;gap:8px;margin-top:20px">
+        <button type="submit" class="btn btn-primary">
+          <i class="bi bi-check-circle"></i> {{ titulo }}
+        </button>
+        <a href="{% if med %}{% url 'detalle_medicamento' med.pk %}{% else %}{% url 'inventario' %}{% endif %}" class="btn btn-outline">
+          Cancelar
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+const input   = document.querySelector('input[type="file"][name="imagen"]');
+const preview = document.getElementById('img-preview');
+const noImg   = document.getElementById('no-img');
+
+if (input) {
+  input.addEventListener('change', function () {
+    const file = this.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      preview.src = e.target.result;
+      preview.style.display = 'block';
+      noImg.style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+const clearCb = document.getElementById('imagen-clear');
+if (clearCb) {
+  clearCb.addEventListener('change', function () {
+    if (this.checked) {
+      preview.style.display = 'none';
+      noImg.style.display = 'flex';
+    } else {
+      preview.style.display = 'block';
+      noImg.style.display = 'none';
+    }
+  });
+}
+</script>
+{% endblock %}

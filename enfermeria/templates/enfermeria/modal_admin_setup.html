@@ -1,0 +1,792 @@
+{% load static %}
+<!-- ═══ MODAL ADMIN SETUP v2 — Professional Design ═══ -->
+<style>
+@keyframes msOverlayIn  { from{opacity:0}             to{opacity:1} }
+@keyframes msSlideUp    { from{opacity:0;transform:translateY(40px) scale(.97)} to{opacity:1;transform:none} }
+@keyframes msBadgePop   { 0%{transform:scale(0) rotate(-15deg)} 70%{transform:scale(1.1)} 100%{transform:scale(1)} }
+@keyframes msGlow       { 0%,100%{box-shadow:0 0 0 0 rgba(14,165,160,.0)} 50%{box-shadow:0 0 0 8px rgba(14,165,160,.12)} }
+@keyframes msSpin       { to{transform:rotate(360deg)} }
+@keyframes msRingPulse  { 0%,100%{transform:scale(1);opacity:.4} 50%{transform:scale(1.06);opacity:.9} }
+@keyframes msSuccessIn  { 0%{transform:scale(0);opacity:0} 60%{transform:scale(1.15)} 100%{transform:scale(1);opacity:1} }
+@keyframes msDotBounce  { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-4px)} }
+@keyframes msShimmer    { 0%{left:-100%} 100%{left:200%} }
+
+/* ── Overlay ── */
+#ms-overlay {
+  position: fixed; inset: 0; z-index: 10000;
+  background: rgba(8, 16, 36, .82);
+  backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px; overflow-y: auto;
+  animation: msOverlayIn .25s ease;
+}
+
+/* ── Card ── */
+#ms-card {
+  width: 100%; max-width: 820px;
+  display: flex; flex-direction: row;
+  border-radius: 24px; overflow: hidden;
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,.06),
+    0 32px 80px rgba(0,0,0,.6),
+    0 8px 24px rgba(0,0,0,.4);
+  animation: msSlideUp .4s cubic-bezier(.22,1,.36,1);
+}
+
+/* ══════════ LEFT PANEL ══════════ */
+#ms-left {
+  width: 310px; min-width: 310px;
+  background: linear-gradient(160deg, #080e1d 0%, #0d1f3c 40%, #071e1c 100%);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 44px 28px 40px;
+  position: relative; overflow: hidden;
+  text-align: center;
+}
+
+/* Dot grid texture */
+#ms-left::before {
+  content: ''; position: absolute; inset: 0;
+  background-image: radial-gradient(rgba(255,255,255,.04) 1px, transparent 1px);
+  background-size: 20px 20px; pointer-events: none;
+}
+
+/* Ambient glows */
+.ms-glow-1 {
+  position: absolute; width: 280px; height: 280px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(14,165,160,.18) 0%, transparent 70%);
+  top: -80px; right: -80px; pointer-events: none;
+}
+.ms-glow-2 {
+  position: absolute; width: 220px; height: 220px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(99,102,241,.12) 0%, transparent 70%);
+  bottom: -60px; left: -60px; pointer-events: none;
+}
+
+/* Logo ring */
+.ms-logo-wrap {
+  position: relative; display: inline-block;
+  margin-bottom: 22px; z-index: 2;
+}
+.ms-logo-wrap::before, .ms-logo-wrap::after {
+  content: ''; position: absolute; border-radius: 50%;
+  border: 1.5px solid rgba(14,165,160,.35);
+  animation: msRingPulse 3.5s ease-in-out infinite;
+}
+.ms-logo-wrap::before { inset: -12px; animation-delay: 0s; }
+.ms-logo-wrap::after  { inset: -24px; animation-delay: .8s; border-color: rgba(14,165,160,.15); }
+
+.ms-logo-img {
+  width: 100px; height: 100px; border-radius: 50%;
+  object-fit: cover; display: block;
+  border: 2.5px solid rgba(255,255,255,.12);
+  box-shadow: 0 12px 40px rgba(0,0,0,.5), 0 0 0 4px rgba(14,165,160,.08);
+  position: relative; z-index: 1;
+  background: #0d2a27;
+}
+
+.ms-crown {
+  position: absolute; top: -14px; left: 50%; transform: translateX(-50%);
+  font-size: 1.4rem; z-index: 3;
+  filter: drop-shadow(0 2px 10px rgba(245,158,11,.8));
+  animation: msBadgePop .5s cubic-bezier(.22,1,.36,1) .3s both;
+}
+
+/* Role pill */
+.ms-role-pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: linear-gradient(135deg, rgba(245,158,11,.15), rgba(245,158,11,.08));
+  border: 1px solid rgba(245,158,11,.35);
+  color: #fde68a; border-radius: 100px;
+  padding: 5px 14px; font-size: .6rem; font-weight: 700;
+  letter-spacing: 1px; text-transform: uppercase;
+  margin-bottom: 14px; z-index: 2; position: relative;
+}
+
+/* Name */
+#ms-left h2 {
+  font-family: 'Sora', sans-serif; font-size: 1.15rem; font-weight: 800;
+  color: #fff; letter-spacing: -.3px; margin-bottom: 8px;
+  z-index: 2; position: relative;
+}
+#ms-left p {
+  font-size: .72rem; color: rgba(255,255,255,.38);
+  line-height: 1.7; z-index: 2; position: relative;
+  max-width: 220px;
+}
+
+/* ── Steps ── */
+.ms-steps-list {
+  margin-top: 32px; z-index: 2; position: relative;
+  width: 100%; display: flex; flex-direction: column; gap: 0;
+}
+.ms-step-item {
+  display: flex; align-items: flex-start; gap: 12px;
+  position: relative;
+}
+.ms-step-left {
+  display: flex; flex-direction: column; align-items: center;
+  flex-shrink: 0;
+}
+.ms-step-circle {
+  width: 28px; height: 28px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .65rem; font-weight: 800;
+  border: 1.5px solid rgba(255,255,255,.12);
+  color: rgba(255,255,255,.25);
+  background: rgba(255,255,255,.04);
+  transition: all .35s cubic-bezier(.22,1,.36,1);
+  position: relative;
+}
+.ms-step-circle.active {
+  border-color: #f59e0b; color: #f59e0b;
+  background: rgba(245,158,11,.1);
+  box-shadow: 0 0 0 4px rgba(245,158,11,.08);
+}
+.ms-step-circle.done {
+  border-color: #0ea5a0; background: #0ea5a0; color: #fff;
+}
+.ms-step-line {
+  width: 1.5px; height: 28px;
+  background: rgba(255,255,255,.08);
+  margin: 3px 0;
+  transition: background .35s;
+}
+.ms-step-line.done { background: #0ea5a0; }
+
+.ms-step-info { padding-top: 4px; text-align: left; }
+.ms-step-name {
+  font-size: .62rem; font-weight: 700; letter-spacing: .6px;
+  color: rgba(255,255,255,.22); text-transform: uppercase;
+  transition: color .3s;
+}
+.ms-step-name.active { color: #f59e0b; }
+.ms-step-name.done   { color: #0ea5a0; }
+.ms-step-desc {
+  font-size: .6rem; color: rgba(255,255,255,.18); margin-top: 1px;
+}
+
+/* ══════════ RIGHT PANEL ══════════ */
+#ms-right {
+  flex: 1; min-width: 0;
+  background: #fff;
+  display: flex; flex-direction: column;
+  position: relative; overflow: hidden;
+}
+
+/* Top accent bar */
+#ms-right::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg, #0ea5a0, #6366f1, #f59e0b);
+}
+
+/* Content area */
+#ms-content {
+  flex: 1; display: flex; flex-direction: column;
+  padding: 36px 36px 28px;
+  overflow-y: auto;
+}
+
+/* ── Section header ── */
+.ms-section-title {
+  font-family: 'Sora', sans-serif; font-size: .6rem; font-weight: 700;
+  color: #94a3b8; text-transform: uppercase; letter-spacing: 1.2px;
+  display: flex; align-items: center; gap: 8px; margin-bottom: 20px;
+}
+.ms-section-title::after {
+  content: ''; flex: 1; height: 1px; background: #f1f5f9;
+}
+
+/* ── Info notice ── */
+.ms-notice {
+  display: flex; gap: 12px; align-items: flex-start;
+  background: linear-gradient(135deg, #f0fdf9, #f0f9ff);
+  border: 1px solid #99f6e4; border-radius: 14px;
+  padding: 14px 16px; margin-bottom: 28px;
+}
+.ms-notice-icon {
+  width: 32px; height: 32px; border-radius: 10px; flex-shrink: 0;
+  background: rgba(14,165,160,.1);
+  display: flex; align-items: center; justify-content: center;
+}
+.ms-notice-icon i { color: #0ea5a0; font-size: .9rem; }
+.ms-notice-body { font-size: .74rem; color: #134e4a; line-height: 1.7; }
+.ms-notice-body strong { color: #0f766e; }
+.ms-notice-body small {
+  display: block; margin-top: 4px;
+  color: #5eead4; font-size: .67rem;
+}
+.ms-notice-body a { color: #0ea5a0; font-weight: 600; text-decoration: none; }
+.ms-notice-body a:hover { text-decoration: underline; }
+
+/* ── Error ── */
+.ms-error {
+  display: none; align-items: center; gap: 10px;
+  background: #fef2f2; border: 1px solid #fecaca;
+  border-left: 3px solid #ef4444; border-radius: 12px;
+  padding: 11px 14px; margin-bottom: 20px;
+  font-size: .76rem; color: #991b1b; font-weight: 600;
+  animation: msSlideUp .2s ease;
+}
+
+/* ── Panels ── */
+.ms-panel { display: none; flex: 1; flex-direction: column; }
+.ms-panel.active { display: flex; }
+
+/* ── Pin + Numpad layout ── */
+.ms-pin-area {
+  display: flex; gap: 28px; align-items: flex-start; flex: 1;
+}
+.ms-pin-left { flex: 1; min-width: 0; }
+.ms-pin-right { flex-shrink: 0; }
+
+/* Field label */
+.ms-field-label {
+  font-size: .62rem; font-weight: 700; letter-spacing: .8px;
+  color: #64748b; text-transform: uppercase;
+  display: flex; align-items: center; gap: 6px;
+  margin-bottom: 14px;
+}
+.ms-field-label i { color: #0ea5a0; }
+
+/* PIN dots */
+.ms-dots {
+  display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap;
+}
+.ms-dot {
+  width: 44px; height: 48px; border-radius: 12px;
+  border: 1.5px solid #e2e8f0; background: #f8fafc;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Sora', sans-serif; font-size: 1.5rem; font-weight: 800;
+  color: #0f2444; transition: all .2s; position: relative; overflow: hidden;
+}
+.ms-dot::after {
+  content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, #0ea5a0, #6366f1);
+  transform: scaleX(0); transform-origin: center; transition: transform .25s;
+}
+.ms-dot.cursor {
+  border-color: #f59e0b;
+  box-shadow: 0 0 0 3px rgba(245,158,11,.12);
+  background: #fffbeb;
+  animation: msGlow 2s ease-in-out infinite;
+}
+.ms-dot.filled { border-color: #0ea5a0; background: #f0fdf9; color: #0d9488; }
+.ms-dot.filled::after { transform: scaleX(1); }
+
+/* Strength bar */
+.ms-strength { margin: 4px 0 12px; }
+.ms-strength-track {
+  height: 3px; background: #f1f5f9; border-radius: 4px; overflow: hidden;
+  margin-bottom: 6px; position: relative;
+}
+.ms-strength-fill {
+  height: 100%; border-radius: 4px; width: 0%;
+  transition: width .4s cubic-bezier(.22,1,.36,1), background .4s;
+}
+.ms-strength-label { font-size: .65rem; font-weight: 600; color: #94a3b8; min-height: 14px; }
+
+/* Match indicator */
+.ms-match {
+  display: flex; align-items: center; gap: 6px;
+  font-size: .74rem; font-weight: 600; min-height: 22px;
+  margin: 6px 0 10px;
+}
+.ms-match.ok  { color: #16a34a; }
+.ms-match.err { color: #dc2626; }
+
+/* Confirm hint */
+.ms-confirm-hint {
+  font-size: .78rem; color: #64748b; line-height: 1.6;
+  margin-bottom: 16px; padding: 10px 14px;
+  background: #f8fafc; border-radius: 10px;
+  border-left: 3px solid #e2e8f0;
+}
+
+/* ── Numpad ── */
+.ms-numpad {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+  width: 186px;
+}
+.ms-key {
+  height: 52px; border-radius: 12px; border: 1.5px solid #e8edf4;
+  background: #fff; color: #1e293b;
+  font-family: 'Sora', sans-serif; font-size: 1.05rem; font-weight: 700;
+  cursor: pointer; transition: all .15s;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+  user-select: none; -webkit-user-select: none;
+  position: relative; overflow: hidden;
+}
+.ms-key:hover:not(:disabled) { background: #f8fafc; border-color: #cbd5e1; transform: translateY(-1px); }
+.ms-key:active:not(:disabled) { transform: scale(.93); background: #f1f5f9; }
+.ms-key-del {
+  border-color: #fecaca; background: #fef2f2; color: #ef4444; font-size: .8rem;
+}
+.ms-key-del:hover:not(:disabled) { background: #fee2e2; border-color: #fca5a5; }
+.ms-key-next, .ms-key-save {
+  border: none;
+  background: linear-gradient(135deg, #0ea5a0 0%, #0d9488 100%);
+  color: #fff; font-size: .8rem;
+  box-shadow: 0 4px 14px rgba(14,165,160,.4);
+}
+.ms-key-next:hover:not(:disabled), .ms-key-save:hover:not(:disabled) {
+  background: linear-gradient(135deg, #0d9488, #0a7c75);
+  box-shadow: 0 6px 18px rgba(14,165,160,.5);
+  transform: translateY(-1px);
+}
+.ms-key-next:disabled, .ms-key-save:disabled {
+  opacity: .3; cursor: not-allowed; transform: none !important; box-shadow: none;
+}
+
+/* ── Nav bottom ── */
+.ms-nav { display: flex; gap: 10px; margin-top: auto; padding-top: 20px; flex-shrink: 0; }
+.ms-btn-back {
+  padding: 11px 20px; background: #f8fafc; border: 1.5px solid #e2e8f0;
+  border-radius: 11px; color: #64748b;
+  font-family: 'Sora', sans-serif; font-size: .82rem; font-weight: 700;
+  cursor: pointer; transition: all .2s; display: flex; align-items: center; gap: 6px;
+}
+.ms-btn-back:hover { background: #f1f5f9; border-color: #cbd5e1; color: #475569; }
+
+/* ═══════════ SUCCESS ═══════════ */
+#ms-success {
+  display: none; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; padding: 48px 36px;
+  flex: 1;
+}
+.ms-success-icon {
+  width: 80px; height: 80px; border-radius: 50%;
+  background: linear-gradient(135deg, #0ea5a0, #0d9488);
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 24px;
+  box-shadow: 0 12px 40px rgba(14,165,160,.4), 0 0 0 8px rgba(14,165,160,.08);
+  animation: msSuccessIn .5s cubic-bezier(.22,1,.36,1);
+}
+.ms-success-icon i { font-size: 2.2rem; color: #fff; }
+#ms-success h3 {
+  font-family: 'Sora', sans-serif; font-size: 1.3rem; font-weight: 800;
+  color: #0f2444; letter-spacing: -.3px; margin-bottom: 8px;
+}
+#ms-success p {
+  font-size: .8rem; color: #64748b; line-height: 1.7;
+  margin-bottom: 24px; max-width: 280px;
+}
+.ms-code-chips { display: flex; gap: 6px; margin-bottom: 28px; justify-content: center; }
+.ms-code-chip {
+  width: 38px; height: 38px; border-radius: 10px;
+  background: linear-gradient(135deg, #f0fdf9, #ecfdf5);
+  border: 1.5px solid #a7f3d0;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Sora', sans-serif; font-size: 1rem; font-weight: 800; color: #0d9488;
+}
+.ms-goto-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: linear-gradient(135deg, #0f2444, #1a3a6e);
+  color: #fff; border: none; border-radius: 13px;
+  padding: 14px 32px;
+  font-family: 'Sora', sans-serif; font-size: .88rem; font-weight: 700;
+  text-decoration: none; cursor: pointer;
+  box-shadow: 0 8px 28px rgba(15,36,68,.35); transition: all .22s;
+}
+.ms-goto-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 36px rgba(15,36,68,.45); }
+
+/* ── Responsive ── */
+@media (max-width: 700px) {
+  #ms-card { flex-direction: column; max-width: 440px; }
+  #ms-left { width: 100%; min-width: 0; padding: 28px 20px 20px; }
+  .ms-steps-list { display: none; }
+  #ms-content { padding: 24px 20px 20px; }
+  .ms-pin-area { flex-direction: column; gap: 18px; }
+  .ms-numpad { width: 100%; max-width: 220px; margin: 0 auto; }
+  .ms-dots { justify-content: center; }
+}
+@media (max-width: 380px) {
+  .ms-dot { width: 37px; height: 42px; font-size: 1.3rem; }
+  .ms-dots { gap: 6px; }
+  .ms-key { height: 46px; }
+}
+</style>
+
+<div id="ms-overlay">
+<div id="ms-card">
+
+  <!-- ══ LEFT ══ -->
+  <div id="ms-left">
+    <div class="ms-glow-1"></div>
+    <div class="ms-glow-2"></div>
+
+    <div class="ms-logo-wrap">
+      <span class="ms-crown">👑</span>
+      <img class="ms-logo-img"
+           src="{% static 'icons/logo_cosfa.png' %}"
+           alt="Colegio San Francisco de Asís"
+           onerror="this.style.background='#0d2a27';this.removeAttribute('src')">
+    </div>
+
+    <div class="ms-role-pill">
+      <i class="bi bi-star-fill" style="font-size:.55rem"></i>
+      Administrador Principal
+    </div>
+    <h2>¡Hola, {{ admin_username }}! 👋</h2>
+    <p>Configura tu PIN de acceso administrativo para proteger COSFA CURE.</p>
+
+    <div class="ms-steps-list">
+      <div class="ms-step-item">
+        <div class="ms-step-left">
+          <div class="ms-step-circle active" id="ms-dot-1">1</div>
+          <div class="ms-step-line" id="ms-line-1"></div>
+        </div>
+        <div class="ms-step-info">
+          <div class="ms-step-name active" id="ms-lbl-1">Crear PIN</div>
+          <div class="ms-step-desc">Elige 6 dígitos seguros</div>
+        </div>
+      </div>
+      <div class="ms-step-item">
+        <div class="ms-step-left">
+          <div class="ms-step-circle" id="ms-dot-2">2</div>
+          <div class="ms-step-line" id="ms-line-2"></div>
+        </div>
+        <div class="ms-step-info">
+          <div class="ms-step-name" id="ms-lbl-2">Confirmar</div>
+          <div class="ms-step-desc">Repite el PIN</div>
+        </div>
+      </div>
+      <div class="ms-step-item">
+        <div class="ms-step-left">
+          <div class="ms-step-circle" id="ms-dot-3">✓</div>
+        </div>
+        <div class="ms-step-info">
+          <div class="ms-step-name" id="ms-lbl-3">Listo</div>
+          <div class="ms-step-desc">Todo configurado</div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /#ms-left -->
+
+  <!-- ══ RIGHT ══ -->
+  <div id="ms-right">
+    <div id="ms-content">
+
+      <!-- Notice -->
+      <div class="ms-notice">
+        <div class="ms-notice-icon"><i class="bi bi-shield-lock-fill"></i></div>
+        <div class="ms-notice-body">
+          <strong>¿Para qué sirve este código?</strong>
+          Otros usuarios podrán obtener rol de administrador ingresando este PIN al iniciar sesión.
+          <small>💡 También puedes gestionar roles desde <a href="#">Perfil → Usuarios</a>.</small>
+        </div>
+      </div>
+
+      <!-- Error -->
+      <div class="ms-error" id="ms-error">
+        <i class="bi bi-exclamation-triangle-fill" style="flex-shrink:0;font-size:.9rem"></i>
+        <span id="ms-error-txt"></span>
+      </div>
+
+      <!-- ── PASO 1 ── -->
+      <div class="ms-panel active" id="ms-p1">
+        <div class="ms-section-title">
+          <i class="bi bi-lock-fill" style="color:#0ea5a0"></i>
+          Paso 1 — Crea tu PIN
+        </div>
+
+        <div class="ms-pin-area">
+          <div class="ms-pin-left">
+            <div class="ms-field-label">
+              <i class="bi bi-grid-3x2-gap-fill"></i>
+              Código de 6 dígitos
+            </div>
+            <div class="ms-dots" id="ms-dots-1">
+              <div class="ms-dot cursor"></div>
+              <div class="ms-dot"></div>
+              <div class="ms-dot"></div>
+              <div class="ms-dot"></div>
+              <div class="ms-dot"></div>
+              <div class="ms-dot"></div>
+            </div>
+            <div class="ms-strength">
+              <div class="ms-strength-track">
+                <div class="ms-strength-fill" id="ms-sbar"></div>
+              </div>
+              <div class="ms-strength-label" id="ms-stxt">Ingresa tu código</div>
+            </div>
+          </div>
+
+          <div class="ms-pin-right">
+            <div class="ms-numpad">
+              {% for n in "123456789" %}
+              <button class="ms-key" onclick="msKey(1,'{{ n }}')">{{ n }}</button>
+              {% endfor %}
+              <button class="ms-key ms-key-del" onclick="msDel(1)" title="Borrar">
+                <i class="bi bi-backspace-fill"></i>
+              </button>
+              <button class="ms-key" onclick="msKey(1,'0')">0</button>
+              <button class="ms-key ms-key-next" id="ms-btn-next" disabled onclick="msGoStep2()" title="Siguiente">
+                <i class="bi bi-arrow-right-circle-fill" style="font-size:1.1rem"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div><!-- /p1 -->
+
+      <!-- ── PASO 2 ── -->
+      <div class="ms-panel" id="ms-p2">
+        <div class="ms-section-title">
+          <i class="bi bi-shield-check-fill" style="color:#0ea5a0"></i>
+          Paso 2 — Confirma tu PIN
+        </div>
+
+        <div class="ms-confirm-hint">
+          <i class="bi bi-info-circle" style="color:#0ea5a0;margin-right:6px"></i>
+          Vuelve a escribir el mismo código para confirmar que lo recuerdas.
+        </div>
+
+        <div class="ms-pin-area">
+          <div class="ms-pin-left">
+            <div class="ms-field-label">
+              <i class="bi bi-grid-3x2-gap-fill"></i>
+              Repite el código
+            </div>
+            <div class="ms-dots" id="ms-dots-2">
+              <div class="ms-dot cursor"></div>
+              <div class="ms-dot"></div>
+              <div class="ms-dot"></div>
+              <div class="ms-dot"></div>
+              <div class="ms-dot"></div>
+              <div class="ms-dot"></div>
+            </div>
+            <div class="ms-match" id="ms-match">&nbsp;</div>
+          </div>
+
+          <div class="ms-pin-right">
+            <div class="ms-numpad">
+              {% for n in "123456789" %}
+              <button class="ms-key" onclick="msKey(2,'{{ n }}')">{{ n }}</button>
+              {% endfor %}
+              <button class="ms-key ms-key-del" onclick="msDel(2)" title="Borrar">
+                <i class="bi bi-backspace-fill"></i>
+              </button>
+              <button class="ms-key" onclick="msKey(2,'0')">0</button>
+              <button class="ms-key ms-key-save" id="ms-btn-save" disabled onclick="msGuardar()">
+                <i class="bi bi-check-circle-fill" style="font-size:1.1rem"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="ms-nav">
+          <button class="ms-btn-back" onclick="msGoStep1()">
+            <i class="bi bi-arrow-left"></i> Atrás
+          </button>
+        </div>
+      </div><!-- /p2 -->
+
+    </div><!-- /#ms-content -->
+
+    <!-- ── SUCCESS ── -->
+    <div id="ms-success">
+      <div class="ms-success-icon">
+        <i class="bi bi-shield-check"></i>
+      </div>
+      <h3>¡PIN guardado exitosamente! 🎉</h3>
+      <p>Tu código de administrador está activo. Ya puedes acceder a COSFA CURE con todos los privilegios.</p>
+      <div class="ms-code-chips" id="ms-code-chips"></div>
+      <a href="/login/" class="ms-goto-btn">
+        <i class="bi bi-box-arrow-in-right"></i>
+        Ir al inicio de sesión
+      </a>
+    </div>
+
+  </div><!-- /#ms-right -->
+</div><!-- /#ms-card -->
+</div><!-- /#ms-overlay -->
+
+<script>
+(function(){
+  var pin1 = '', pin2 = '';
+
+  /* ─ render dots ─ */
+  function renderDots(id, pin, cursor) {
+    var ds = document.getElementById(id).querySelectorAll('.ms-dot');
+    ds.forEach(function(d, i) {
+      d.className = 'ms-dot';
+      if (i < pin.length) { d.className += ' filled'; d.textContent = '•'; }
+      else { d.textContent = ''; }
+      if (i === cursor) d.className += ' cursor';
+    });
+  }
+
+  /* ─ strength ─ */
+  function getStrength(c) {
+    var u = new Set(c.split('')).size;
+    var seq = /0123|1234|2345|3456|4567|5678|6789|9876|8765|7654|6543|5432|4321|3210/.test(c);
+    if (u === 1 || seq) return { pct: 15, col: '#ef4444', lbl: '⚠️  Muy predecible — elige otro' };
+    if (u <= 2)         return { pct: 40, col: '#f97316', lbl: 'Débil — prueba más variado' };
+    if (u <= 4)         return { pct: 72, col: '#22c55e', lbl: '✓  Moderado' };
+    return                     { pct: 100, col: '#0ea5a0', lbl: '✓✓  Fuerte' };
+  }
+
+  function getCsrf() {
+    var v = null;
+    document.cookie.split(';').forEach(function(c) {
+      var p = c.trim().split('=');
+      if (p[0] === 'csrftoken') v = decodeURIComponent(p[1]);
+    });
+    return v;
+  }
+
+  /* ─ key press ─ */
+  window.msKey = function(step, ch) {
+    if (step === 1) {
+      if (pin1.length >= 6) return;
+      pin1 += ch;
+      var cursor = pin1.length < 6 ? pin1.length : -1;
+      renderDots('ms-dots-1', pin1, cursor);
+      var nb = document.getElementById('ms-btn-next');
+      if (pin1.length === 6) {
+        var s = getStrength(pin1);
+        document.getElementById('ms-sbar').style.cssText = 'width:' + s.pct + '%;background:' + s.col;
+        document.getElementById('ms-stxt').textContent = s.lbl;
+        document.getElementById('ms-stxt').style.color = s.col;
+        nb.disabled = false;
+      } else {
+        document.getElementById('ms-sbar').style.cssText = 'width:' + (pin1.length / 6 * 18) + '%;background:#cbd5e1';
+        document.getElementById('ms-stxt').textContent = (6 - pin1.length) + ' dígito(s) restantes';
+        document.getElementById('ms-stxt').style.color = '#94a3b8';
+        nb.disabled = true;
+      }
+    } else {
+      if (pin2.length >= 6) return;
+      pin2 += ch;
+      var cursor2 = pin2.length < 6 ? pin2.length : -1;
+      renderDots('ms-dots-2', pin2, cursor2);
+      checkMatch();
+    }
+  };
+
+  window.msDel = function(step) {
+    if (step === 1) {
+      pin1 = pin1.slice(0, -1);
+      renderDots('ms-dots-1', pin1, pin1.length);
+      document.getElementById('ms-btn-next').disabled = pin1.length < 6;
+      if (!pin1.length) {
+        document.getElementById('ms-sbar').style.width = '0';
+        document.getElementById('ms-stxt').textContent = 'Ingresa tu código';
+        document.getElementById('ms-stxt').style.color = '';
+      }
+    } else {
+      pin2 = pin2.slice(0, -1);
+      renderDots('ms-dots-2', pin2, pin2.length);
+      checkMatch();
+    }
+  };
+
+  function checkMatch() {
+    var el = document.getElementById('ms-match');
+    var sb = document.getElementById('ms-btn-save');
+    el.className = 'ms-match';
+    if (!pin2.length) { el.innerHTML = '&nbsp;'; sb.disabled = true; return; }
+    if (pin2.length < 6) { el.innerHTML = '&nbsp;'; sb.disabled = true; return; }
+    if (pin1 === pin2) {
+      el.innerHTML = '<i class="bi bi-check-circle-fill"></i>&nbsp;¡Coinciden perfectamente!';
+      el.className = 'ms-match ok'; sb.disabled = false;
+    } else {
+      el.innerHTML = '<i class="bi bi-x-circle-fill"></i>&nbsp;No coinciden, intenta de nuevo';
+      el.className = 'ms-match err'; sb.disabled = true;
+    }
+  }
+
+  /* ─ step nav ─ */
+  window.msGoStep2 = function() {
+    document.getElementById('ms-p1').classList.remove('active');
+    document.getElementById('ms-p2').classList.add('active');
+    // step indicators
+    document.getElementById('ms-dot-1').className = 'ms-step-circle done';
+    document.getElementById('ms-dot-1').textContent = '✓';
+    document.getElementById('ms-lbl-1').className   = 'ms-step-name done';
+    document.getElementById('ms-line-1').classList.add('done');
+    document.getElementById('ms-dot-2').className = 'ms-step-circle active';
+    document.getElementById('ms-lbl-2').className = 'ms-step-name active';
+    // reset p2
+    pin2 = ''; renderDots('ms-dots-2', pin2, 0);
+    document.getElementById('ms-match').innerHTML = '&nbsp;';
+    document.getElementById('ms-match').className = 'ms-match';
+    document.getElementById('ms-btn-save').disabled = true;
+    document.getElementById('ms-error').style.display = 'none';
+  };
+
+  window.msGoStep1 = function() {
+    document.getElementById('ms-p2').classList.remove('active');
+    document.getElementById('ms-p1').classList.add('active');
+    document.getElementById('ms-dot-1').className = 'ms-step-circle active';
+    document.getElementById('ms-dot-1').textContent = '1';
+    document.getElementById('ms-lbl-1').className   = 'ms-step-name active';
+    document.getElementById('ms-line-1').classList.remove('done');
+    document.getElementById('ms-dot-2').className = 'ms-step-circle';
+    document.getElementById('ms-lbl-2').className = 'ms-step-name';
+  };
+
+  /* ─ save ─ */
+  window.msGuardar = function() {
+    var sb = document.getElementById('ms-btn-save');
+    var eb = document.getElementById('ms-error');
+    sb.disabled = true;
+    sb.innerHTML = '<i class="bi bi-hourglass-split" style="animation:msSpin .7s linear infinite;display:inline-block"></i>';
+
+    fetch("{% url 'guardar_codigo_admin' %}", {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrf() },
+      body: JSON.stringify({ codigo: pin1 })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (d.ok) {
+        // step 3 done
+        document.getElementById('ms-dot-2').className = 'ms-step-circle done';
+        document.getElementById('ms-dot-2').textContent = '✓';
+        document.getElementById('ms-lbl-2').className   = 'ms-step-name done';
+        document.getElementById('ms-line-2').classList.add('done');
+        document.getElementById('ms-dot-3').className = 'ms-step-circle done';
+        document.getElementById('ms-lbl-3').className = 'ms-step-name done';
+        // chips
+        var chips = document.getElementById('ms-code-chips');
+        chips.innerHTML = '';
+        pin1.split('').forEach(function(c) {
+          var el = document.createElement('div');
+          el.className = 'ms-code-chip'; el.textContent = c;
+          chips.appendChild(el);
+        });
+        document.getElementById('ms-content').style.display = 'none';
+        document.getElementById('ms-success').style.display = 'flex';
+      } else {
+        eb.querySelector('span').textContent = d.error || 'Error al guardar.';
+        eb.style.display = 'flex';
+        sb.disabled = false;
+        sb.innerHTML = '<i class="bi bi-check-circle-fill" style="font-size:1.1rem"></i>';
+      }
+    })
+    .catch(function() {
+      eb.querySelector('span').textContent = 'Error de red. Intenta de nuevo.';
+      eb.style.display = 'flex';
+      sb.disabled = false;
+      sb.innerHTML = '<i class="bi bi-check-circle-fill" style="font-size:1.1rem"></i>';
+    });
+  };
+
+  /* ─ Physical keyboard ─ */
+  document.addEventListener('keydown', function(e) {
+    var p1on = document.getElementById('ms-p1').classList.contains('active');
+    var p2on = document.getElementById('ms-p2').classList.contains('active');
+    if (p1on) {
+      if (/^[0-9]$/.test(e.key)) msKey(1, e.key);
+      else if (e.key === 'Backspace') msDel(1);
+      else if (e.key === 'Enter' && !document.getElementById('ms-btn-next').disabled) msGoStep2();
+    } else if (p2on) {
+      if (/^[0-9]$/.test(e.key)) msKey(2, e.key);
+      else if (e.key === 'Backspace') msDel(2);
+      else if (e.key === 'Enter' && !document.getElementById('ms-btn-save').disabled) msGuardar();
+    }
+  });
+})();
+</script>

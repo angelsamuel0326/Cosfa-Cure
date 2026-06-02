@@ -1,0 +1,559 @@
+{% extends 'enfermeria/base.html' %}
+{% block title %}Consulta — COSFA CURE
+<!-- ══ MODAL CONFIRMAR ELIMINAR CONSULTA ══ -->
+<div id="modal-eliminar" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center">
+  <div style="background:white;border-radius:16px;padding:28px;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+      <span style="background:#fef2f2;border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0">🗑️</span>
+      <div>
+        <div style="font-weight:800;color:#b91c1c;font-size:.95rem">¿Eliminar esta consulta?</div>
+        <div style="font-size:.78rem;color:#64748b">Esta acción no se puede deshacer.</div>
+      </div>
+    </div>
+    {% if consulta.remision_automatica %}
+    <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:9px;padding:10px 13px;font-size:.78rem;color:#9a3412;margin-bottom:14px">
+      <i class="bi bi-exclamation-triangle-fill"></i> Esta consulta tiene una <strong>remisión asociada</strong> que también será eliminada.
+    </div>
+    {% endif %}
+    <form method="post" action="{% url 'eliminar_consulta' consulta.pk %}">
+      {% csrf_token %}
+      <div style="display:flex;gap:8px;margin-top:4px">
+        <button type="submit" style="flex:1;padding:11px;background:#dc2626;color:white;border:none;border-radius:10px;font-weight:700;font-size:.86rem;cursor:pointer">
+          <i class="bi bi-trash-fill"></i> Sí, eliminar
+        </button>
+        <button type="button" onclick="cerrarModalEliminar()" style="flex:1;padding:11px;background:#f1f5f9;color:#374151;border:1.5px solid #e2e8f0;border-radius:10px;font-weight:700;font-size:.86rem;cursor:pointer">
+          Cancelar
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+<script>
+function abrirModalEliminar(){
+  var m = document.getElementById('modal-eliminar');
+  m.style.display = 'flex';
+}
+function cerrarModalEliminar(){
+  document.getElementById('modal-eliminar').style.display = 'none';
+}
+document.getElementById('modal-eliminar').addEventListener('click', function(e){
+  if(e.target === this) cerrarModalEliminar();
+});
+</script>
+
+{% endblock %}
+{% block page_title %}Detalle de Consulta
+<!-- ══ MODAL CONFIRMAR ELIMINAR CONSULTA ══ -->
+<div id="modal-eliminar" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center">
+  <div style="background:white;border-radius:16px;padding:28px;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+      <span style="background:#fef2f2;border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0">🗑️</span>
+      <div>
+        <div style="font-weight:800;color:#b91c1c;font-size:.95rem">¿Eliminar esta consulta?</div>
+        <div style="font-size:.78rem;color:#64748b">Esta acción no se puede deshacer.</div>
+      </div>
+    </div>
+    {% if consulta.remision_automatica %}
+    <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:9px;padding:10px 13px;font-size:.78rem;color:#9a3412;margin-bottom:14px">
+      <i class="bi bi-exclamation-triangle-fill"></i> Esta consulta tiene una <strong>remisión asociada</strong> que también será eliminada.
+    </div>
+    {% endif %}
+    <form method="post" action="{% url 'eliminar_consulta' consulta.pk %}">
+      {% csrf_token %}
+      <div style="display:flex;gap:8px;margin-top:4px">
+        <button type="submit" style="flex:1;padding:11px;background:#dc2626;color:white;border:none;border-radius:10px;font-weight:700;font-size:.86rem;cursor:pointer">
+          <i class="bi bi-trash-fill"></i> Sí, eliminar
+        </button>
+        <button type="button" onclick="cerrarModalEliminar()" style="flex:1;padding:11px;background:#f1f5f9;color:#374151;border:1.5px solid #e2e8f0;border-radius:10px;font-weight:700;font-size:.86rem;cursor:pointer">
+          Cancelar
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+<script>
+function abrirModalEliminar(){
+  var m = document.getElementById('modal-eliminar');
+  m.style.display = 'flex';
+}
+function cerrarModalEliminar(){
+  document.getElementById('modal-eliminar').style.display = 'none';
+}
+document.getElementById('modal-eliminar').addEventListener('click', function(e){
+  if(e.target === this) cerrarModalEliminar();
+});
+</script>
+
+{% endblock %}
+{% block content %}
+
+<style>
+@keyframes slideUp   { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:none} }
+@keyframes pulse2    { 0%,100%{transform:scale(1)} 50%{transform:scale(1.06)} }
+
+.dc-wrap { max-width:720px; margin:0 auto; display:flex; flex-direction:column; gap:16px; }
+
+.dc-hero {
+  background:linear-gradient(135deg,#0f2444 0%,#0e7490 100%);
+  border-radius:20px; padding:22px 24px;
+  display:flex; align-items:center; gap:18px;
+  position:relative; overflow:hidden;
+  animation:slideUp .4s ease;
+}
+.dc-hero::before {
+  content:''; position:absolute; inset:0;
+  background:radial-gradient(circle at 80% 50%,rgba(255,255,255,.06) 0%,transparent 60%);
+}
+.dc-hero-avatar { width:62px;height:62px;border-radius:50%;border:3px solid rgba(255,255,255,.35);object-fit:cover;flex-shrink:0;box-shadow:0 4px 18px rgba(0,0,0,.3); }
+.dc-hero-av-ph { width:62px;height:62px;border-radius:50%;background:rgba(255,255,255,.18);border:3px solid rgba(255,255,255,.35);display:flex;align-items:center;justify-content:center;font-size:1.6rem;flex-shrink:0; }
+.dc-hero-info { flex:1;min-width:0;position:relative; }
+.dc-hero-name { font-size:1.15rem;font-weight:800;color:white;margin-bottom:5px; }
+.dc-hero-meta { display:flex;gap:7px;align-items:center;flex-wrap:wrap; }
+.dc-hero-actions { display:flex;gap:8px;align-items:center;flex-wrap:wrap;position:relative; }
+
+.badge-pill { display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border-radius:20px;font-size:.72rem;font-weight:700; }
+.pill-green  { background:#dcfce7;color:#166534;border:1px solid #86efac; }
+.pill-blue   { background:#dbeafe;color:#1e40af;border:1px solid #93c5fd; }
+.pill-red    { background:#fee2e2;color:#991b1b;border:1px solid #fca5a5; }
+.pill-orange { background:#ffedd5;color:#9a3412;border:1px solid #fdba74; }
+.pill-gray   { background:#f1f5f9;color:#475569;border:1px solid #cbd5e1; }
+
+.action-bar {
+  position:sticky;top:0;z-index:50;
+  background:rgba(255,255,255,.94);backdrop-filter:blur(12px);
+  border-bottom:1px solid #e8eef6;
+  padding:10px 0;margin-bottom:4px;
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  flex-wrap:nowrap;
+}
+.action-bar-right { display:flex;gap:7px;align-items:center;flex-wrap:nowrap; }
+.btn-action { display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:10px;font-size:.81rem;font-weight:700;cursor:pointer;transition:all .2s;text-decoration:none;border:none;white-space:nowrap; }
+.btn-pdf    { background:linear-gradient(135deg,#ef4444,#dc2626);color:white; }
+.btn-excel  { background:linear-gradient(135deg,#16a34a,#15803d);color:white; }
+.btn-edit   { background:white;border:1.5px solid #e2e8f0!important;color:#374151; }
+.btn-back   { background:white;border:1.5px solid #e2e8f0!important;color:#374151; }
+.btn-delete { background:white;border:1.5px solid #fca5a5!important;color:#dc2626; }
+.btn-action:hover { transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.15); }
+
+/* Título mejorado */
+.dc-title-block { display:flex;align-items:center;gap:10px; }
+.dc-id-badge {
+  display:inline-flex;align-items:center;gap:8px;
+  background:linear-gradient(135deg,#0f2444,#1e40af);
+  color:white;padding:6px 14px;border-radius:12px;
+  font-size:.9rem;font-weight:800;letter-spacing:.3px;
+}
+.dc-id-num { font-size:1.15rem;font-weight:900;color:#7dd3fc; }
+
+.dc-section { background:white;border-radius:16px;border:1px solid #e8eef6;box-shadow:0 2px 12px rgba(0,0,0,.05);overflow:hidden;animation:slideUp .4s ease both; }
+.dc-section-head { padding:13px 18px 10px;border-bottom:1px solid #f1f5fb;display:flex;align-items:center;gap:10px; }
+.dc-section-icon { width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0; }
+.dc-section-title { font-size:.82rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#374151; }
+.dc-section-body { padding:16px 18px; }
+
+.vitals-grid { display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:10px; }
+.vital-card { background:linear-gradient(135deg,#f8faff,#eef4ff);border:1px solid #dbeafe;border-radius:13px;padding:12px 10px;text-align:center;transition:all .2s;cursor:default;position:relative;overflow:hidden; }
+.vital-card:hover { transform:translateY(-3px);box-shadow:0 8px 20px rgba(14,116,144,.15);border-color:#93c5fd; }
+.vital-card::after { content:'';position:absolute;bottom:0;left:0;right:0;height:3px;border-radius:0 0 13px 13px; }
+.vital-card.temp::after { background:linear-gradient(90deg,#ef4444,#f97316); }
+.vital-card.pres::after { background:linear-gradient(90deg,#8b5cf6,#6366f1); }
+.vital-card.card::after { background:linear-gradient(90deg,#ec4899,#f43f5e); }
+.vital-card.resp::after { background:linear-gradient(90deg,#14b8a6,#06b6d4); }
+.vital-card.peso::after { background:linear-gradient(90deg,#f59e0b,#eab308); }
+.vital-card.tall::after { background:linear-gradient(90deg,#22c55e,#16a34a); }
+.vital-label { font-size:.65rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:#6b7280;margin-bottom:4px; }
+.vital-value { font-size:1.3rem;font-weight:900;color:#0f2444;line-height:1; }
+.vital-unit  { font-size:.63rem;color:#9ca3af;margin-top:2px; }
+.vital-card.temp.fever .vital-value { color:#dc2626;animation:pulse2 1.5s infinite; }
+
+.info-2col { display:grid;grid-template-columns:1fr 1fr;gap:12px; }
+.info-block { display:flex;flex-direction:column;gap:3px; }
+.info-label { font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#9ca3af; }
+.info-value { font-size:.88rem;color:#1e293b;line-height:1.6;background:#f8faff;border:1px solid #e8eef6;border-radius:10px;padding:10px 13px;min-height:42px; }
+.info-value.empty { color:#cbd5e1;font-style:italic; }
+
+.med-chip { display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,#d1fae5,#ecfdf5);border:1px solid #6ee7b7;border-radius:12px;padding:11px 14px;transition:all .2s; }
+.med-chip:hover { transform:translateX(4px);border-color:#34d399; }
+.med-name { font-weight:700;font-size:.88rem;color:#065f46; }
+.med-detail { font-size:.76rem;color:#047857; }
+
+.notif-block { border-radius:13px;padding:13px 15px;display:flex;flex-direction:column;gap:5px; }
+.notif-block.verde   { background:#f0fdf4;border:1px solid #86efac; }
+.notif-block.naranja { background:#fff7ed;border:1px solid #fed7aa; }
+.notif-title { font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.5px; }
+.notif-block.verde   .notif-title { color:#166534; }
+.notif-block.naranja .notif-title { color:#c2410c; }
+.notif-row { font-size:.82rem;color:#374151; }
+
+@media(max-width:500px) { .info-2col{grid-template-columns:1fr} .vitals-grid{grid-template-columns:repeat(3,1fr)} .dc-hero{flex-wrap:wrap} }
+</style>
+
+<div class="dc-wrap">
+
+  <!-- Barra acción sticky -->
+  <div class="action-bar">
+    <div class="dc-title-block">
+      <div class="dc-id-badge">
+        <i class="bi bi-clipboard2-pulse-fill"></i>
+        Registro de Consulta &nbsp;<span class="dc-id-num">#{{ consulta.pk }}</span>
+      </div>
+    </div>
+    <div class="action-bar-right">
+      <a href="{% url 'pdf_consulta_individual' consulta.pk %}" target="_blank" class="btn-action btn-pdf"><i class="bi bi-file-earmark-pdf-fill"></i> PDF</a>
+      <a href="{% url 'exportar_consulta_xlsx' consulta.pk %}" class="btn-action btn-excel"><i class="bi bi-file-earmark-excel-fill"></i> Excel</a>
+      <a href="{% url 'editar_consulta' consulta.pk %}" class="btn-action btn-edit"><i class="bi bi-pencil"></i> Editar</a>
+      <button type="button" class="btn-action btn-delete" onclick="abrirModalEliminar()"><i class="bi bi-trash"></i> Eliminar</button>
+      <a href="{% url 'historial_estudiante' consulta.estudiante.pk %}" class="btn-action btn-back"><i class="bi bi-arrow-left"></i> Volver</a>
+    </div>
+  </div>
+
+  <!-- Hero -->
+  <div class="dc-hero">
+    {% if consulta.estudiante.foto %}<img src="{{ consulta.estudiante.foto.url }}" class="dc-hero-avatar" alt="{{ consulta.estudiante.nombre }}">
+    {% else %}<div class="dc-hero-av-ph"><i class="bi bi-person-fill" style="color:rgba(255,255,255,.7)"></i></div>{% endif %}
+    <div class="dc-hero-info">
+      <div class="dc-hero-name">{{ consulta.estudiante.nombre }}</div>
+      <div class="dc-hero-meta">
+        <span class="badge-pill pill-blue">{{ consulta.estudiante.grado }}</span>
+        <span style="color:rgba(255,255,255,.55);font-size:.72rem"><i class="bi bi-calendar3"></i> {{ consulta.fecha_hora|date:"d/m/Y" }}</span>
+        {% if consulta.hora_atencion %}
+        <span style="color:rgba(255,255,255,.7);font-size:.72rem;background:rgba(255,255,255,.12);padding:2px 8px;border-radius:8px;border:1px solid rgba(255,255,255,.2)"><i class="bi bi-clock-fill"></i> Atención: {{ consulta.hora_atencion|time:"H:i" }}</span>
+        {% endif %}
+      </div>
+    </div>
+    <div class="dc-hero-actions">
+      {% if consulta.estado == 'remitido_hospital' %}<span class="badge-pill pill-red"><i class="bi bi-hospital"></i> Remitido hospital</span>
+      {% elif consulta.estado == 'remitido_casa' %}<span class="badge-pill pill-orange"><i class="bi bi-house"></i> Remitido a casa</span>
+      {% elif consulta.estado == 'regreso_clase' %}<span class="badge-pill pill-green"><i class="bi bi-mortarboard"></i> Regreso a clase</span>
+      {% elif consulta.estado == 'atendido' %}<span class="badge-pill pill-green"><i class="bi bi-check-circle"></i> Atendido</span>
+      {% else %}<span class="badge-pill pill-gray">{{ consulta.get_estado_display }}</span>{% endif %}
+      <span class="badge-pill pill-blue">{{ consulta.get_motivo_display }}</span>
+    </div>
+  </div>
+
+  <!-- Datos del estudiante -->
+  <div class="dc-section" style="animation-delay:.08s">
+    <div class="dc-section-head">
+      <div class="dc-section-icon" style="background:linear-gradient(135deg,#dbeafe,#bfdbfe)"><i class="bi bi-person-fill" style="color:#1d4ed8"></i></div>
+      <span class="dc-section-title">Datos del Estudiante</span>
+    </div>
+    <div class="dc-section-body">
+      <div class="info-2col">
+        <div>
+          <div class="info-label">Grado</div>
+          <div style="font-weight:700;font-size:.9rem;color:#1e293b;margin-top:2px">{{ consulta.estudiante.grado }}</div>
+        </div>
+        {% if consulta.estudiante.numero_documento %}
+        <div>
+          <div class="info-label">Documento</div>
+          <div style="font-weight:600;font-size:.88rem;color:#1e293b;margin-top:2px">{{ consulta.estudiante.numero_documento }}</div>
+        </div>
+        {% endif %}
+        {% if consulta.estudiante.edad %}
+        <div>
+          <div class="info-label">Edad</div>
+          <div style="font-weight:600;font-size:.88rem;color:#1e293b;margin-top:2px">{{ consulta.estudiante.edad }} años</div>
+        </div>
+        {% endif %}
+        {% if consulta.estudiante.eps %}
+        <div>
+          <div class="info-label">EPS</div>
+          <div style="font-weight:600;font-size:.88rem;color:#1e293b;margin-top:2px">{{ consulta.estudiante.eps }}</div>
+        </div>
+        {% endif %}
+        {% if consulta.estudiante.acudiente %}
+        <div>
+          <div class="info-label">Acudiente</div>
+          <div style="font-weight:600;font-size:.88rem;color:#1e293b;margin-top:2px">{{ consulta.estudiante.acudiente }}</div>
+        </div>
+        {% endif %}
+        {% if consulta.estudiante.telefono_acudiente %}
+        <div>
+          <div class="info-label">Teléfono acudiente</div>
+          <div style="font-weight:600;font-size:.88rem;color:#1e293b;margin-top:2px">{{ consulta.estudiante.telefono_acudiente }}</div>
+        </div>
+        {% endif %}
+        {% if consulta.estudiante.alergias %}
+        <div style="grid-column:1/-1">
+          <div class="info-label">Alergias conocidas</div>
+          <div style="margin-top:4px;background:#fff7ed;border-radius:8px;padding:9px 12px;font-size:.82rem;color:#9a3412;border-left:3px solid #fdba74">{{ consulta.estudiante.alergias }}</div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Signos vitales -->
+  {% if consulta.temperatura or consulta.presion_arterial or consulta.frecuencia_cardiaca or consulta.frecuencia_respiratoria or consulta.peso or consulta.talla %}
+  <div class="dc-section" style="animation-delay:.1s">
+    <div class="dc-section-head">
+      <div class="dc-section-icon" style="background:linear-gradient(135deg,#fee2e2,#fecaca)"><i class="bi bi-heart-pulse-fill" style="color:#dc2626"></i></div>
+      <span class="dc-section-title">Signos Vitales</span>
+      {% if consulta.temperatura and consulta.temperatura >= 38 %}
+      <span style="margin-left:auto;background:#fee2e2;color:#dc2626;font-size:.7rem;font-weight:700;padding:3px 10px;border-radius:20px;border:1px solid #fca5a5"><i class="bi bi-thermometer-high"></i> Temperatura elevada</span>
+      {% endif %}
+    </div>
+    <div class="dc-section-body">
+      <div class="vitals-grid">
+        {% if consulta.temperatura %}
+        <div class="vital-card temp {% if consulta.temperatura >= 38 %}fever{% endif %}">
+          <i class="bi bi-thermometer-half" style="font-size:.95rem;display:block;margin-bottom:4px;color:#ef4444"></i>
+          <div class="vital-label">Temperatura</div>
+          <div class="vital-value">{{ consulta.temperatura }}</div>
+          <div class="vital-unit">°C</div>
+        </div>{% endif %}
+        {% if consulta.presion_arterial %}
+        <div class="vital-card pres">
+          <i class="bi bi-activity" style="font-size:.95rem;display:block;margin-bottom:4px;color:#8b5cf6"></i>
+          <div class="vital-label">Presión</div>
+          <div class="vital-value" style="font-size:1rem">{{ consulta.presion_arterial }}</div>
+          <div class="vital-unit">mmHg</div>
+        </div>{% endif %}
+        {% if consulta.frecuencia_cardiaca %}
+        <div class="vital-card card">
+          <i class="bi bi-heart-fill" style="font-size:.95rem;display:block;margin-bottom:4px;color:#ec4899"></i>
+          <div class="vital-label">F. Cardíaca</div>
+          <div class="vital-value">{{ consulta.frecuencia_cardiaca }}</div>
+          <div class="vital-unit">lpm</div>
+        </div>{% endif %}
+        {% if consulta.frecuencia_respiratoria %}
+        <div class="vital-card resp">
+          <i class="bi bi-wind" style="font-size:.95rem;display:block;margin-bottom:4px;color:#14b8a6"></i>
+          <div class="vital-label">F. Resp.</div>
+          <div class="vital-value">{{ consulta.frecuencia_respiratoria }}</div>
+          <div class="vital-unit">rpm</div>
+        </div>{% endif %}
+        {% if consulta.peso %}
+        <div class="vital-card peso">
+          <i class="bi bi-speedometer2" style="font-size:.95rem;display:block;margin-bottom:4px;color:#f59e0b"></i>
+          <div class="vital-label">Peso</div>
+          <div class="vital-value">{{ consulta.peso }}</div>
+          <div class="vital-unit">kg</div>
+        </div>{% endif %}
+        {% if consulta.talla %}
+        <div class="vital-card tall">
+          <i class="bi bi-arrows-vertical" style="font-size:.95rem;display:block;margin-bottom:4px;color:#22c55e"></i>
+          <div class="vital-label">Talla</div>
+          <div class="vital-value">{{ consulta.talla }}</div>
+          <div class="vital-unit">cm</div>
+        </div>{% endif %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Motivo clínico -->
+  <div class="dc-section" style="animation-delay:.15s">
+    <div class="dc-section-head">
+      <div class="dc-section-icon" style="background:linear-gradient(135deg,#dbeafe,#bfdbfe)"><i class="bi bi-stethoscope" style="color:#1d4ed8"></i></div>
+      <span class="dc-section-title">Motivo Clínico</span>
+    </div>
+    <div class="dc-section-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div>
+          <div style="font-size:.68rem;color:#64748b;text-transform:uppercase;font-weight:700">Motivo</div>
+          <div style="font-weight:600;margin-top:3px">{{ consulta.get_motivo_display }}</div>
+        </div>
+        <div>
+          <div style="font-size:.68rem;color:#64748b;text-transform:uppercase;font-weight:700">Estado</div>
+          <div style="margin-top:3px">
+            {% if consulta.estado == 'remitido_hospital' %}<span style="background:#fee2e2;color:#991b1b;padding:4px 10px;border-radius:20px;font-size:.75rem;font-weight:700">🚑 Remitido hospital</span>
+            {% elif consulta.estado == 'remitido_casa' %}<span style="background:#fef3c7;color:#92400e;padding:4px 10px;border-radius:20px;font-size:.75rem;font-weight:700">🏠 Remitido a casa</span>
+            {% elif consulta.estado == 'regreso_clase' %}<span style="background:#dbeafe;color:#1e40af;padding:4px 10px;border-radius:20px;font-size:.75rem;font-weight:700">📚 Regreso a clase</span>
+            {% elif consulta.estado == 'atendido' %}<span style="background:#d1fae5;color:#065f46;padding:4px 10px;border-radius:20px;font-size:.75rem;font-weight:700">✅ Atendido</span>
+            {% else %}<span style="background:#f1f5f9;color:#475569;padding:4px 10px;border-radius:20px;font-size:.75rem;font-weight:700">{{ consulta.get_estado_display }}</span>{% endif %}
+          </div>
+        </div>
+        <div style="grid-column:1/-1">
+          <div style="font-size:.68rem;color:#64748b;text-transform:uppercase;font-weight:700;margin-bottom:5px">Descripción de síntomas</div>
+          <div style="background:#f8fafc;border-radius:10px;padding:11px 14px;font-size:.855rem;line-height:1.65;border-left:3px solid #93c5fd;color:#1e293b">{{ consulta.descripcion_sintomas|default:"<span style='color:#cbd5e1;font-style:italic'>No registrado</span>" }}</div>
+        </div>
+        <div style="grid-column:1/-1">
+          <div style="font-size:.68rem;color:#64748b;text-transform:uppercase;font-weight:700;margin-bottom:5px">Tratamiento aplicado</div>
+          <div style="background:#f8fafc;border-radius:10px;padding:11px 14px;font-size:.855rem;line-height:1.65;border-left:3px solid #6ee7b7;color:#1e293b">{{ consulta.tratamiento|default:"<span style='color:#cbd5e1;font-style:italic'>No registrado</span>" }}</div>
+        </div>
+        {% if consulta.observaciones %}
+        <div style="grid-column:1/-1">
+          <div style="font-size:.68rem;color:#64748b;text-transform:uppercase;font-weight:700;margin-bottom:5px">Observaciones</div>
+          <div style="background:#fffbeb;border-radius:10px;padding:11px 14px;font-size:.855rem;line-height:1.65;border-left:3px solid #fbbf24;color:#1e293b">{{ consulta.observaciones }}</div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Medicamentos -->
+  {% if consulta.medicamentos_usados.all or consulta.medicamento_suministrado %}
+  <div class="dc-section" style="animation-delay:.2s">
+    <div class="dc-section-head">
+      <div class="dc-section-icon" style="background:linear-gradient(135deg,#d1fae5,#a7f3d0)"><i class="bi bi-capsule-pill" style="color:#065f46"></i></div>
+      <span class="dc-section-title">Medicamentos Suministrados</span>
+    </div>
+    <div class="dc-section-body" style="display:flex;flex-direction:column;gap:8px">
+      {% for mc in consulta.medicamentos_usados.all %}
+      <div class="med-chip">
+        <i class="bi bi-capsule-pill" style="font-size:1.2rem;color:#059669"></i>
+        <div>
+          <div class="med-name">{{ mc.medicamento.nombre }}</div>
+          <div class="med-detail">{{ mc.cantidad }} {{ mc.medicamento.unidad }}{% if mc.dosis %} — {{ mc.dosis }}{% endif %}</div>
+        </div>
+      </div>
+      {% empty %}
+        {% if consulta.medicamento_suministrado %}
+        <div class="med-chip">
+          <i class="bi bi-capsule-pill" style="font-size:1.2rem;color:#059669"></i>
+          <div>
+            <div class="med-name">{{ consulta.medicamento_suministrado }}</div>
+            <div class="med-detail">{% if consulta.dosis %}{{ consulta.dosis }}{% endif %}{% if consulta.cantidad_usada %} · {{ consulta.cantidad_usada }} unidad(es){% endif %}</div>
+          </div>
+        </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Notificaciones -->
+  {% if consulta.estado == "regreso_clase" or consulta.acudiente_notificado %}
+  <div class="dc-section" style="animation-delay:.25s">
+    <div class="dc-section-head">
+      <div class="dc-section-icon" style="background:linear-gradient(135deg,#f0fdf4,#dcfce7)"><i class="bi bi-bell-fill" style="color:#16a34a"></i></div>
+      <span class="dc-section-title">Notificaciones</span>
+    </div>
+    <div class="dc-section-body" style="display:flex;flex-direction:column;gap:10px">
+      {% if consulta.estado == "regreso_clase" %}
+      <div class="notif-block verde">
+        <div class="notif-title"><i class="bi bi-mortarboard-fill"></i> Regreso a clase — Notificación por correo</div>
+        {% if consulta.correo_padre_madre %}<div class="notif-row"><i class="bi bi-envelope"></i> Padre/Madre: <strong>{{ consulta.correo_padre_madre }}</strong></div>{% endif %}
+        {% if consulta.correo_docente %}<div class="notif-row"><i class="bi bi-person-badge"></i> Docente: <strong>{{ consulta.correo_docente }}</strong></div>{% endif %}
+        {% if consulta.notificacion_clase_enviada %}
+        <div class="notif-row" style="color:#16a34a;font-weight:700"><i class="bi bi-check-circle-fill"></i> Notificación enviada exitosamente</div>
+        {% else %}
+        <div class="notif-row" style="color:#ca8a04;font-weight:700"><i class="bi bi-clock"></i> Notificación pendiente</div>
+        {% endif %}
+      </div>
+      {% endif %}
+      {% if consulta.acudiente_notificado %}
+      <div class="notif-block naranja">
+        <div class="notif-title"><i class="bi bi-telephone-fill"></i> Acudiente notificado</div>
+        {% if consulta.hora_notificacion %}<div class="notif-row"><i class="bi bi-clock"></i> Hora: <strong>{{ consulta.hora_notificacion|time:"H:i" }}</strong></div>{% endif %}
+        {% if consulta.quien_atendio_llamada %}<div class="notif-row"><i class="bi bi-person"></i> Atendió: <strong>{{ consulta.quien_atendio_llamada }}</strong></div>{% endif %}
+        {% if consulta.detalle_notificacion %}<div class="notif-row"><i class="bi bi-chat-text"></i> {{ consulta.detalle_notificacion }}</div>{% endif %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+
+</div>
+
+<script>
+const CSRF = '{{ csrf_token }}';
+const CONSULTA_PK = {{ consulta.pk }};
+const ESTUDIANTE_PK = {{ consulta.estudiante.pk }};
+</script>
+
+{% if request.GET.ver_pdf %}
+<script>
+/* Mostrar modal PDF limpio al cargar, sin causar crash */
+document.addEventListener('DOMContentLoaded', function() {
+  const overlay = document.createElement('div');
+  overlay.id = 'pdf-modal-clean';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(10,20,40,.6);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);animation:fadeIn .28s ease';
+
+  const estado = "{{ consulta.estado }}";
+  const gradient = estado === 'remitido_hospital'
+    ? 'linear-gradient(135deg,#dc2626,#b91c1c)'
+    : estado === 'regreso_clase'
+      ? 'linear-gradient(135deg,#0ea5a0,#0d9488)'
+      : 'linear-gradient(135deg,#f59e0b,#d97706)';
+  const btnLabel = estado === 'remitido_hospital' ? 'Ver Remisión'
+                 : estado === 'regreso_clase'      ? 'Ver Autorización'
+                 : 'Ver PDF';
+
+  overlay.innerHTML = `
+    <div style="background:white;border-radius:22px;padding:36px 30px;max-width:440px;width:90%;box-shadow:0 28px 70px rgba(0,0,0,.3);text-align:center;animation:bounceIn .38s cubic-bezier(.34,1.56,.64,1)">
+      <div style="width:68px;height:68px;${gradient.replace('linear-gradient','background:linear-gradient')};border-radius:20px;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;box-shadow:0 6px 20px rgba(14,165,160,.3)">
+        <i class="bi bi-file-earmark-medical-fill" style="color:white;font-size:2rem"></i>
+      </div>
+      <div style="font-size:1.1rem;font-weight:800;color:#0f2444;margin-bottom:8px">Consulta registrada</div>
+      <div style="font-size:.86rem;color:#64748b;margin-bottom:24px;line-height:1.7">
+        La consulta de <strong style="color:#0f2444">{{ consulta.estudiante.nombre }}</strong> fue guardada exitosamente.<br>¿Deseas abrir el PDF ahora?
+      </div>
+      <div style="display:flex;gap:10px;justify-content:center">
+        <button id="pdf-modal-no" style="padding:11px 22px;border-radius:12px;border:1.5px solid #e2e8f0;background:white;color:#64748b;font-size:.86rem;font-weight:600;cursor:pointer">Ahora no</button>
+        <a href="{% url 'pdf_consulta_individual' consulta.pk %}" target="_blank" id="pdf-modal-yes"
+           style="padding:11px 22px;border-radius:12px;${gradient.replace('linear-gradient','background:linear-gradient')};color:white;font-size:.86rem;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:7px">
+          <i class="bi bi-printer-fill"></i> ${btnLabel}
+        </a>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  const closeModal = () => {
+    overlay.style.opacity = '0';
+    overlay.style.transition = 'opacity .2s ease';
+    setTimeout(() => overlay.remove(), 220);
+  };
+
+  document.getElementById('pdf-modal-no').onclick = closeModal;
+  overlay.addEventListener('click', e => { if(e.target === overlay) closeModal(); });
+  document.addEventListener('keydown', e => { if(e.key === 'Escape') closeModal(); });
+
+  /* Al hacer clic en "Ver PDF" → mostrar el overlay de carga limpio */
+  document.getElementById('pdf-modal-yes').addEventListener('click', function() {
+    closeModal();
+    if(window.cosfaPdf) {
+      setTimeout(() => window.cosfaPdf.show('Generando PDF...'), 250);
+    }
+  });
+});
+</script>
+{% endif %}
+
+
+<!-- ══ MODAL CONFIRMAR ELIMINAR CONSULTA ══ -->
+<div id="modal-eliminar" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center">
+  <div style="background:white;border-radius:16px;padding:28px;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+      <span style="background:#fef2f2;border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0">🗑️</span>
+      <div>
+        <div style="font-weight:800;color:#b91c1c;font-size:.95rem">¿Eliminar esta consulta?</div>
+        <div style="font-size:.78rem;color:#64748b">Esta acción no se puede deshacer.</div>
+      </div>
+    </div>
+    {% if consulta.remision_automatica %}
+    <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:9px;padding:10px 13px;font-size:.78rem;color:#9a3412;margin-bottom:14px">
+      <i class="bi bi-exclamation-triangle-fill"></i> Esta consulta tiene una <strong>remisión asociada</strong> que también será eliminada.
+    </div>
+    {% endif %}
+    <form method="post" action="{% url 'eliminar_consulta' consulta.pk %}">
+      {% csrf_token %}
+      <div style="display:flex;gap:8px;margin-top:4px">
+        <button type="submit" style="flex:1;padding:11px;background:#dc2626;color:white;border:none;border-radius:10px;font-weight:700;font-size:.86rem;cursor:pointer">
+          <i class="bi bi-trash-fill"></i> Sí, eliminar
+        </button>
+        <button type="button" onclick="cerrarModalEliminar()" style="flex:1;padding:11px;background:#f1f5f9;color:#374151;border:1.5px solid #e2e8f0;border-radius:10px;font-weight:700;font-size:.86rem;cursor:pointer">
+          Cancelar
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+<script>
+function abrirModalEliminar(){
+  var m = document.getElementById('modal-eliminar');
+  m.style.display = 'flex';
+}
+function cerrarModalEliminar(){
+  document.getElementById('modal-eliminar').style.display = 'none';
+}
+document.getElementById('modal-eliminar').addEventListener('click', function(e){
+  if(e.target === this) cerrarModalEliminar();
+});
+</script>
+
+{% endblock %}

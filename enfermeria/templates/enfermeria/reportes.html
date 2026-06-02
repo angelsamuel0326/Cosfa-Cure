@@ -1,0 +1,450 @@
+{% extends 'enfermeria/base.html' %}
+{% block title %}Reportes — COSFA CURE{% endblock %}
+{% block page_title %}Reportes y Estadísticas{% endblock %}
+{% block content %}
+<style>
+.tbl-rep thead tr { background: linear-gradient(135deg, #0f2444 0%, #0e7490 100%) !important; }
+.tbl-rep thead th { background: transparent !important; color: white !important; font-family: 'Sora', sans-serif; font-size: .65rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; padding: 12px 16px; border: none !important; }
+.tbl-rep tbody tr { transition: all .2s cubic-bezier(.4,0,.2,1); border-bottom: 1px solid rgba(14,165,160,.08); animation: rowSlideR .32s ease both; }
+.tbl-rep tbody tr:nth-child(even) { background: rgba(14,165,160,.025); }
+.tbl-rep tbody tr:hover { background: rgba(14,165,160,.06) !important; box-shadow: inset 3px 0 0 var(--teal); }
+@keyframes rowSlideR { from { opacity:0; transform:translateY(-5px); } to { opacity:1; transform:translateY(0); } }
+.tbl-rep tbody tr:nth-child(1){animation-delay:.03s} .tbl-rep tbody tr:nth-child(2){animation-delay:.07s}
+.tbl-rep tbody tr:nth-child(3){animation-delay:.11s} .tbl-rep tbody tr:nth-child(n+4){animation-delay:.15s}
+.tbl-rep tbody td { padding: 12px 16px; vertical-align: middle; border: none !important; font-size: .82rem; color: var(--text); }
+
+/* Toggle Tipo */
+.tipo-toggle { display:flex; gap:0; border-radius:12px; overflow:hidden; border:2px solid rgba(14,165,160,.25); }
+.tipo-toggle a { padding:9px 22px; font-size:.82rem; font-weight:700; text-decoration:none; color:var(--muted); transition:all .2s; display:flex; align-items:center; gap:7px; }
+.tipo-toggle a.active { background:linear-gradient(135deg,var(--teal),#067a76); color:white; }
+.tipo-toggle a:not(.active):hover { background:rgba(14,165,160,.07); }
+
+/* Filtro Hoy btn */
+.btn-hoy { display:inline-flex; align-items:center; gap:5px; padding:6px 14px; border-radius:8px; border:1.5px solid var(--teal); color:var(--teal); font-size:.75rem; font-weight:700; cursor:pointer; background:white; text-decoration:none; transition:all .2s; }
+.btn-hoy:hover,.btn-hoy.active { background:var(--teal); color:white; }
+
+/* v19: medallas top10 */
+.medal-1 { color:#D4A017; }
+.medal-2 { color:#9EA3A8; }
+.medal-3 { color:#C27B3A; }
+</style>
+
+<div class="page-title">Reportes y <span>Estadísticas</span></div>
+
+<!-- TOGGLE ESTUDIANTES / DOCENTES -->
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px">
+  <div class="tipo-toggle">
+    <a href="?tipo=estudiantes&vista={{ vista }}&fecha_desde={{ fecha_desde }}&fecha_hasta={{ fecha_hasta }}&grado={{ grado_f }}&motivo={{ motivo_f }}"
+       class="{% if tipo == 'estudiantes' or not tipo %}active{% endif %}">
+      <i class="bi bi-mortarboard-fill"></i> Estudiantes
+    </a>
+    <a href="?tipo=docentes&vista={{ vista }}&fecha_desde={{ fecha_desde }}&fecha_hasta={{ fecha_hasta }}"
+       class="{% if tipo == 'docentes' %}active{% endif %}">
+      <i class="bi bi-person-workspace"></i> Docentes
+    </a>
+  </div>
+  <div style="font-size:.75rem;color:var(--muted)">
+    {% if tipo == 'docentes' %}Estadísticas del personal docente{% else %}Estadísticas de atención estudiantil{% endif %}
+  </div>
+</div>
+
+<!-- Filtros -->
+<div class="card" style="margin-bottom:16px;padding:16px">
+  <form method="get" style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end">
+    <input type="hidden" name="tipo" value="{{ tipo|default:'estudiantes' }}">
+    <input type="hidden" name="vista" value="{{ vista }}">
+    <div>
+      <label class="form-label" style="font-size:.75rem">Desde</label>
+      <input type="date" name="fecha_desde" value="{{ fecha_desde }}" class="form-control" style="font-size:.82rem">
+    </div>
+    <div>
+      <label class="form-label" style="font-size:.75rem">Hasta</label>
+      <input type="date" name="fecha_hasta" value="{{ fecha_hasta }}" class="form-control" style="font-size:.82rem">
+    </div>
+    {% if tipo == 'estudiantes' or not tipo %}
+    <div>
+      <label class="form-label" style="font-size:.75rem">Grado</label>
+      <select name="grado" class="form-select" style="font-size:.82rem">
+        <option value="">Todos los grados</option>
+        {% for val, label in grados_choices %}<option value="{{ val }}" {% if val == grado_f %}selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select>
+    </div>
+    <div>
+      <label class="form-label" style="font-size:.75rem">Motivo</label>
+      <select name="motivo" class="form-select" style="font-size:.82rem">
+        <option value="">Todos los motivos</option>
+        {% for val, label in motivos_choices %}<option value="{{ val }}" {% if val == motivo_f %}selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select>
+    </div>
+    {% endif %}
+    <div style="display:flex;gap:6px;flex-wrap:wrap">
+      <a href="?tipo={{ tipo|default:'estudiantes' }}&vista={{ vista }}&fecha_desde={{ hoy_str }}&fecha_hasta={{ hoy_str }}"
+         class="btn-hoy {% if es_filtro_hoy %}active{% endif %}">
+        <i class="bi bi-calendar-check"></i> Hoy
+      </a>
+      <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-funnel-fill"></i> Filtrar</button>
+      <a href="?tipo={{ tipo|default:'estudiantes' }}" class="btn btn-outline btn-sm"><i class="bi bi-x-circle"></i> Limpiar</a>
+    </div>
+  </form>
+  {% if fecha_desde or fecha_hasta or grado_f or motivo_f %}
+  <div style="margin-top:8px;font-size:.75rem;color:var(--muted)">
+    Mostrando resultados filtrados —
+    {% if tipo == 'docentes' %}{{ total_consultas }} consulta{{ total_consultas|pluralize:",s" }} de docentes{% else %}{{ total_consultas }} consulta{{ total_consultas|pluralize:",s" }} de estudiantes{% endif %}
+  </div>
+  {% endif %}
+</div>
+
+<!-- Totales -->
+{% if tipo == 'docentes' %}
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px">
+  <div class="card" style="padding:20px;text-align:center">
+    <div style="font-size:2.1rem;font-weight:800;color:var(--teal);letter-spacing:-1px">{{ total_consultas }}</div>
+    <div style="font-size:0.78rem;color:var(--muted);margin-top:5px;font-weight:500">Consultas Docentes{% if fecha_desde or fecha_hasta %} (filtradas){% endif %}</div>
+  </div>
+  <div class="card" style="padding:20px;text-align:center">
+    <div style="font-size:2.1rem;font-weight:800;color:#e8954a;letter-spacing:-1px">{{ total_docentes }}</div>
+    <div style="font-size:0.78rem;color:var(--muted);margin-top:5px;font-weight:500">Docentes registrados</div>
+  </div>
+  <div class="card" style="padding:20px;text-align:center">
+    <div style="font-size:2.1rem;font-weight:800;color:var(--sage);letter-spacing:-1px">{{ docentes_activos }}</div>
+    <div style="font-size:0.78rem;color:var(--muted);margin-top:5px;font-weight:500">Docentes activos</div>
+  </div>
+</div>
+{% else %}
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px">
+  <div class="card" style="padding:20px;text-align:center">
+    <div style="font-size:2.1rem;font-weight:800;color:var(--teal);letter-spacing:-1px">{{ total_consultas }}</div>
+    <div style="font-size:0.78rem;color:var(--muted);margin-top:5px;font-weight:500">Consultas{% if fecha_desde or grado_f or motivo_f %} (filtradas){% endif %}</div>
+  </div>
+  <div class="card" style="padding:20px;text-align:center">
+    <div style="font-size:2.1rem;font-weight:800;color:#e8954a;letter-spacing:-1px">{{ total_remisiones }}</div>
+    <div style="font-size:0.78rem;color:var(--muted);margin-top:5px;font-weight:500">Remisiones realizadas</div>
+  </div>
+  <div class="card" style="padding:20px;text-align:center">
+    <div style="font-size:2.1rem;font-weight:800;color:var(--sage);letter-spacing:-1px">{{ total_estudiantes }}</div>
+    <div style="font-size:0.78rem;color:var(--muted);margin-top:5px;font-weight:500">Estudiantes registrados</div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Toggle Semana / Mes + Botones PDF y Excel (v19) -->
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+  <div style="display:flex;gap:6px;align-items:center">
+    <span style="font-size:.75rem;font-weight:600;color:var(--muted);margin-right:4px">Ver evolución por:</span>
+    <a href="?tipo={{ tipo|default:'estudiantes' }}&vista=semana&fecha_desde={{ fecha_desde }}&fecha_hasta={{ fecha_hasta }}&grado={{ grado_f }}&motivo={{ motivo_f }}"
+       class="btn btn-sm {% if vista == 'semana' %}btn-primary{% else %}btn-outline{% endif %}">
+      <i class="bi bi-calendar-week"></i> Semana
+    </a>
+    <a href="?tipo={{ tipo|default:'estudiantes' }}&vista=mes&fecha_desde={{ fecha_desde }}&fecha_hasta={{ fecha_hasta }}&grado={{ grado_f }}&motivo={{ motivo_f }}"
+       class="btn btn-sm {% if vista == 'mes' or not vista %}btn-primary{% else %}btn-outline{% endif %}">
+      <i class="bi bi-calendar-month"></i> Mes
+    </a>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <a href="{% url 'pdf_reportes' %}?tipo={{ tipo|default:'estudiantes' }}&fecha_desde={{ fecha_desde }}&fecha_hasta={{ fecha_hasta }}&grado={{ grado_f }}&motivo={{ motivo_f }}"
+       target="_blank" class="btn btn-outline btn-sm" style="border-color:#e05c5c;color:#e05c5c">
+      <i class="bi bi-file-earmark-pdf-fill"></i> Descargar PDF
+    </a>
+    {Exportar Excel estadístico completo #}
+    <a href="{% url 'exportar_reporte_excel' %}?tipo={{ tipo|default:'estudiantes' }}&fecha_desde={{ fecha_desde }}&fecha_hasta={{ fecha_hasta }}&grado={{ grado_f }}&motivo={{ motivo_f }}"
+       class="btn btn-outline btn-sm" style="border-color:#1a7a4a;color:#1a7a4a">
+      <i class="bi bi-file-earmark-excel-fill"></i> Exportar Excel
+    </a>
+  </div>
+</div>
+
+<!-- Gráficas -->
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+  <div class="card">
+    <div class="card-head">
+      <div class="card-head-title">
+        <i class="bi bi-bar-chart-fill"></i>
+        Consultas por {% if vista == 'semana' %}Semana{% else %}Mes{% endif %}
+        {% if tipo == 'docentes' %}<span style="font-size:.68rem;color:var(--muted);font-weight:400"> — Docentes</span>{% endif %}
+      </div>
+    </div>
+    <div style="padding:16px"><canvas id="chartEvolucion" height="200"></canvas></div>
+    {Comparativo mes a mes (solo vista mes, solo estudiantes) #}
+    {% if vista != 'semana' and tipo != 'docentes' %}
+    <div style="border-top:1px solid #eef5f4;padding:12px 16px 14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <span style="font-size:.78rem;font-weight:700;color:#334155;letter-spacing:.02em">
+          <i class="bi bi-calendar2-range" style="color:#1d4ed8"></i> Comparativo mes a mes
+        </span>
+        <span id="comp-delta-badge" style="font-size:.75rem;font-weight:700;padding:2px 9px;border-radius:20px;display:none"></span>
+      </div>
+      <canvas id="chartComparativo" height="90"></canvas>
+    </div>
+    {% endif %}
+  </div>
+  <div class="card">
+    <div class="card-head"><div class="card-head-title"><i class="bi bi-pie-chart-fill"></i> Motivos más Frecuentes</div></div>
+    <div style="padding:16px"><canvas id="chartMotivos" height="200"></canvas></div>
+  </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+  <div class="card">
+    <div class="card-head">
+      <div class="card-head-title">
+        <i class="bi bi-graph-up"></i>
+        {% if tipo == 'docentes' %}Consultas por Área{% else %}Consultas por Grado{% endif %}
+      </div>
+    </div>
+    <div style="padding:16px"><canvas id="chartGrados" height="200"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="card-head"><div class="card-head-title"><i class="bi bi-list-ol"></i> Detalle por Motivo</div></div>
+    <div class="table-wrap">
+      <table class="tbl-rep">
+        <thead><tr><th>Motivo</th><th>Total</th></tr></thead>
+        <tbody>{% for item in por_motivo %}<tr>
+          <td>{{ item.label }}</td>
+          <td><strong style="color:var(--teal-dark)">{{ item.total }}</strong></td>
+        </tr>{% endfor %}</tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Tabla por semana o mes -->
+<div class="card" style="margin-bottom:14px">
+  <div class="card-head">
+    <div class="card-head-title">
+      <i class="bi bi-table"></i>
+      Detalle por {% if vista == 'semana' %}Semana{% else %}Mes{% endif %}
+    </div>
+  </div>
+  <div class="table-wrap">
+    <table class="tbl-rep">
+      <thead><tr><th>{% if vista == 'semana' %}Semana{% else %}Mes{% endif %}</th><th>Consultas</th></tr></thead>
+      <tbody>
+        {% if vista == 'semana' %}
+          {% for item in por_semana %}<tr>
+            <td>{{ item.semana }}</td>
+            <td><strong style="color:var(--teal-dark)">{{ item.total }}</strong></td>
+          </tr>{% endfor %}
+        {% else %}
+          {% for item in por_mes %}<tr>
+            <td>{{ item.mes }}</td>
+            <td><strong style="color:var(--teal-dark)">{{ item.total }}</strong></td>
+          </tr>{% endfor %}
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- v19: Frecuentes — Docentes O Estudiantes (Top 10 mejorado) -->
+{% if tipo == 'docentes' %}
+
+  {# ── DOCENTES FRECUENTES ── #}
+  <div class="card" style="margin-top:14px">
+    <div class="card-head" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+      <div class="card-head-title">
+        <i class="bi bi-trophy-fill" style="color:#e8954a"></i>
+        Top 10 Docentes Frecuentes
+        <span style="font-size:.72rem;font-weight:400;color:var(--muted);margin-left:6px">(4+ visitas en los últimos 30 días)</span>
+      </div>
+      <a href="{% url 'exportar_reporte_excel' %}?tipo=docentes&fecha_desde={{ fecha_desde }}&fecha_hasta={{ fecha_hasta }}"
+         class="btn btn-outline btn-xs" style="border-color:#1a7a4a;color:#1a7a4a;font-size:.72rem">
+        <i class="bi bi-file-earmark-excel-fill"></i> Exportar Excel
+      </a>
+    </div>
+    {% if docentes_frecuentes %}
+    <div class="table-wrap">
+      <table class="tbl-rep">
+        <thead>
+          <tr>
+            <th style="width:36px;text-align:center">#</th>
+            <th>Docente</th>
+            <th>Área</th>
+            <th style="text-align:center">Visitas (30 días)</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for d in docentes_frecuentes %}
+          <tr>
+            <td style="text-align:center;font-weight:700;font-size:1rem">
+              {% if forloop.counter == 1 %}<span title="1er lugar">🥇</span>
+              {% elif forloop.counter == 2 %}<span title="2do lugar">🥈</span>
+              {% elif forloop.counter == 3 %}<span title="3er lugar">🥉</span>
+              {% else %}<span style="color:var(--muted);font-size:.85rem">{{ forloop.counter }}</span>
+              {% endif %}
+            </td>
+            <td><strong>{{ d.docente__nombre }}</strong></td>
+            <td><span class="badge badge-blue">{{ d.docente__area }}</span></td>
+            <td style="text-align:center">
+              <span class="badge badge-orange" style="font-size:.9rem;padding:4px 12px">{{ d.visitas }}</span>
+            </td>
+            <td><a href="{% url 'historial_docente' d.docente__id %}" class="btn btn-outline btn-xs"><i class="bi bi-eye"></i> Ver historial</a></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div style="padding:24px;text-align:center;color:var(--muted);font-size:.88rem">
+      <i class="bi bi-check-circle" style="font-size:1.8rem;color:var(--sage);display:block;margin-bottom:8px"></i>
+      Ningún docente supera 4 visitas en los últimos 30 días.
+    </div>
+    {% endif %}
+  </div>
+
+{% else %}
+
+  {# ── ESTUDIANTES FRECUENTES (Top 10 mejorado v19) ── #}
+  <div class="card" style="margin-top:14px">
+    <div class="card-head" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+      <div class="card-head-title">
+        <i class="bi bi-trophy-fill" style="color:#e8954a"></i>
+        Top 10 Estudiantes Frecuentes
+        <span style="font-size:.72rem;font-weight:400;color:var(--muted);margin-left:6px">(4+ visitas en los últimos 30 días)</span>
+      </div>
+      <a href="{% url 'exportar_reporte_excel' %}?tipo=estudiantes&fecha_desde={{ fecha_desde }}&fecha_hasta={{ fecha_hasta }}&grado={{ grado_f }}&motivo={{ motivo_f }}"
+         class="btn btn-outline btn-xs" style="border-color:#1a7a4a;color:#1a7a4a;font-size:.72rem">
+        <i class="bi bi-file-earmark-excel-fill"></i> Exportar Excel completo
+      </a>
+    </div>
+    {% if estudiantes_frecuentes %}
+    <div class="table-wrap">
+      <table class="tbl-rep">
+        <thead>
+          <tr>
+            <th style="width:36px;text-align:center">#</th>
+            <th>Estudiante</th>
+            <th>Grado</th>
+            <th style="text-align:center">Visitas (30 días)</th>
+            <th style="text-align:center">Alerta</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for e in estudiantes_frecuentes %}
+          <tr>
+            <td style="text-align:center;font-weight:700;font-size:1rem">
+              {% if forloop.counter == 1 %}<span title="1er lugar">🥇</span>
+              {% elif forloop.counter == 2 %}<span title="2do lugar">🥈</span>
+              {% elif forloop.counter == 3 %}<span title="3er lugar">🥉</span>
+              {% else %}<span style="color:var(--muted);font-size:.85rem">{{ forloop.counter }}</span>
+              {% endif %}
+            </td>
+            <td><strong>{{ e.estudiante__nombre }}</strong></td>
+            <td><span class="badge badge-blue">{{ e.estudiante__grado }}</span></td>
+            <td style="text-align:center">
+              <span class="badge badge-orange" style="font-size:.9rem;padding:4px 12px">{{ e.visitas }}</span>
+            </td>
+            <td style="text-align:center">
+              <span style="color:#e8954a;font-size:1.1rem" title="Visitas frecuentes — revisar">⚠️</span>
+            </td>
+            <td><a href="{% url 'historial_estudiante' e.estudiante__id %}" class="btn btn-outline btn-xs"><i class="bi bi-eye"></i> Ver historial</a></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div style="padding:24px;text-align:center;color:var(--muted);font-size:.88rem">
+      <i class="bi bi-check-circle" style="font-size:1.8rem;color:var(--sage);display:block;margin-bottom:8px"></i>
+      Ningún estudiante supera 4 visitas en los últimos 30 días. ¡Excelente!
+    </div>
+    {% endif %}
+  </div>
+
+{% endif %}
+
+<script>
+// Carga Chart.js desde CDN con fallback
+(function() {
+  function initCharts() {
+    if (typeof Chart === 'undefined') {
+      document.querySelectorAll('canvas').forEach(c => {
+        const wrap = c.parentElement;
+        wrap.innerHTML = '<div style="text-align:center;padding:20px;color:#94a3b8;font-size:.8rem"><i class="bi bi-wifi-off"></i> Gráfico no disponible sin conexión</div>';
+      });
+      return;
+    }
+    renderCharts();
+  }
+  var s = document.createElement('script');
+  s.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js';
+  s.onload = initCharts;
+  s.onerror = initCharts;
+  document.head.appendChild(s);
+})();
+</script>
+<script>
+function renderCharts() {
+const teal='#3aafa9',sage='#52b788',sky='#6bb5c9',mint='#4db6ac',orange='#e8954a',warm='#d4a017',purple='#8b7fd4',slate='#7a9e9c';
+const colors=[teal,sage,sky,mint,orange,warm,purple,slate];
+const vista = "{{ vista|default:'mes' }}";
+const evLabels = vista === 'semana' ? {{ semanas_labels|safe }} : {{ meses_labels|safe }};
+const evData   = vista === 'semana' ? {{ semanas_data|safe }}  : {{ meses_data|safe }};
+new Chart(document.getElementById('chartEvolucion'),{type:'bar',data:{labels:evLabels,datasets:[{label:'Consultas',data:evData,backgroundColor:evLabels.map((_,i)=>i%2===0?teal:sage),borderRadius:8,borderSkipped:false}]},options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{stepSize:1},grid:{color:'#eef5f4'}},x:{grid:{display:false}}},responsive:true}});
+new Chart(document.getElementById('chartMotivos'),{type:'doughnut',data:{labels:{{ motivos_labels|safe }},datasets:[{data:{{ motivos_data|safe }},backgroundColor:colors,borderWidth:0,hoverOffset:10}]},options:{plugins:{legend:{position:'bottom',labels:{font:{size:10},boxWidth:12,padding:12}}},responsive:true,cutout:'60%'}});
+new Chart(document.getElementById('chartGrados'),{type:'bar',data:{labels:{{ grados_labels|safe }},datasets:[{label:'Consultas',data:{{ grados_data|safe }},backgroundColor:sky,borderRadius:8,borderSkipped:false}]},options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{stepSize:1},grid:{color:'#eef5f4'}},x:{grid:{display:false}}},indexAxis:'y',responsive:true}});
+
+// Comparativo mes a mes
+(function() {
+  if (!document.getElementById('chartComparativo')) return;
+  const compLabels = {{ meses_labels|safe }};
+  const compData   = {{ meses_data|safe }};
+  if (!compLabels.length) return;
+
+  new Chart(document.getElementById('chartComparativo'), {
+    type: 'bar',
+    data: {
+      labels: compLabels,
+      datasets: [{
+        label: 'Consultas',
+        data: compData,
+        backgroundColor: compLabels.map((_, i) => i === compLabels.length - 1 ? '#1d4ed8' : '#bfdbfe'),
+        borderRadius: 8,
+        borderSkipped: false,
+      }]
+    },
+    options: {
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            afterLabel: function(ctx) {
+              const i = ctx.dataIndex;
+              if (i > 0) {
+                const prev = compData[i-1];
+                const curr = compData[i];
+                const delta = curr - prev;
+                const signo = delta >= 0 ? '+' : '';
+                const pct = prev > 0 ? ` (${signo}${Math.round(delta/prev*100)}%)` : '';
+                return `vs mes anterior: ${signo}${delta}${pct}`;
+              }
+              return '';
+            }
+          }
+        }
+      },
+      scales: {
+        y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: '#eef5f4' } },
+        x: { grid: { display: false } }
+      },
+      responsive: true,
+    }
+  });
+
+  const badge = document.getElementById('comp-delta-badge');
+  if (compData.length >= 2) {
+    const actual   = compData[compData.length - 1];
+    const anterior = compData[compData.length - 2];
+    const delta    = actual - anterior;
+    const signo    = delta >= 0 ? '+' : '';
+    const pct      = anterior > 0 ? ` (${signo}${Math.round(delta/anterior*100)}%)` : '';
+    badge.textContent = `Mes actual vs anterior: ${signo}${delta}${pct}`;
+    badge.style.background = delta > 0 ? '#fef3c7' : delta < 0 ? '#dcfce7' : '#f1f5f9';
+    badge.style.color      = delta > 0 ? '#92400e' : delta < 0 ? '#166534' : '#64748b';
+    badge.style.display    = 'inline-block';
+  }
+})();
+} // end renderCharts
+</script>
+{% endblock %}

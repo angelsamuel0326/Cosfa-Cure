@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Registro de Consultas — COSFA CURE</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Segoe UI',Arial,sans-serif;font-size:10px;color:#1e2a3a;background:#fff;padding:22px}
+  .header{display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid #3aafa9;padding-bottom:10px;margin-bottom:16px}
+  .header-left h1{font-size:16px;font-weight:800;color:#1e4a5a}
+  .header-left p{font-size:9px;color:#64748b;margin-top:2px}
+  .header-right{text-align:right;font-size:9px;color:#64748b}
+  table{width:100%;border-collapse:collapse;margin-bottom:10px}
+  th{background:#3aafa9;color:white;padding:5px 8px;text-align:left;font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:.3px}
+  td{padding:4px 8px;border-bottom:1px solid #e8f4f3;font-size:9px;vertical-align:top}
+  tr:nth-child(even) td{background:#f4fffe}
+  .badge{display:inline-block;padding:1px 6px;border-radius:4px;font-size:8px;font-weight:700}
+  .badge-remitido{background:#fee2e2;color:#b91c1c}
+  .badge-atendido{background:#d1fae5;color:#065f46}
+  .badge-acudiente{background:#fef3c7;color:#92400e}
+  .badge-clase{background:#ede9fe;color:#5b21b6}
+  .footer{margin-top:16px;border-top:1px solid #e2e8f0;padding-top:6px;text-align:center;font-size:8.5px;color:#94a3b8}
+  @media print{body{padding:0} @page{margin:14mm 12mm;size:landscape}}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-left">
+    <h1>📋 Registro de Consultas — COSFA CURE</h1>
+    <p>Sistema de Enfermería Escolar · Generado el {{ fecha_impresion|date:"d/m/Y" }}{% if query %} · Búsqueda: "{{ query }}"{% endif %}</p>
+  </div>
+  <div class="header-right">
+    <strong>COSFA CURE</strong><br>Total: {{ consultas|length }} registro{{ consultas|length|pluralize:",s" }}
+  </div>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th style="width:12%">Fecha y hora</th>
+      <th style="width:18%">Estudiante</th>
+      <th style="width:6%">Grado</th>
+      <th style="width:12%">Motivo</th>
+      <th style="width:20%">Descripción síntomas</th>
+      <th style="width:15%">Tratamiento</th>
+      <th style="width:12%">Medicamento(s)</th>
+      <th style="width:8%">Estado</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for c in consultas %}
+    <tr>
+      <td>{{ c.fecha_hora|date:"d/m/Y" }}<br><span style="color:#64748b">{{ c.fecha_hora|time:"g:i A" }}</span></td>
+      <td><strong>{{ c.estudiante.nombre }}</strong></td>
+      <td style="text-align:center">{{ c.estudiante.grado }}</td>
+      <td>{{ c.get_motivo_display }}</td>
+      <td style="font-size:8.5px">{{ c.descripcion_sintomas|truncatechars:100 }}</td>
+      <td style="font-size:8.5px">{{ c.tratamiento|truncatechars:80 }}</td>
+      <td style="font-size:8.5px">
+        {% for mc in c.medicamentos_usados.all %}
+          {{ mc.medicamento.nombre }} ({{ mc.cantidad }}){% if not forloop.last %}, {% endif %}
+        {% empty %}{{ c.medicamento_suministrado|default:"—" }}{% endfor %}
+      </td>
+      <td>
+        {% if c.estado == 'remitido' %}<span class="badge badge-remitido">Remitido</span>
+        {% elif c.estado == 'atendido' %}<span class="badge badge-atendido">Atendido</span>
+        {% elif c.estado == 'acudiente' %}<span class="badge badge-acudiente">Acudiente</span>
+        {% elif c.estado == 'regreso_clase' %}<span class="badge badge-clase">Regresó a clase</span>
+        {% else %}{{ c.get_estado_display }}{% endif %}
+      </td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="8" style="text-align:center;color:#94a3b8;padding:20px">No hay consultas registradas</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<div class="footer">COSFA CURE — Sistema de Enfermería Escolar · Registro de Consultas · {{ fecha_impresion|date:"d/m/Y" }} · Documento de uso interno</div>
+<script>window.onload = function(){ window.print(); }</script>
+</body>
+</html>

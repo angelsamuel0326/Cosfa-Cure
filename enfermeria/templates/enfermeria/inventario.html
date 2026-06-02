@@ -1,0 +1,178 @@
+{% extends 'enfermeria/base.html' %}
+{% block title %}Inventario — COSFA CURE{% endblock %}
+{% block page_title %}Insumos y Botiquín{% endblock %}
+{% block content %}
+<style>
+.tbl-inv thead tr { background: linear-gradient(135deg, #0f2444 0%, #0e7490 100%) !important; }
+.tbl-inv thead th { background: transparent !important; color: white !important; font-family: 'Sora', sans-serif; font-size: .65rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; padding: 13px 16px; border: none !important; }
+.tbl-inv tbody tr { transition: all .2s cubic-bezier(.4,0,.2,1); border-bottom: 1px solid rgba(14,165,160,.08); animation: rowSlideInv .32s ease both; }
+.tbl-inv tbody tr:nth-child(even) { background: rgba(14,165,160,.025); }
+.tbl-inv tbody tr:hover { background: rgba(14,165,160,.06) !important; box-shadow: inset 3px 0 0 var(--teal); }
+@keyframes rowSlideInv { from { opacity:0; transform:translateY(-5px); } to { opacity:1; transform:translateY(0); } }
+.tbl-inv tbody tr:nth-child(1){animation-delay:.03s} .tbl-inv tbody tr:nth-child(2){animation-delay:.07s}
+.tbl-inv tbody tr:nth-child(3){animation-delay:.11s} .tbl-inv tbody tr:nth-child(4){animation-delay:.15s}
+.tbl-inv tbody tr:nth-child(n+5){animation-delay:.19s}
+.tbl-inv tbody td { padding: 13px 16px; vertical-align: middle; border: none !important; font-size: .82rem; color: var(--text); }
+.tbl-footer-inv { padding: 11px 16px; font-size: .74rem; color: var(--text-muted); font-weight: 500; background: rgba(14,165,160,.04); border-top: 1px solid rgba(14,165,160,.1); display: flex; align-items: center; gap: 6px; }
+
+.categoria-sep { background: rgba(14,165,160,.06) !important; }
+.categoria-sep td { padding: 8px 16px !important; font-size: .7rem; font-weight: 800; color: var(--teal); text-transform: uppercase; letter-spacing: .1em; border-bottom: 2px solid rgba(14,165,160,.15) !important; }
+
+.badge-cat-insumo { display:inline-flex;align-items:center;gap:4px;font-size:.65rem;font-weight:700;padding:2px 9px;border-radius:20px;background:rgba(14,165,160,.12);color:#0e7490; }
+.badge-cat-med    { display:inline-flex;align-items:center;gap:4px;font-size:.65rem;font-weight:700;padding:2px 9px;border-radius:20px;background:rgba(239,68,68,.1);color:#dc2626; }
+
+.inv-filters { display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:12px 16px;background:rgba(14,165,160,.03);border-bottom:1px solid rgba(14,165,160,.08); }
+.inv-filters input,.inv-filters select { height:34px;font-size:.79rem;padding:0 10px;border:1px solid rgba(14,165,160,.2);border-radius:8px;background:white;color:var(--text);outline:none; }
+.inv-filters input:focus,.inv-filters select:focus { border-color:#0e7490;box-shadow:0 0 0 3px rgba(14,165,160,.1); }
+</style>
+
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+  <div class="page-title" style="margin:0">Insumos y <span>Botiquín</span></div>
+  <div style="display:flex;gap:8px">
+    <a href="{% url 'pdf_movimientos' %}" target="_blank" class="btn btn-outline" style="border-color:#e05c5c;color:#e05c5c"><i class="bi bi-file-earmark-pdf-fill"></i> PDF movimientos</a>
+    <a href="{% url 'exportar_inventario_xlsx' %}" class="btn btn-outline" style="border-color:#16a34a;color:#15803d"><i class="bi bi-file-earmark-excel-fill"></i> Excel</a>
+    <a href="{% url 'registrar_movimiento' %}" class="btn btn-outline"><i class="bi bi-arrow-left-right"></i> Entrada/Salida</a>
+    <button onclick="document.getElementById('modal-alerta').style.display='flex'" class="btn btn-outline" style="border-color:#e8954a;color:#d4651a"><i class="bi bi-envelope-fill"></i> Enviar alerta</button>
+    {% if usuario_es_admin %}<a href="{% url 'nuevo_medicamento' %}" class="btn btn-primary"><i class="bi bi-plus"></i> Nuevo</a>{% endif %}
+  </div>
+</div>
+
+{% if vencidos %}
+<div class="alert alert-danger" style="margin-bottom:12px"><i class="bi bi-exclamation-triangle-fill"></i> <strong>{{ vencidos|length }} ítem(s) VENCIDO(S)</strong> — Retíralos del inventario.</div>{% endif %}
+{% if proximos_vencer %}
+<div class="alert alert-warning" style="margin-bottom:12px"><i class="bi bi-clock-fill"></i> <strong>{{ proximos_vencer|length }} ítem(s)</strong> vencen en los próximos 30 días.</div>{% endif %}
+{% if bajo_stock %}
+<div class="alert alert-info" style="margin-bottom:12px"><i class="bi bi-exclamation-circle-fill"></i> <strong>{{ bajo_stock|length }} ítem(s)</strong> con stock bajo.</div>{% endif %}
+
+<div class="alert" style="background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.2);color:#b91c1c;margin-bottom:16px;border-radius:10px;padding:10px 16px;font-size:.8rem">
+  <i class="bi bi-shield-exclamation"></i> <strong>Recuerda:</strong> En enfermería escolar <strong>no se pueden administrar medicamentos</strong> (acetaminofén, ibuprofeno, etc.) sin prescripción médica y autorización escrita del acudiente. Solo se aplican <strong>insumos de primeros auxilios</strong> de manera autónoma.
+</div>
+
+<div class="card">
+  <div class="card-head"><div class="card-head-title"><i class="bi bi-heart-pulse-fill"></i> Inventario del botiquín</div></div>
+
+  <!-- Filters -->
+  <form method="get" class="inv-filters">
+    <input type="text" name="q" placeholder="🔍 Buscar ítem…" value="{{ query|default:'' }}">
+    <select name="categoria">
+      <option value="">Todas las categorías</option>
+      <option value="insumo"      {% if filtro_cat == 'insumo'      %}selected{% endif %}>Insumos / Primeros auxilios</option>
+      <option value="medicamento" {% if filtro_cat == 'medicamento' %}selected{% endif %}>Medicamentos (prescripción)</option>
+    </select>
+    <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-funnel-fill"></i> Filtrar</button>
+    {% if query or filtro_cat %}
+      <a href="{% url 'inventario' %}" class="btn btn-outline btn-sm"><i class="bi bi-x"></i> Limpiar</a>
+    {% endif %}
+  </form>
+
+  <div class="table-wrap">
+    {% if medicamentos %}
+    <table class="tbl-inv">
+      <thead><tr><th>Ítem</th><th>Categoría</th><th>Cantidad</th><th>Unidad</th><th>Mínimo</th><th>Usos en consultas</th><th>Vencimiento</th><th>Stock</th><th></th></tr></thead>
+      <tbody>{% for m in medicamentos %}<tr>
+        <td style="display:flex;align-items:center;gap:10px">
+          {% if m.imagen %}
+            <img src="{{ m.imagen.url }}" style="width:40px;height:40px;border-radius:8px;object-fit:contain;background:#f8fafc;border:1px solid #e2e8f0;flex-shrink:0">
+          {% else %}
+            <div style="width:40px;height:40px;border-radius:8px;background:#f1f5f9;border:1.5px dashed #cbd5e1;display:flex;align-items:center;justify-content:center;font-size:1.1rem;color:#94a3b8;flex-shrink:0">
+              {% if m.categoria == 'insumo' %}🩹{% else %}💊{% endif %}
+            </div>
+          {% endif %}
+          <div>
+            <strong>{{ m.nombre }}</strong>
+            {% if m.descripcion %}<br><span style="font-size:0.72rem;color:var(--muted)">{{ m.descripcion|truncatechars:40 }}</span>{% endif %}
+          </div>
+        </td>
+        <td>
+          {% if m.categoria == 'insumo' %}
+            <span class="badge-cat-insumo"><i class="bi bi-bandaid-fill"></i> Insumo</span>
+          {% else %}
+            <span class="badge-cat-med"><i class="bi bi-capsule"></i> Medicamento</span>
+          {% endif %}
+        </td>
+        <td style="font-weight:800;font-size:1rem;color:{% if m.stock_bajo %}#e05c5c{% else %}var(--text){% endif %}">{{ m.cantidad_actual }}</td>
+        <td>{{ m.get_unidad_display }}</td>
+        <td style="color:var(--muted)">{{ m.cantidad_minima }}</td>
+        <td style="text-align:center">
+          {% with total=m.usos_consulta.count %}
+            {% if total > 0 %}
+              <a href="{% url 'detalle_medicamento' m.pk %}" style="font-weight:700;color:var(--primary);text-decoration:none">
+                <span class="badge badge-teal">{{ total }} consulta{{ total|pluralize:",s" }}</span>
+              </a>
+            {% else %}
+              <span style="color:var(--muted);font-size:0.8rem">Sin usos</span>
+            {% endif %}
+          {% endwith %}
+        </td>
+        <td>
+          {% if m.vencido %}<span class="badge badge-red">VENCIDO {{ m.fecha_vencimiento|date:"d/m/Y" }}</span>
+          {% elif m.proximo_vencer %}<span class="badge badge-orange">{{ m.fecha_vencimiento|date:"d/m/Y" }} ({{ m.dias_para_vencer }}d)</span>
+          {% else %}<span style="font-size:0.8rem">{{ m.fecha_vencimiento|date:"d/m/Y" }}</span>{% endif %}
+        </td>
+        <td>
+          {% if m.vencido %}<span class="badge badge-red">Vencido</span>
+          {% elif m.stock_bajo %}<span class="badge badge-orange">Bajo stock</span>
+          {% else %}<span class="badge badge-sage">OK</span>{% endif %}
+        </td>
+        <td style="display:flex;gap:5px">
+          <a href="{% url 'detalle_medicamento' m.pk %}" class="btn btn-outline btn-xs" title="Ver historial"><i class="bi bi-eye"></i></a>
+          {% if usuario_es_admin %}<a href="{% url 'editar_medicamento' m.pk %}" class="btn btn-outline btn-xs" title="Editar"><i class="bi bi-pencil"></i></a>{% endif %}
+        </td>
+      </tr>{% endfor %}</tbody>
+    </table>
+    <div class="tbl-footer-inv">
+      <i class="bi bi-heart-pulse-fill"></i>
+      <strong>{{ medicamentos.paginator.count }}</strong> ítem(s) en inventario
+      &nbsp;·&nbsp;
+      <span style="color:var(--teal)"><i class="bi bi-bandaid-fill"></i> {{ insumos_count }} insumos</span>
+      &nbsp;·&nbsp;
+      <span style="color:#dc2626"><i class="bi bi-capsule"></i> {{ meds_count }} medicamentos</span>
+    </div>
+    {% if medicamentos.has_other_pages %}
+    <div style="display:flex;align-items:center;justify-content:center;gap:6px;padding:12px 16px;border-top:1px solid rgba(14,165,160,.1)">
+      {% if medicamentos.has_previous %}
+        <a href="?page={{ medicamentos.previous_page_number }}{% if query %}&q={{ query }}{% endif %}{% if filtro_cat %}&categoria={{ filtro_cat }}{% endif %}" class="btn btn-outline btn-sm"><i class="bi bi-chevron-left"></i></a>
+      {% endif %}
+      {% for num in medicamentos.paginator.page_range %}
+        {% if medicamentos.number == num %}
+          <span class="btn btn-sm" style="background:var(--teal);color:white;border:none;min-width:34px">{{ num }}</span>
+        {% elif num > medicamentos.number|add:"-3" and num < medicamentos.number|add:"3" %}
+          <a href="?page={{ num }}{% if query %}&q={{ query }}{% endif %}{% if filtro_cat %}&categoria={{ filtro_cat }}{% endif %}" class="btn btn-outline btn-sm" style="min-width:34px">{{ num }}</a>
+        {% endif %}
+      {% endfor %}
+      {% if medicamentos.has_next %}
+        <a href="?page={{ medicamentos.next_page_number }}{% if query %}&q={{ query }}{% endif %}{% if filtro_cat %}&categoria={{ filtro_cat }}{% endif %}" class="btn btn-outline btn-sm"><i class="bi bi-chevron-right"></i></a>
+      {% endif %}
+      <span style="font-size:.75rem;color:var(--text-muted);margin-left:4px">Pág. {{ medicamentos.number }}/{{ medicamentos.paginator.num_pages }}</span>
+    </div>
+    {% endif %}
+    {% else %}
+    <div style="text-align:center;padding:40px;color:var(--muted)">
+      <i class="bi bi-heart-pulse" style="font-size:2.5rem"></i>
+      <p style="margin-top:8px">Sin ítems en el inventario</p>
+      {% if usuario_es_admin %}<a href="{% url 'nuevo_medicamento' %}" class="btn btn-primary btn-sm" style="margin-top:10px">Agregar</a>{% endif %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Modal enviar alerta de inventario -->
+<div id="modal-alerta" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9999;align-items:center;justify-content:center">
+  <div style="background:white;border-radius:14px;padding:28px;width:100%;max-width:420px;box-shadow:0 8px 32px rgba(0,0,0,.2)">
+    <div style="font-weight:800;font-size:1rem;color:#1a2b3c;margin-bottom:6px">📧 Enviar alerta de inventario</div>
+    <p style="font-size:.82rem;color:#6b86a0;margin-bottom:16px">Se enviará un correo con todos los ítems vencidos, con stock bajo y próximos a vencer.</p>
+    <form method="post" action="{% url 'enviar_alerta_inventario' %}">
+      {% csrf_token %}
+      <div style="margin-bottom:14px">
+        <label style="font-size:.72rem;font-weight:700;color:#6b86a0;text-transform:uppercase;display:block;margin-bottom:5px">Correo destino</label>
+        <input type="email" name="correo_destino" class="form-control" placeholder="enfermera@colegio.edu.co" value="{{ request.user.email }}">
+        <div style="font-size:.7rem;color:#94a3b8;margin-top:4px">Se usará el correo de tu perfil si lo dejas vacío.</div>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button type="button" onclick="document.getElementById('modal-alerta').style.display='none'" class="btn btn-outline">Cancelar</button>
+        <button type="submit" class="btn btn-primary"><i class="bi bi-send-fill"></i> Enviar correo</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

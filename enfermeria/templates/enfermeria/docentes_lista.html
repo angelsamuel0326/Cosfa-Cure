@@ -1,0 +1,310 @@
+{% extends 'enfermeria/base.html' %}
+{% block title %}Docentes — COSFA CURE{% endblock %}
+{% block page_title %}Docentes{% endblock %}
+{% block content %}
+
+<style>
+.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px}
+@media(max-width:900px){.stat-grid{grid-template-columns:repeat(2,1fr)}}
+.stat-card{background:white;border-radius:16px;padding:18px 20px;box-shadow:0 2px 16px rgba(15,36,68,.07);display:flex;align-items:center;gap:14px;position:relative;overflow:hidden;border:1px solid rgba(15,36,68,.06);transition:transform .2s,box-shadow .2s}
+.stat-card:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(15,36,68,.12)}
+.stat-card::before{content:'';position:absolute;right:-14px;top:-14px;width:70px;height:70px;border-radius:50%;opacity:.07}
+.stat-card.c-teal::before{background:var(--teal)}.stat-card.c-green::before{background:#10b981}.stat-card.c-orange::before{background:#f59e0b}
+.stat-icon{width:46px;height:46px;border-radius:12px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:1.3rem}
+.stat-icon.c-teal{background:rgba(14,165,160,.12)}.stat-icon.c-green{background:rgba(16,185,129,.1)}.stat-icon.c-orange{background:rgba(245,158,11,.1)}
+.stat-num{font-family:'Sora',sans-serif;font-size:1.6rem;font-weight:800;color:var(--navy);line-height:1;margin-bottom:3px}
+.stat-lbl{font-size:.72rem;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+.stat-sub{font-size:.7rem;color:#94a3b8;margin-top:2px}
+
+.filtros-doc-wrap{background:white;border-radius:16px;box-shadow:0 2px 16px rgba(15,36,68,.06);border:1px solid rgba(15,36,68,.06);margin-bottom:16px;overflow:hidden}
+.filtros-doc-header{padding:13px 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(15,36,68,.06);cursor:pointer;user-select:none}
+.filtros-doc-body{padding:16px 18px;display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}
+.filtros-doc-body.hidden{display:none}
+.filter-group{display:flex;flex-direction:column;gap:5px;min-width:150px}
+.filter-group label{font-size:.68rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.4px}
+.filter-group input,.filter-group select{padding:8px 12px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:.8rem;color:var(--navy);background:#f8fafc;outline:none;transition:border-color .2s}
+.filter-group input:focus,.filter-group select:focus{border-color:var(--teal);background:white}
+.btn-filtrar-doc{display:inline-flex;align-items:center;gap:7px;background:linear-gradient(135deg,var(--teal),#0d8c88);color:white;border:none;padding:9px 20px;border-radius:10px;font-size:.8rem;font-weight:700;cursor:pointer;align-self:flex-end;box-shadow:0 3px 10px rgba(14,165,160,.3)}
+.btn-limpiar-doc{display:inline-flex;align-items:center;gap:6px;background:white;border:1.5px solid #e2e8f0;color:#64748b;padding:8px 16px;border-radius:10px;font-size:.8rem;font-weight:600;cursor:pointer;text-decoration:none;align-self:flex-end}
+.filtro-badge-doc{display:inline-flex;align-items:center;gap:4px;background:rgba(14,165,160,.1);color:var(--teal);border:1px solid rgba(14,165,160,.25);border-radius:20px;padding:3px 10px;font-size:.68rem;font-weight:700}
+
+.tbl-docentes thead tr{background:linear-gradient(135deg,var(--navy) 0%,var(--teal) 100%)!important}
+.tbl-docentes thead th{background:transparent!important;color:white!important;font-family:'Sora',sans-serif;font-size:.65rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:13px 16px;border:none!important}
+.tbl-docentes tbody tr{transition:all .2s cubic-bezier(.4,0,.2,1);border-bottom:1px solid rgba(14,165,160,.08);animation:rowSlide .32s ease both;cursor:pointer}
+.tbl-docentes tbody tr:nth-child(even){background:rgba(14,165,160,.025)}
+.tbl-docentes tbody tr:hover{background:rgba(14,165,160,.06)!important;box-shadow:inset 3px 0 0 var(--teal)}
+@keyframes rowSlide{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}
+.tbl-docentes tbody tr:nth-child(1){animation-delay:.03s}.tbl-docentes tbody tr:nth-child(2){animation-delay:.07s}
+.tbl-docentes tbody tr:nth-child(3){animation-delay:.11s}.tbl-docentes tbody tr:nth-child(n+4){animation-delay:.15s}
+.tbl-docentes tbody td{padding:13px 16px;vertical-align:middle;border:none!important;font-size:.82rem;color:var(--text)}
+.doc-avatar-ph{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--teal),var(--navy));border:2.5px solid rgba(14,165,160,.2);display:flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-size:.85rem;font-weight:800;color:white;transition:all .3s cubic-bezier(.34,1.56,.64,1)}
+.doc-avatar-img{width:40px;height:40px;border-radius:50%;object-fit:cover;border:2.5px solid rgba(14,165,160,.2);transition:all .3s cubic-bezier(.34,1.56,.64,1)}
+.tbl-docentes tbody tr:hover .doc-avatar-ph,.tbl-docentes tbody tr:hover .doc-avatar-img{transform:scale(1.12) rotate(4deg);border-color:var(--teal);box-shadow:0 4px 14px rgba(14,165,160,.35)}
+.badge-area{display:inline-flex;align-items:center;justify-content:center;padding:2px 10px;background:linear-gradient(135deg,var(--teal),#067a76);color:white;font-size:.63rem;font-weight:800;border-radius:20px;white-space:nowrap;box-shadow:0 2px 8px rgba(14,165,160,.3);transition:all .3s cubic-bezier(.34,1.56,.64,1)}
+.tbl-docentes tbody tr:hover .badge-area{transform:scale(1.1)}
+.doc-name{font-weight:700;color:var(--navy);text-decoration:none;transition:color .15s}
+.doc-name:hover{color:var(--teal)}
+.doc-actions{display:flex;gap:5px;align-items:center;opacity:0;transition:opacity .2s}
+.tbl-docentes tbody tr:hover .doc-actions{opacity:1}
+.doc-act{width:30px;height:30px;border-radius:8px;border:1.5px solid var(--border);display:inline-flex;align-items:center;justify-content:center;font-size:.8rem;cursor:pointer;transition:all .25s cubic-bezier(.34,1.56,.64,1);background:white;color:var(--text-muted);text-decoration:none}
+.doc-act:hover{transform:scale(1.15)}
+.doc-act-view:hover{background:rgba(59,130,246,.08);color:#3b82f6;border-color:#bfdbfe}
+.doc-act-add:hover{background:var(--teal);color:white;border-color:var(--teal);box-shadow:0 4px 10px rgba(14,165,160,.35)}
+.doc-act-edit:hover{background:rgba(14,165,160,.1);color:var(--teal);border-color:rgba(14,165,160,.3)}
+.badge-inactivo{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;font-size:.63rem;font-weight:700;background:rgba(239,68,68,.1);color:#991b1b;border:1px solid #fca5a5}
+.badge-alerta-doc{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:.64rem;font-weight:700;background:rgba(239,68,68,.1);color:#991b1b;border:1px solid #fca5a5}
+.tbl-footer{padding:11px 16px;font-size:.74rem;color:var(--text-muted);font-weight:500;background:rgba(14,165,160,.04);border-top:1px solid rgba(14,165,160,.1);display:flex;align-items:center;gap:6px}
+</style>
+
+<!-- 1. STAT CARDS -->
+<div class="stat-grid">
+  <div class="stat-card c-teal">
+    <div class="stat-icon c-teal"><i class="bi bi-person-badge-fill" style="color:var(--teal)"></i></div>
+    <div>
+      <div class="stat-num">{{ total }}</div>
+      <div class="stat-lbl">Total Docentes</div>
+      <div class="stat-sub">Registrados en el sistema</div>
+    </div>
+  </div>
+  <div class="stat-card c-green">
+    <div class="stat-icon c-green"><i class="bi bi-check-circle-fill" style="color:#10b981"></i></div>
+    <div>
+      <div class="stat-num">{{ total_activos }}</div>
+      <div class="stat-lbl">Activos</div>
+      <div class="stat-sub">En servicio actualmente</div>
+    </div>
+  </div>
+  <div class="stat-card c-orange">
+    <div class="stat-icon c-orange"><i class="bi bi-exclamation-triangle-fill" style="color:#f59e0b"></i></div>
+    <div>
+      <div class="stat-num">{{ con_alertas }}</div>
+      <div class="stat-lbl">Con alertas médicas</div>
+      <div class="stat-sub">Alergias o condiciones</div>
+    </div>
+  </div>
+</div>
+
+<!-- 2. FILTROS DESPLEGABLES -->
+<div class="filtros-doc-wrap">
+  <div class="filtros-doc-header" onclick="toggleFiltrosDoc(this)">
+    <div style="display:flex;align-items:center;gap:8px;font-size:.84rem;font-weight:700;color:var(--navy)">
+      <i class="bi bi-funnel-fill" style="color:var(--teal)"></i>
+      Filtros de búsqueda
+      {% if query or f_area or f_activo %}<span class="filtro-badge-doc"><i class="bi bi-check-circle-fill"></i> Activos</span>{% endif %}
+    </div>
+    <i class="bi bi-chevron-down" id="fchev-doc" style="color:#94a3b8;transition:transform .2s{% if query or f_area or f_activo %};transform:rotate(180deg){% endif %}"></i>
+  </div>
+  <div class="filtros-doc-body {% if not query and not f_area and not f_activo %}hidden{% endif %}" id="fbody-doc">
+    <form method="get" style="display:contents">
+      <div class="filter-group" style="min-width:220px;flex:1">
+        <label><i class="bi bi-search"></i> Buscar</label>
+        <input type="text" name="q" id="q-docentes" value="{{ query }}" placeholder="Nombre, cédula o área..." autocomplete="off">
+      </div>
+      <div class="filter-group">
+        <label><i class="bi bi-briefcase"></i> Área</label>
+        <select name="area">
+          <option value="">Todas</option>
+          {% for val,label in area_choices %}<option value="{{ val }}" {% if f_area == val %}selected{% endif %}>{{ label }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="filter-group">
+        <label><i class="bi bi-toggle-on"></i> Estado</label>
+        <select name="activo">
+          <option value="">Todos</option>
+          <option value="si" {% if f_activo == 'si' %}selected{% endif %}>Activos</option>
+          <option value="no" {% if f_activo == 'no' %}selected{% endif %}>Inactivos</option>
+        </select>
+      </div>
+      <button type="submit" class="btn-filtrar-doc"><i class="bi bi-funnel-fill"></i> Filtrar</button>
+      {% if query or f_area or f_activo %}<a href="{% url 'lista_docentes' %}" class="btn-limpiar-doc"><i class="bi bi-x-circle"></i> Limpiar</a>{% endif %}
+    </form>
+  </div>
+</div>
+
+<!-- 3. TABLA -->
+<div class="card">
+  <div class="card-head">
+    <div class="card-head-title">
+      <i class="bi bi-person-badge-fill"></i> Docentes Registrados
+      {% if query or f_area or f_activo %}<span class="filtro-badge-doc" style="margin-left:6px">Filtrado</span>{% endif %}
+    </div>
+    <div style="display:flex;gap:6px">
+      {% if usuario_es_admin %}<a href="{% url 'nuevo_docente' %}" class="btn btn-primary btn-sm"><i class="bi bi-person-plus"></i> Nuevo</a>{% endif %}
+      <a href="{% url 'pdf_reportes' %}?tipo=docentes" target="_blank"
+         class="btn btn-sm" style="background:linear-gradient(135deg,#ef4444,#dc2626);color:white;border:none">
+        <i class="bi bi-file-earmark-pdf-fill"></i> PDF
+      </a>
+      <a href="{% url 'exportar_docentes_xlsx' %}{% if query %}?q={{ query }}{% endif %}{% if f_area %}&area={{ f_area }}{% endif %}{% if f_activo %}&activo={{ f_activo }}{% endif %}"
+         class="btn btn-sm" style="background:linear-gradient(135deg,#16a34a,#15803d);color:white;border:none">
+        <i class="bi bi-file-earmark-excel-fill"></i> Exportar
+      </a>
+      <button type="button" onclick="document.getElementById('modalImportarDoc').style.display='flex'"
+              class="btn btn-sm" style="background:linear-gradient(135deg,#7c3aed,#6d28d9);color:white;border:none">
+        <i class="bi bi-file-earmark-arrow-up-fill"></i> Importar
+      </button>
+    </div>
+  </div>
+
+
+  <div class="table-wrap">
+    {% if docentes %}
+    <table class="tbl-docentes" style="width:100%">
+      <thead>
+        <tr>
+          <th></th>
+          <th>Nombre</th>
+          <th>Cédula</th>
+          <th>Área / Cargo</th>
+          <th>Grados</th>
+          <th>EPS</th>
+          <th>Teléfono</th>
+          <th>Consultas</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for doc in docentes %}
+        <tr onclick="window.location='{% url 'historial_docente' doc.pk %}'">
+          <td style="width:54px" onclick="event.stopPropagation()">
+            {% if doc.foto %}
+              <img src="{{ doc.foto.url }}" class="doc-avatar-img" alt="{{ doc.nombre }}">
+            {% else %}
+              <div class="doc-avatar-ph">{{ doc.nombre|first|upper }}</div>
+            {% endif %}
+          </td>
+          <td>
+            <a href="{% url 'historial_docente' doc.pk %}" class="doc-name" onclick="event.stopPropagation()">{{ doc.nombre }}</a>
+            <div style="font-size:.7rem;color:#94a3b8;margin-top:2px">
+              {{ doc.get_tipo_display|default:doc.tipo }}
+              {% if not doc.activo %}<span class="badge-inactivo" style="margin-left:4px">Inactivo</span>{% endif %}
+              {% if doc.alergias or doc.condiciones_medicas %}<span class="badge-alerta-doc" style="margin-left:4px"><i class="bi bi-exclamation-triangle-fill"></i> Alerta</span>{% endif %}
+            </div>
+          </td>
+          <td style="font-size:.78rem;color:var(--text-muted)">{{ doc.cedula }}</td>
+          <td><span class="badge-area">{{ doc.get_area_display }}</span></td>
+          <td style="font-size:.78rem">{{ doc.grados_asignados|default:"—" }}</td>
+          <td style="font-size:.78rem;color:var(--text-muted)">{{ doc.eps|default:"—" }}</td>
+          <td style="font-size:.78rem">{{ doc.telefono }}</td>
+          <td style="text-align:center">
+            <span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:rgba(14,165,160,.1);color:var(--teal);font-weight:800;font-size:.8rem">{{ doc.total_consultas }}</span>
+          </td>
+          <td onclick="event.stopPropagation()">
+            <div class="doc-actions">
+              <a href="{% url 'historial_docente' doc.pk %}" class="doc-act doc-act-view" title="Ver historial"><i class="bi bi-eye"></i></a>
+              {% if usuario_es_admin %}<a href="{% url 'nueva_consulta_docente_desde' doc.pk %}" class="doc-act doc-act-add" title="Nueva consulta"><i class="bi bi-clipboard2-pulse"></i></a>{% endif %}
+              {% if usuario_es_admin %}<a href="{% url 'editar_docente' doc.pk %}" class="doc-act doc-act-edit" title="Editar"><i class="bi bi-pencil"></i></a>{% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <div class="tbl-footer">
+      <i class="bi bi-person-badge-fill" style="color:var(--teal)"></i>
+      <strong>{{ page_obj.paginator.count }}</strong> docente(s)
+      {% if query or f_area or f_activo %}&nbsp;·&nbsp;<span class="filtro-badge-doc">Filtrado</span>{% endif %}
+    </div>
+
+    {% if page_obj.has_other_pages %}
+    <div style="display:flex;align-items:center;justify-content:center;gap:6px;padding:12px 16px;border-top:1px solid rgba(14,165,160,.1)">
+      {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}{% if f_area %}&area={{ f_area }}{% endif %}{% if f_activo %}&activo={{ f_activo }}{% endif %}" class="btn btn-outline btn-sm"><i class="bi bi-chevron-left"></i></a>
+      {% endif %}
+      {% for num in page_obj.paginator.page_range %}
+        {% if page_obj.number == num %}
+          <span class="btn btn-sm" style="background:var(--teal);color:white;border:none;min-width:34px">{{ num }}</span>
+        {% elif num > page_obj.number|add:"-3" and num < page_obj.number|add:"3" %}
+          <a href="?page={{ num }}{% if query %}&q={{ query }}{% endif %}{% if f_area %}&area={{ f_area }}{% endif %}{% if f_activo %}&activo={{ f_activo }}{% endif %}" class="btn btn-outline btn-sm" style="min-width:34px">{{ num }}</a>
+        {% endif %}
+      {% endfor %}
+      {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}{% if f_area %}&area={{ f_area }}{% endif %}{% if f_activo %}&activo={{ f_activo }}{% endif %}" class="btn btn-outline btn-sm"><i class="bi bi-chevron-right"></i></a>
+      {% endif %}
+      <span style="font-size:.75rem;color:var(--text-muted);margin-left:4px">Pág. {{ page_obj.number }}/{{ page_obj.paginator.num_pages }}</span>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div style="text-align:center;padding:60px 24px">
+      <div style="width:72px;height:72px;border-radius:50%;background:rgba(14,165,160,.08);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:1.8rem">
+        <i class="bi bi-person-badge" style="color:var(--teal)"></i>
+      </div>
+      {% if query or f_area or f_activo %}
+        <h3 style="font-family:'Sora',sans-serif;font-size:1rem;font-weight:800;color:var(--navy);margin:0 0 8px">Sin resultados</h3>
+        <p style="font-size:.82rem;color:var(--text-muted);margin-bottom:16px">No hay docentes con los filtros aplicados</p>
+        <a href="{% url 'lista_docentes' %}" class="btn btn-outline btn-sm"><i class="bi bi-x-circle"></i> Limpiar filtros</a>
+      {% else %}
+        <h3 style="font-family:'Sora',sans-serif;font-size:1rem;font-weight:800;color:var(--navy);margin:0 0 8px">No hay docentes registrados aún</h3>
+        <p style="font-size:.82rem;color:var(--text-muted);margin-bottom:16px">Registra el primer docente del colegio</p>
+        {% if usuario_es_admin %}<a href="{% url 'nuevo_docente' %}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg"></i> Nuevo docente</a>{% endif %}
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+function toggleFiltrosDoc(el){
+  const body=document.getElementById('fbody-doc');
+  const chev=document.getElementById('fchev-doc');
+  body.classList.toggle('hidden');
+  chev.style.transform=body.classList.contains('hidden')?'':'rotate(180deg)';
+}
+// Búsqueda en tiempo real
+(function(){
+  const inp=document.getElementById('q-docentes');
+  if(!inp) return;
+  let timer;
+  inp.addEventListener('input',function(){
+    clearTimeout(timer);
+    timer=setTimeout(function(){
+      const form=inp.closest('form');
+      if(form) form.submit();
+    },500);
+  });
+})();
+</script>
+  <!-- MODAL IMPORTAR DOCENTES -->
+  <div id="modalImportarDoc" style="display:none;position:fixed;inset:0;background:rgba(15,36,68,.4);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);z-index:9999;align-items:center;justify-content:center">
+    <div style="background:white;border-radius:20px;padding:32px 28px;max-width:480px;width:90%;box-shadow:0 24px 64px rgba(0,0,0,.2);position:relative">
+      <button onclick="document.getElementById('modalImportarDoc').style.display='none'"
+              style="position:absolute;top:14px;right:16px;background:none;border:none;font-size:1.3rem;cursor:pointer;color:#94a3b8">✕</button>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px">
+        <div style="width:46px;height:46px;border-radius:12px;background:linear-gradient(135deg,#7c3aed,#6d28d9);display:flex;align-items:center;justify-content:center;font-size:1.4rem">
+          <i class="bi bi-file-earmark-excel-fill" style="color:white"></i>
+        </div>
+        <div>
+          <div style="font-weight:800;font-size:1rem;color:var(--navy)">Importar Docentes</div>
+          <div style="font-size:.74rem;color:var(--muted)">Carga masiva desde Excel</div>
+        </div>
+      </div>
+      <div style="background:rgba(124,58,237,.06);border:1.5px solid rgba(124,58,237,.2);border-radius:12px;padding:14px 16px;margin-bottom:18px">
+        <div style="font-size:.78rem;font-weight:700;color:#5b21b6;margin-bottom:6px"><i class="bi bi-info-circle-fill"></i> ¿Cómo funciona?</div>
+        <div style="font-size:.75rem;color:#64748b;line-height:1.6">
+          Este formulario de Excel es para rellenar datos e ingresarlos de forma <strong>masiva y rápida</strong>.<br>
+          1. Descarga la plantilla oficial.<br>
+          2. Rellena los datos de cada docente (uno por fila).<br>
+          3. Sube el archivo y los datos se cargan automáticamente.
+        </div>
+      </div>
+      <a href="{% url 'plantilla_importar_docentes' %}"
+         style="display:flex;align-items:center;gap:8px;background:rgba(22,163,74,.08);border:1.5px solid rgba(22,163,74,.3);border-radius:10px;padding:10px 14px;text-decoration:none;color:#15803d;font-size:.82rem;font-weight:700;margin-bottom:14px">
+        <i class="bi bi-download"></i> Descargar plantilla Excel (.xlsx)
+        <span style="margin-left:auto;font-size:.68rem;font-weight:400;color:#94a3b8">Con instrucciones incluidas</span>
+      </a>
+      <form method="post" action="{% url 'importar_docentes_excel' %}" enctype="multipart/form-data">
+        {% csrf_token %}
+        <label style="font-size:.75rem;font-weight:700;color:#64748b;display:block;margin-bottom:6px">SUBIR ARCHIVO EXCEL COMPLETADO</label>
+        <input type="file" name="archivo_excel" accept=".xlsx,.xls"
+               style="width:100%;padding:9px 12px;border:1.5px dashed #c4b5fd;border-radius:10px;font-size:.8rem;background:#faf5ff;cursor:pointer;margin-bottom:14px" required>
+        <div style="display:flex;gap:8px">
+          <button type="submit" class="btn btn-primary" style="flex:1;background:linear-gradient(135deg,#7c3aed,#6d28d9);border:none">
+            <i class="bi bi-upload"></i> Cargar datos al sistema
+          </button>
+          <button type="button" onclick="document.getElementById('modalImportarDoc').style.display='none'"
+                  class="btn btn-outline" style="flex:0">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}

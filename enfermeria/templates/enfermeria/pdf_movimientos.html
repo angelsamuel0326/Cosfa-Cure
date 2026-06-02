@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Movimientos de Inventario — COSFA CURE</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Segoe UI',Arial,sans-serif;font-size:10px;color:#1e2a3a;background:#fff;padding:22px}
+  .header{display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid #52b788;padding-bottom:10px;margin-bottom:16px}
+  .header-left h1{font-size:16px;font-weight:800;color:#1e4a5a}
+  .header-left p{font-size:9px;color:#64748b;margin-top:2px}
+  .header-right{text-align:right;font-size:9px;color:#64748b}
+  table{width:100%;border-collapse:collapse;margin-bottom:10px}
+  th{background:#52b788;color:white;padding:5px 8px;text-align:left;font-size:8.5px;font-weight:700;text-transform:uppercase}
+  td{padding:4px 8px;border-bottom:1px solid #e8f4f3;font-size:9px}
+  tr:nth-child(even) td{background:#f0fdf4}
+  .badge{display:inline-block;padding:2px 7px;border-radius:4px;font-size:8px;font-weight:700}
+  .badge-entrada{background:#d1fae5;color:#065f46}
+  .badge-salida{background:#fee2e2;color:#b91c1c}
+  .resumen-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px}
+  .resumen-kpi{background:#f0fdf4;border:1px solid #a7f3d0;border-radius:8px;padding:10px;text-align:center}
+  .resumen-kpi strong{display:block;font-size:18px;font-weight:800;color:#065f46}
+  .resumen-kpi span{font-size:8.5px;color:#6b7280;text-transform:uppercase;font-weight:600}
+  .footer{margin-top:16px;border-top:1px solid #e2e8f0;padding-top:6px;text-align:center;font-size:8.5px;color:#94a3b8}
+  @media print{body{padding:0} @page{margin:14mm 12mm}}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-left">
+    <h1>💊 Entradas y Salidas de Medicamentos — COSFA CURE</h1>
+    <p>Sistema de Enfermería Escolar · Generado el {{ fecha_impresion|date:"d/m/Y" }}
+      {% if medicamento %} · Medicamento: <strong>{{ medicamento.nombre }}</strong>{% endif %}
+    </p>
+  </div>
+  <div class="header-right">
+    <strong>COSFA CURE</strong><br>Total: {{ movimientos|length }} movimiento{{ movimientos|length|pluralize:",s" }}
+  </div>
+</div>
+
+<!-- Resumen -->
+{% with entradas=0 salidas=0 %}
+<div class="resumen-grid">
+  <div class="resumen-kpi">
+    <strong style="color:#065f46">{{ movimientos|length }}</strong>
+    <span>Total de movimientos</span>
+  </div>
+  <div class="resumen-kpi">
+    <strong style="color:#065f46">
+      {% for m in movimientos %}{% if m.tipo == 'entrada' %}+{% endif %}{% endfor %}
+    </strong>
+    <span>Entradas registradas</span>
+  </div>
+  <div class="resumen-kpi">
+    <strong style="color:#b91c1c">
+      {% for m in movimientos %}{% if m.tipo == 'salida' %}−{% endif %}{% endfor %}
+    </strong>
+    <span>Salidas registradas</span>
+  </div>
+</div>
+{% endwith %}
+
+<table>
+  <thead>
+    <tr>
+      <th style="width:14%">Fecha y hora</th>
+      <th style="width:22%">Medicamento</th>
+      <th style="width:10%">Tipo</th>
+      <th style="width:10%">Cantidad</th>
+      <th style="width:10%">Unidad</th>
+      <th>Motivo / Descripción</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for mov in movimientos %}
+    <tr>
+      <td>{{ mov.fecha|date:"d/m/Y" }}<br><span style="color:#64748b">{{ mov.fecha|time:"g:i A" }}</span></td>
+      <td><strong>{{ mov.medicamento.nombre }}</strong></td>
+      <td>
+        {% if mov.tipo == 'entrada' %}
+          <span class="badge badge-entrada">↑ Entrada</span>
+        {% else %}
+          <span class="badge badge-salida">↓ Salida</span>
+        {% endif %}
+      </td>
+      <td style="text-align:center;font-weight:700;
+        {% if mov.tipo == 'entrada' %}color:#065f46{% else %}color:#b91c1c{% endif %}">
+        {% if mov.tipo == 'entrada' %}+{% else %}−{% endif %}{{ mov.cantidad }}
+      </td>
+      <td>{{ mov.medicamento.unidad }}</td>
+      <td style="font-size:9px">{{ mov.motivo }}</td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:20px">No hay movimientos registrados</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<div class="footer">COSFA CURE — Sistema de Enfermería Escolar · Inventario de Medicamentos · {{ fecha_impresion|date:"d/m/Y" }} · Documento de uso interno</div>
+<script>window.onload = function(){ window.print(); }</script>
+</body>
+</html>

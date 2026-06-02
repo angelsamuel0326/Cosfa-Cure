@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+body{margin:0;padding:0;background:#f0f5fb;font-family:Arial,sans-serif}
+.wrap{max-width:580px;margin:30px auto;background:white;border-radius:12px;overflow:hidden;border:1px solid #d4e4f4}
+.header{background:linear-gradient(135deg,#92400e,#d97706);padding:28px 32px;text-align:center}
+.header h1{color:white;font-size:20px;margin:0 0 4px}
+.header p{color:rgba(255,255,255,.75);font-size:13px;margin:0}
+.logo{font-size:32px;margin-bottom:10px}
+.body{padding:28px 32px}
+.med-card{border-radius:10px;padding:14px 18px;margin-bottom:10px;border:1px solid}
+.med-card.bajo{background:#fff7ed;border-color:#fed7aa}
+.med-card.vence{background:#fef9c3;border-color:#fde68a}
+.med-card.vencido{background:#fef2f2;border-color:#fca5a5}
+.med-card h3{margin:0 0 8px;font-size:15px}
+.med-card.bajo h3{color:#92400e}
+.med-card.vence h3{color:#713f12}
+.med-card.vencido h3{color:#b91c1c}
+.med-row{display:flex;justify-content:space-between;font-size:13px;padding:3px 0}
+.med-label{color:#6b86a0}
+.med-val{font-weight:bold;color:#1a2b3c}
+.tipo-badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:bold;margin-bottom:8px}
+.badge-bajo{background:#fed7aa;color:#92400e}
+.badge-vence{background:#fde68a;color:#713f12}
+.badge-vencido{background:#fca5a5;color:#b91c1c}
+.footer{background:#f7faff;padding:18px 32px;text-align:center;border-top:1px solid #d4e4f4}
+.footer p{color:#94a3b8;font-size:12px;margin:4px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <img src="cid:logo_cosfa" alt="Logo Colegio San Francisco de Asís" width="80" height="80" style="border-radius:50%;border:3px solid rgba(255,255,255,0.4);display:block;margin:0 auto 12px;">
+    <h1>Alerta de Inventario — COSFA CURE</h1>
+    <p>Colegio San Francisco de Asís</p>
+  </div>
+  <div class="body">
+    <p style="font-size:15px;color:#1a2b3c;margin-bottom:6px">Hola, <strong>{{ nombre_enfermera }}</strong></p>
+    <p style="font-size:14px;color:#3d4f5e;margin-bottom:20px">Se han detectado las siguientes alertas en el inventario de medicamentos:</p>
+
+    {% if vencidos %}
+    <p style="font-size:13px;font-weight:bold;color:#b91c1c;text-transform:uppercase;margin-bottom:8px"><span style="display:inline-block;width:16px;height:16px;background:#ef4444;border-radius:50%;border:2px solid #b91c1c;vertical-align:middle;"></span> Medicamentos vencidos</p>
+    {% for m in vencidos %}
+    <div class="med-card vencido">
+      <span class="tipo-badge badge-vencido">VENCIDO</span>
+      <h3>{{ m.nombre }}</h3>
+      <div class="med-row"><span class="med-label">Stock actual</span><span class="med-val">{{ m.cantidad_actual }} {{ m.get_unidad_display }}</span></div>
+      <div class="med-row"><span class="med-label">Fecha vencimiento</span><span class="med-val">{{ m.fecha_vencimiento|date:"d/m/Y" }}</span></div>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    {% if bajo_stock %}
+    <p style="font-size:13px;font-weight:bold;color:#92400e;text-transform:uppercase;margin:14px 0 8px"><span style="display:inline-block;width:0;height:0;border-left:9px solid transparent;border-right:9px solid transparent;border-bottom:16px solid #f59e0b;vertical-align:middle;"></span> Stock bajo mínimo</p>
+    {% for m in bajo_stock %}
+    <div class="med-card bajo">
+      <span class="tipo-badge badge-bajo">STOCK BAJO</span>
+      <h3>{{ m.nombre }}</h3>
+      <div class="med-row"><span class="med-label">Stock actual</span><span class="med-val">{{ m.cantidad_actual }} {{ m.get_unidad_display }}</span></div>
+      <div class="med-row"><span class="med-label">Stock mínimo</span><span class="med-val">{{ m.cantidad_minima }} {{ m.get_unidad_display }}</span></div>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    {% if proximos_vencer %}
+    <p style="font-size:13px;font-weight:bold;color:#713f12;text-transform:uppercase;margin:14px 0 8px"><span style="display:inline-block;width:14px;height:14px;background:#3b82f6;border-radius:2px;vertical-align:middle;border-top:3px solid #1e40af;"></span> Próximos a vencer (30 días)</p>
+    {% for m in proximos_vencer %}
+    <div class="med-card vence">
+      <span class="tipo-badge badge-vence">PRÓXIMO A VENCER</span>
+      <h3>{{ m.nombre }}</h3>
+      <div class="med-row"><span class="med-label">Vence el</span><span class="med-val">{{ m.fecha_vencimiento|date:"d/m/Y" }}</span></div>
+      <div class="med-row"><span class="med-label">Días restantes</span><span class="med-val">{{ m.dias_para_vencer }} días</span></div>
+      <div class="med-row"><span class="med-label">Stock actual</span><span class="med-val">{{ m.cantidad_actual }} {{ m.get_unidad_display }}</span></div>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <p style="font-size:13px;color:#6b86a0;margin-top:16px">Por favor acceda al sistema para gestionar el inventario a la brevedad posible.</p>
+  </div>
+  <div class="footer">
+    <p><strong>COSFA CURE</strong> — Sistema de Enfermería Escolar</p>
+    <p>Colegio San Francisco de Asís · Este es un mensaje automático</p>
+  </div>
+</div>
+
+  <!-- Tracking pixel (invisible) -->
+  {% if confirm_url %}
+  <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:16px;">
+    <tr>
+      <td align="center" style="padding:12px 40px 20px;">
+        <a href="{{ confirm_url }}"
+           style="display:inline-block;font-size:12px;color:#94A3B8;text-decoration:none;
+                  border:1px solid #E2E8F0;border-radius:20px;padding:7px 20px;
+                  font-family:Segoe UI,Helvetica,Arial,sans-serif;">
+          &#10003;&nbsp; Confirmar recepcion de este correo
+        </a>
+      </td>
+    </tr>
+  </table>
+  {% endif %}
+  {% if pixel_url %}<img src="{{ pixel_url }}" width="1" height="1" style="display:none;border:0;height:1px;width:1px;max-height:1px;max-width:1px;" alt="">{% endif %}
+</body>
+</html>

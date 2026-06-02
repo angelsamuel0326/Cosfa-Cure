@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Configurar código Admin — COSFA CURE</title>
+<link rel="icon" type="image/x-icon" href="/static/icons/favicon.ico">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+<style>
+:root{
+  --navy:#0f2444;--navy-mid:#1a3a6e;--teal:#0ea5a0;--teal-d:#0b8a86;
+  --gold:#f59e0b;--gold-d:#d97706;--gold-pale:rgba(245,158,11,.12);
+  --border:#dde6f0;--muted:#7a93b4;--red:#ef4444;--green:#22c55e;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+/* ── Background ── */
+body{
+  font-family:'DM Sans',sans-serif;min-height:100vh;
+  display:flex;align-items:center;justify-content:center;
+  background:#060e1e;overflow:hidden;position:relative;
+}
+.bg-grid{
+  position:fixed;inset:0;
+  background-image:
+    linear-gradient(rgba(14,165,160,.04) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(14,165,160,.04) 1px,transparent 1px);
+  background-size:40px 40px;pointer-events:none;
+}
+.bg-glow1{position:fixed;width:600px;height:600px;border-radius:50%;filter:blur(120px);pointer-events:none;top:-150px;right:-150px;background:radial-gradient(circle,rgba(245,158,11,.15),transparent 70%);animation:floatOrb 14s ease-in-out infinite}
+.bg-glow2{position:fixed;width:500px;height:500px;border-radius:50%;filter:blur(100px);pointer-events:none;bottom:-100px;left:-100px;background:radial-gradient(circle,rgba(14,165,160,.18),transparent 70%);animation:floatOrb 18s ease-in-out infinite reverse}
+@keyframes floatOrb{0%,100%{transform:translate(0,0)}40%{transform:translate(25px,-20px)}70%{transform:translate(-18px,22px)}}
+
+/* ── Animations ── */
+@keyframes fadeInUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes checkPop{0%{transform:scale(0);opacity:0}60%{transform:scale(1.2)}100%{transform:scale(1);opacity:1}}
+@keyframes shimmer{0%{background-position:-200% center}100%{background-position:200% center}}
+@keyframes pulseRing{0%,100%{transform:scale(1);opacity:.4}50%{transform:scale(1.08);opacity:.8}}
+
+/* ── Card principal ── */
+.card{
+  position:relative;z-index:10;width:520px;max-width:calc(100vw - 24px);
+  background:#fff;border-radius:24px;overflow:hidden;
+  animation:fadeInUp .5s cubic-bezier(.22,1,.36,1) both;
+  box-shadow:0 32px 80px rgba(0,0,0,.55),0 0 0 1px rgba(255,255,255,.06);
+}
+
+/* ── Header ── */
+.card-header{
+  background:linear-gradient(135deg,#060e1e 0%,#0f2444 60%,#0a3030 100%);
+  padding:32px 36px 28px;text-align:center;position:relative;overflow:hidden;
+}
+.card-header::before{
+  content:'';position:absolute;inset:0;
+  background-image:radial-gradient(circle,rgba(245,158,11,.06) 1px,transparent 1px);
+  background-size:20px 20px;
+}
+.card-header::after{
+  content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(245,158,11,.4),transparent);
+}
+
+/* Logo container */
+.logo-ring-wrap{display:inline-block;position:relative;margin-bottom:18px}
+.logo-ring{
+  width:88px;height:88px;border-radius:50%;
+  border:2px solid rgba(245,158,11,.35);
+  display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(circle,rgba(245,158,11,.08),rgba(14,165,160,.05));
+  position:relative;
+}
+.logo-ring::before{
+  content:'';position:absolute;inset:-7px;border-radius:50%;
+  border:1.5px solid rgba(245,158,11,.15);
+  animation:pulseRing 2.8s ease-in-out infinite;
+}
+.logo-ring img{width:70px;height:70px;border-radius:50%;object-fit:cover}
+.badge-admin{
+  position:absolute;bottom:-6px;right:-6px;
+  background:linear-gradient(135deg,var(--gold),var(--gold-d));
+  color:white;border-radius:50%;width:26px;height:26px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:.75rem;box-shadow:0 2px 8px rgba(245,158,11,.5);
+}
+
+.card-header h2{
+  font-family:'Sora',sans-serif;font-size:1.4rem;font-weight:800;
+  color:#fff;letter-spacing:-.3px;margin-bottom:4px;
+}
+.card-header .subtitle{font-size:.8rem;color:rgba(255,255,255,.45);margin-bottom:14px}
+.tag-primer{
+  display:inline-flex;align-items:center;gap:6px;
+  background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.35);
+  color:#fde68a;border-radius:20px;padding:5px 14px;font-size:.72rem;font-weight:700;letter-spacing:.5px;
+}
+
+/* ── Steps sidebar ── */
+.card-body{display:flex;gap:0;min-height:340px}
+.steps-col{
+  width:140px;flex-shrink:0;
+  background:linear-gradient(180deg,#f8faff,#f0f4fb);
+  border-right:1px solid var(--border);padding:28px 16px;
+  display:flex;flex-direction:column;gap:0;
+}
+.step-item{
+  display:flex;align-items:flex-start;gap:10px;padding:10px 4px;
+  position:relative;
+}
+.step-item:not(:last-child)::after{
+  content:'';position:absolute;left:17px;top:36px;bottom:-10px;
+  width:1.5px;background:var(--border);
+}
+.step-num{
+  width:26px;height:26px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Sora',sans-serif;font-size:.72rem;font-weight:800;
+  background:var(--border);color:var(--muted);transition:all .3s;
+}
+.step-item.active .step-num{background:var(--gold);color:#fff;box-shadow:0 2px 8px rgba(245,158,11,.4)}
+.step-item.done .step-num{background:var(--teal);color:#fff}
+.step-text{display:flex;flex-direction:column;padding-top:4px}
+.step-title{font-size:.72rem;font-weight:700;color:var(--navy);font-family:'Sora',sans-serif}
+.step-desc{font-size:.65rem;color:var(--muted);margin-top:1px;line-height:1.4}
+.step-item:not(.active) .step-title{color:var(--muted)}
+
+/* ── Main form area ── */
+.form-area{flex:1;padding:28px 28px 24px;display:flex;flex-direction:column}
+
+/* Info box */
+.info-card{
+  background:linear-gradient(135deg,rgba(14,165,160,.05),rgba(14,165,160,.02));
+  border:1px solid rgba(14,165,160,.18);border-radius:14px;
+  padding:14px 16px;margin-bottom:22px;
+}
+.info-card p{font-size:.8rem;color:var(--navy);line-height:1.65}
+.info-card strong{color:var(--teal)}
+.info-tip{
+  display:flex;align-items:flex-start;gap:8px;
+  margin-top:10px;padding-top:10px;
+  border-top:1px solid rgba(14,165,160,.12);
+}
+.info-tip i{color:var(--gold);font-size:.9rem;flex-shrink:0;margin-top:2px}
+.info-tip span{font-size:.74rem;color:var(--muted);line-height:1.6}
+
+/* Section label */
+.s-label{
+  font-size:.68rem;font-weight:700;color:var(--muted);
+  letter-spacing:.9px;text-transform:uppercase;margin-bottom:8px;
+}
+
+/* Code inputs */
+.code-row{display:flex;gap:8px;justify-content:center;margin-bottom:8px}
+.code-box{
+  width:52px;height:60px;border:2px solid var(--border);border-radius:14px;
+  font-family:'Sora',sans-serif;font-size:1.6rem;font-weight:700;
+  color:var(--navy);text-align:center;outline:none;
+  background:#f8fbff;transition:all .2s;
+  -webkit-appearance:none;-moz-appearance:textfield;
+}
+.code-box::-webkit-outer-spin-button,.code-box::-webkit-inner-spin-button{-webkit-appearance:none}
+.code-box:focus{border-color:var(--gold);background:#fff;box-shadow:0 0 0 3px rgba(245,158,11,.14)}
+.code-box.filled{border-color:rgba(14,165,160,.5);background:rgba(14,165,160,.04)}
+.code-box.error-state{border-color:var(--red);background:rgba(239,68,68,.04)}
+
+/* Strength bar */
+.strength-track{height:3px;background:#eef2f8;border-radius:3px;overflow:hidden;margin-bottom:5px}
+.strength-fill{height:100%;border-radius:3px;transition:width .35s,background .35s;width:0}
+.strength-hint{font-size:.71rem;color:var(--muted);text-align:center;min-height:18px;margin-bottom:18px;transition:color .3s}
+
+/* Match msg */
+.match-msg{font-size:.75rem;text-align:center;min-height:18px;margin-bottom:16px;font-weight:600;transition:all .2s}
+.match-ok{color:#16a34a}
+.match-err{color:var(--red)}
+
+/* Error box */
+.err-box{
+  display:none;background:#fef2f2;border:1px solid #fecaca;
+  border-left:3px solid var(--red);border-radius:10px;
+  padding:10px 14px;margin-bottom:14px;
+  font-size:.78rem;color:#991b1b;font-weight:600;
+  align-items:center;gap:8px;
+}
+
+/* Button */
+.btn-save{
+  width:100%;padding:14px;border:none;border-radius:14px;cursor:pointer;
+  font-family:'Sora',sans-serif;font-size:.9rem;font-weight:700;letter-spacing:.3px;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  background:linear-gradient(135deg,var(--gold) 0%,var(--gold-d) 100%);
+  color:#fff;box-shadow:0 6px 22px rgba(245,158,11,.38);
+  transition:all .25s;
+}
+.btn-save:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 10px 30px rgba(245,158,11,.48)}
+.btn-save:disabled{opacity:.45;cursor:not-allowed;transform:none}
+
+/* Success */
+.success-wrap{
+  display:none;flex-direction:column;align-items:center;
+  text-align:center;padding:20px 0;flex:1;justify-content:center;
+}
+.check-circle{
+  width:68px;height:68px;border-radius:50%;
+  background:linear-gradient(135deg,#22c55e,#16a34a);
+  display:flex;align-items:center;justify-content:center;
+  margin:0 auto 18px;
+  animation:checkPop .4s cubic-bezier(.22,1,.36,1) both;
+}
+.check-circle i{font-size:1.9rem;color:#fff}
+.success-wrap h3{font-family:'Sora',sans-serif;font-size:1.2rem;font-weight:700;color:var(--navy);margin-bottom:6px}
+.success-wrap p{font-size:.8rem;color:var(--muted);line-height:1.6;margin-bottom:22px;max-width:260px}
+.btn-go{
+  display:inline-flex;align-items:center;gap:8px;
+  background:linear-gradient(135deg,var(--teal),var(--teal-d));
+  color:#fff;border:none;border-radius:12px;padding:12px 26px;
+  font-family:'Sora',sans-serif;font-size:.88rem;font-weight:700;
+  cursor:pointer;text-decoration:none;transition:all .22s;
+  box-shadow:0 6px 20px rgba(14,165,160,.32);
+}
+.btn-go:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(14,165,160,.42)}
+
+@media(max-width:520px){
+  .steps-col{display:none}
+  .form-area{padding:22px 20px 20px}
+  .code-box{width:42px;height:52px;font-size:1.35rem;border-radius:11px}
+  .code-row{gap:6px}
+}
+</style>
+</head>
+<body>
+<div class="bg-grid"></div>
+<div class="bg-glow1"></div>
+<div class="bg-glow2"></div>
+
+<div class="card">
+  <!-- Header con logo -->
+  <div class="card-header">
+    <div class="logo-ring-wrap">
+      <div class="logo-ring">
+        <img src="/static/icons/logo_cosfa.png" alt="COSFA CURE">
+      </div>
+      <span class="badge-admin"><i class="bi bi-star-fill"></i></span>
+    </div>
+    <h2>¡Hola, {{ username }}! 👋</h2>
+    <p class="subtitle">Primer acceso — COSFA CURE</p>
+    <div class="tag-primer"><i class="bi bi-shield-fill-check"></i>&nbsp; ADMINISTRADOR PRINCIPAL</div>
+  </div>
+
+  <!-- Body: steps + form -->
+  <div class="card-body">
+
+    <!-- Steps sidebar -->
+    <div class="steps-col" id="steps-col">
+      <div class="step-item active" id="step1-item">
+        <div class="step-num" id="step1-num">1</div>
+        <div class="step-text">
+          <span class="step-title">Crear PIN</span>
+          <span class="step-desc">Elige 6 dígitos seguros</span>
+        </div>
+      </div>
+      <div class="step-item" id="step2-item">
+        <div class="step-num" id="step2-num">2</div>
+        <div class="step-text">
+          <span class="step-title">Confirmar</span>
+          <span class="step-desc">Repite el PIN</span>
+        </div>
+      </div>
+      <div class="step-item" id="step3-item">
+        <div class="step-num" id="step3-num"><i class="bi bi-check-lg" style="font-size:.7rem"></i></div>
+        <div class="step-text">
+          <span class="step-title">Listo</span>
+          <span class="step-desc">Todo configurado</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Form area -->
+    <div class="form-area">
+      <div id="form-section" style="display:flex;flex-direction:column;flex:1">
+
+        <div class="info-card">
+          <p>¿Para qué sirve este código? <strong>Otros usuarios podrán obtener rol de administrador</strong> ingresando este PIN al iniciar sesión.</p>
+          <div class="info-tip">
+            <i class="bi bi-lightbulb-fill"></i>
+            <span>También puedes gestionar roles desde <strong>Perfil → Usuarios</strong>.</span>
+          </div>
+        </div>
+
+        <div id="err-box" class="err-box">
+          <i class="bi bi-x-octagon-fill"></i>
+          <span id="err-msg"></span>
+        </div>
+
+        <!-- Paso 1: nuevo código -->
+        <div id="step-new">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+            <div style="width:20px;height:20px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+              <span style="font-size:.65rem;font-weight:800;color:#fff;font-family:'Sora',sans-serif">1</span>
+            </div>
+            <span class="s-label" style="margin:0">CÓDIGO DE 6 DÍGITOS</span>
+          </div>
+          <div class="code-row" id="wrap-new">
+            <input type="text" class="code-box" maxlength="1" inputmode="numeric" pattern="[0-9]">
+            <input type="text" class="code-box" maxlength="1" inputmode="numeric" pattern="[0-9]">
+            <input type="text" class="code-box" maxlength="1" inputmode="numeric" pattern="[0-9]">
+            <input type="text" class="code-box" maxlength="1" inputmode="numeric" pattern="[0-9]">
+            <input type="text" class="code-box" maxlength="1" inputmode="numeric" pattern="[0-9]">
+            <input type="text" class="code-box" maxlength="1" inputmode="numeric" pattern="[0-9]">
+          </div>
+          <div class="strength-track"><div class="strength-fill" id="strength-fill"></div></div>
+          <p class="strength-hint" id="strength-hint">Ingresa tu código</p>
+        </div>
+
+        <!-- Paso 2: confirmar -->
+        <div id="step-confirm">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+            <div style="width:20px;height:20px;border-radius:50%;background:var(--teal);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+              <span style="font-size:.65rem;font-weight:800;color:#fff;font-family:'Sora',sans-serif">2</span>
+            </div>
+            <span class="s-label" style="margin:0">CONFIRMAR PIN</span>
+          </div>
+          <div class="code-row" id="wrap-confirm">
+            <input type="text" class="code-box" maxlength="1" inputmode="numeric" pattern="[0-9]">
+            <input type="text" class="code-box" maxlength="1" inputmode="numeric" pattern="[0-9]">
+            <input type="text" class="code-box" maxlength="1" inputmode="numeric" pattern="[0-9]">
+            <input type="text" class="code-box" maxlength="1" inputmode="numeric" pattern="[0-9]">
+            <input type="text" class="code-box" maxlength="1" inputmode="numeric" pattern="[0-9]">
+            <input type="text" class="code-box" maxlength="1" inputmode="numeric" pattern="[0-9]">
+          </div>
+          <div class="match-msg" id="match-msg"></div>
+        </div>
+
+        <button class="btn-save" id="btn-save" disabled onclick="guardarCodigo()">
+          <i class="bi bi-shield-lock-fill"></i> Guardar y continuar
+        </button>
+      </div>
+
+      <!-- Success -->
+      <div class="success-wrap" id="success-wrap">
+        <div class="check-circle"><i class="bi bi-check-lg"></i></div>
+        <h3>¡PIN configurado!</h3>
+        <p>Tu código de administrador ha sido guardado. Ya puedes iniciar sesión en COSFA CURE.</p>
+        <a href="/inicio/" class="btn-go"><i class="bi bi-box-arrow-in-right"></i> Ir al inicio</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const wrapNew   = document.getElementById('wrap-new');
+  const wrapConf  = document.getElementById('wrap-confirm');
+  const inpNew    = wrapNew.querySelectorAll('.code-box');
+  const inpConf   = wrapConf.querySelectorAll('.code-box');
+  const btnSave   = document.getElementById('btn-save');
+  const matchMsg  = document.getElementById('match-msg');
+  const sfill     = document.getElementById('strength-fill');
+  const shint     = document.getElementById('strength-hint');
+
+  function getVal(inputs){ return Array.from(inputs).map(i=>i.value).join(''); }
+
+  function strength(code){
+    if(code.length < 6) return null;
+    const uniq = new Set(code.split('')).size;
+    const seq  = /01234|12345|23456|34567|45678|56789|98765|87654|76543|65432|54321|43210/.test(code);
+    const same = uniq === 1;
+    if(same||seq) return {w:'17%',c:'#ef4444',t:'⚠ Código muy predecible'};
+    if(uniq<=2)   return {w:'40%',c:'#f59e0b',t:'Código débil — más variedad'};
+    if(uniq<=4)   return {w:'70%',c:'#22c55e',t:'✓ Código moderado'};
+    return {w:'100%',c:'#0ea5a0',t:'✓✓ Código fuerte'};
+  }
+
+  function evaluate(){
+    const vN = getVal(inpNew), vC = getVal(inpConf);
+    // Strength
+    if(vN.length===6){
+      const s=strength(vN);
+      sfill.style.width=s.w; sfill.style.background=s.c;
+      shint.textContent=s.t; shint.style.color=s.c;
+    } else {
+      sfill.style.width=(vN.length/6*40)+'%'; sfill.style.background='#94a3b8';
+      shint.textContent=vN.length?`${6-vN.length} dígito(s) más`:'Ingresa tu código';
+      shint.style.color='var(--muted)';
+    }
+    // Step indicators
+    if(vN.length===6){
+      document.getElementById('step1-item').classList.remove('active');
+      document.getElementById('step1-item').classList.add('done');
+      document.getElementById('step2-item').classList.add('active');
+    } else {
+      document.getElementById('step1-item').classList.add('active');
+      document.getElementById('step1-item').classList.remove('done');
+      document.getElementById('step2-item').classList.remove('active');
+    }
+    // Match
+    if(!vC){ matchMsg.textContent=''; matchMsg.className='match-msg'; }
+    else if(vC.length<6){ matchMsg.textContent=''; }
+    else if(vN===vC){ matchMsg.textContent='✓ Los códigos coinciden'; matchMsg.className='match-msg match-ok'; }
+    else { matchMsg.textContent='✗ Los códigos no coinciden'; matchMsg.className='match-msg match-err'; }
+    // Button
+    btnSave.disabled = !(vN.length===6 && vC.length===6 && vN===vC);
+  }
+
+  function setupOTP(inputs, onChange){
+    inputs.forEach((inp,i)=>{
+      inp.addEventListener('input',function(){
+        this.value=this.value.replace(/[^0-9]/g,'').slice(-1);
+        this.classList.toggle('filled',!!this.value);
+        if(this.value && i<inputs.length-1) inputs[i+1].focus();
+        onChange();
+      });
+      inp.addEventListener('keydown',function(e){
+        if(e.key==='Backspace'&&!this.value&&i>0) inputs[i-1].focus();
+      });
+      inp.addEventListener('paste',function(e){
+        e.preventDefault();
+        const txt=(e.clipboardData||window.clipboardData).getData('text').replace(/\D/g,'').slice(0,6);
+        txt.split('').forEach((c,j)=>{ if(inputs[j]){inputs[j].value=c;inputs[j].classList.add('filled');} });
+        inputs[Math.min(txt.length,inputs.length-1)].focus();
+        onChange();
+      });
+    });
+  }
+
+  setupOTP(inpNew, evaluate);
+  setupOTP(inpConf, evaluate);
+  inpNew[0].focus();
+
+  window.guardarCodigo = function(){
+    const code = getVal(inpNew);
+    const errBox = document.getElementById('err-box');
+    errBox.style.display='none';
+    btnSave.disabled=true;
+    btnSave.innerHTML='<i class="bi bi-hourglass-split" style="animation:spin .8s linear infinite"></i> Guardando...';
+
+    fetch("{% url 'guardar_codigo_admin' %}", {
+      method:'POST',
+      headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')},
+      body:JSON.stringify({codigo:code})
+    })
+    .then(r=>r.json())
+    .then(data=>{
+      if(data.ok){
+        document.getElementById('step2-item').classList.add('done');
+        document.getElementById('step3-item').classList.add('active');
+        document.getElementById('form-section').style.display='none';
+        document.getElementById('success-wrap').style.display='flex';
+      } else {
+        document.getElementById('err-msg').textContent = data.error||'Error al guardar.';
+        errBox.style.display='flex';
+        btnSave.disabled=false;
+        btnSave.innerHTML='<i class="bi bi-shield-lock-fill"></i> Guardar y continuar';
+      }
+    })
+    .catch(()=>{
+      document.getElementById('err-msg').textContent='Error de red. Intenta de nuevo.';
+      errBox.style.display='flex';
+      btnSave.disabled=false;
+      btnSave.innerHTML='<i class="bi bi-shield-lock-fill"></i> Guardar y continuar';
+    });
+  };
+
+  function getCookie(name){
+    let v=null;
+    document.cookie.split(';').forEach(c=>{
+      const[k,val]=c.trim().split('=');
+      if(k===name)v=decodeURIComponent(val);
+    });
+    return v;
+  }
+})();
+</script>
+{% csrf_token %}
+</body>
+</html>

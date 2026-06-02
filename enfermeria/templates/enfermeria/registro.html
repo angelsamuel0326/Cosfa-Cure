@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Registrarse — COSFA CURE</title>
+<link rel="icon" type="image/x-icon" href="/static/icons/favicon.ico">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+<style>
+:root{
+  --navy:#0f2444;--navy-mid:#1a3a6e;--teal:#0ea5a0;--teal-light:#14c9c3;
+  --border:#dde6f0;--text:#0f2444;--muted:#7a93b4;
+  --error-bg:#fef2f2;--error-border:#fecaca;--error-left:#ef4444;--error-text:#991b1b;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:'DM Sans',sans-serif;min-height:100vh;
+  display:flex;background:#f0f4f8;
+}
+/* ─── LEFT PANEL ─── */
+.left-panel{
+  flex:1;background:linear-gradient(150deg,#0a1628 0%,#0f2444 45%,#0d4a45 100%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:60px 50px;position:relative;overflow:hidden;
+}
+.left-panel::before{
+  content:'';position:absolute;inset:0;
+  background-image:radial-gradient(circle,rgba(14,165,160,.15) 1.5px,transparent 1.5px);
+  background-size:28px 28px;
+}
+.orb{position:absolute;border-radius:50%;filter:blur(90px);pointer-events:none;z-index:0}
+.orb1{width:380px;height:380px;background:radial-gradient(circle,rgba(14,165,160,.22),transparent 70%);top:-80px;right:-80px;animation:floatOrb 11s ease-in-out infinite}
+.orb2{width:280px;height:280px;background:radial-gradient(circle,rgba(26,58,110,.5),transparent 70%);bottom:-60px;left:-40px;animation:floatOrb 14s ease-in-out infinite reverse}
+@keyframes floatOrb{0%,100%{transform:translate(0,0)}33%{transform:translate(25px,-18px)}66%{transform:translate(-18px,22px)}}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(32px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse-ring{0%,100%{transform:scale(1);opacity:.6}50%{transform:scale(1.08);opacity:1}}
+@keyframes slideIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+.brand-section{position:relative;z-index:2;text-align:center;animation:fadeInUp .7s cubic-bezier(.22,1,.36,1)}
+.logo-ring{position:relative;display:inline-block;margin-bottom:24px}
+.logo-ring::before{content:'';position:absolute;inset:-8px;border-radius:50%;border:2px solid rgba(14,165,160,.4);animation:pulse-ring 3s ease-in-out infinite}
+.logo-img{width:130px;height:130px;border-radius:50%;object-fit:cover;border:4px solid rgba(255,255,255,.15);box-shadow:0 20px 60px rgba(0,0,0,.4);background:white}
+.brand-name{font-family:'Sora',sans-serif;font-size:2rem;font-weight:800;letter-spacing:-1px;margin-bottom:6px;background:linear-gradient(135deg,#fff 0%,var(--teal-light) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.brand-sub{font-size:.82rem;color:rgba(255,255,255,.5);line-height:1.6;max-width:260px;margin:0 auto}
+
+/* ─── RIGHT PANEL ─── */
+.right-panel{
+  width:500px;min-height:100vh;background:white;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:0;position:relative;box-shadow:-20px 0 60px rgba(0,0,0,.15);
+  overflow-y:auto;
+}
+.right-inner{
+  width:100%;padding:76px 46px 52px;
+  display:flex;flex-direction:column;
+}
+/* Separar visualmente el botón Inicio de los steps */
+.reg-steps{
+  margin-top:16px;
+  display:flex;align-items:center;justify-content:center;gap:0;margin-bottom:28px;
+}
+.step{display:flex;flex-direction:column;align-items:center;gap:4px}
+.step-dot{
+  width:32px;height:32px;border-radius:50%;border:2px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Sora',sans-serif;font-size:.7rem;font-weight:700;color:var(--muted);
+  background:white;transition:all .3s;
+}
+.step.active .step-dot{border-color:var(--teal);background:var(--teal);color:white;box-shadow:0 0 0 4px rgba(14,165,160,.15)}
+.step.done .step-dot{border-color:var(--teal);background:var(--teal);color:white}
+.step-label{font-size:.6rem;color:var(--muted);font-weight:600;letter-spacing:.4px;text-transform:uppercase}
+.step.active .step-label{color:var(--teal)}
+.step-line{flex:1;height:2px;background:var(--border);margin:0 6px;margin-bottom:16px;min-width:28px;transition:background .3s}
+.step-line.done{background:var(--teal)}
+
+.form-header{margin-bottom:26px;animation:fadeInUp .5s cubic-bezier(.22,1,.36,1)}
+.form-header h2{font-family:'Sora',sans-serif;font-size:1.55rem;font-weight:800;color:var(--navy);letter-spacing:-.5px;margin-bottom:6px}
+.form-header p{font-size:.82rem;color:var(--muted)}
+
+/* Password strength */
+.pwd-strength{margin-top:6px}
+.pwd-bar-wrap{height:3px;background:#f1f5f9;border-radius:3px;overflow:hidden;margin-bottom:3px}
+.pwd-bar{height:100%;width:0;border-radius:3px;transition:width .3s,background .3s}
+.pwd-hint{font-size:.68rem;color:var(--muted);min-height:14px}
+
+.form-group{margin-bottom:18px}
+.form-label{display:flex;align-items:center;gap:6px;font-family:'Sora',sans-serif;font-size:.65rem;font-weight:700;color:var(--muted);margin-bottom:7px;text-transform:uppercase;letter-spacing:.8px}
+.input-wrap{position:relative}
+.form-control{
+  width:100%;padding:13px 16px 13px 46px;border:1.5px solid var(--border);
+  border-radius:14px;font-family:'DM Sans',sans-serif;font-size:.9rem;color:var(--text);
+  background:#f8fbff;outline:none;transition:all .22s;
+}
+.form-control:focus{border-color:var(--teal);background:white;box-shadow:0 0 0 4px rgba(14,165,160,.1)}
+.form-control.valid{border-color:#22c55e;background:#f0fdf9}
+.form-control.invalid{border-color:#ef4444;background:#fef2f2}
+.input-icon{position:absolute;left:15px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:1rem;transition:color .2s;pointer-events:none}
+.input-wrap:focus-within .input-icon{color:var(--teal)}
+.input-status{position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:.85rem;pointer-events:none;opacity:0;transition:opacity .2s}
+.toggle-pwd{position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--muted);font-size:.95rem;padding:4px;transition:color .2s}
+.toggle-pwd:hover{color:var(--teal)}
+.hint{font-size:.72rem;color:var(--muted);margin-top:5px;display:flex;align-items:center;gap:4px}
+
+.btn-submit{
+  width:100%;padding:13px;background:linear-gradient(135deg,#0ea5a0,#0d8c88);color:white;border:none;border-radius:14px;
+  font-family:'Sora',sans-serif;font-size:.92rem;font-weight:700;cursor:pointer;letter-spacing:.3px;
+  box-shadow:0 8px 24px rgba(14,165,160,.35);transition:all .22s;display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.btn-submit:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(14,165,160,.45)}
+.error-msg{
+  background:var(--error-bg);border:1px solid var(--error-border);border-left:4px solid var(--error-left);
+  color:var(--error-text);padding:12px 14px;border-radius:12px;font-size:.84rem;font-weight:600;
+  margin-bottom:18px;display:flex;align-items:flex-start;gap:10px;animation:slideIn .3s ease;
+}
+.error-msg i{font-size:1rem;flex-shrink:0;margin-top:1px}
+.login-link{text-align:center;margin-top:22px;font-size:.8rem;color:var(--muted)}
+.login-link a{color:var(--teal);font-weight:700;text-decoration:none}
+.login-link a:hover{text-decoration:underline}
+.corner-badge{position:absolute;top:24px;right:28px;display:flex;align-items:center;gap:6px;font-size:.68rem;color:var(--muted)}
+.online-dot{width:7px;height:7px;border-radius:50%;background:#22c55e;box-shadow:0 0 0 2px rgba(34,197,94,.2);animation:pulse-ring 2s ease-in-out infinite}
+
+/* First user banner */
+.first-user-banner{
+  width:100%;margin-bottom:20px;padding:14px 16px;
+  background:linear-gradient(135deg,#fefce8,#fef9c3);
+  border:2px solid #fbbf24;border-radius:14px;
+  animation:slideIn .4s ease;
+}
+.first-user-banner-inner{display:flex;align-items:flex-start;gap:10px}
+.first-user-banner-title{font-family:'Sora',sans-serif;font-size:.85rem;font-weight:800;color:#92400e;margin-bottom:3px}
+.first-user-banner-body{font-size:.78rem;color:#78350f;line-height:1.5}
+
+@media(max-width:1024px){
+  body{overflow:auto}
+  .left-panel{flex:0 0 42%;min-width:200px}
+  .right-panel{width:auto;flex:1;min-width:300px}
+  .right-inner{padding:40px 24px}
+}
+</style>
+</head>
+<body>
+<div class="left-panel">
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+  <div class="brand-section">
+    <div class="logo-ring">
+      <img class="logo-img" src="/static/icons/icon-192.png" alt="Logo COSFA" onerror="this.style.background='#1a6a5a'">
+    </div>
+    <div class="brand-name">COSFA CURE</div>
+    <p class="brand-sub">Crea tu cuenta para gestionar la enfermería escolar de forma inteligente y digital.</p>
+  </div>
+</div>
+
+<div class="right-panel">
+  <div class="corner-badge"><div class="online-dot"></div> Sistema en línea</div>
+  <a href="/landing/" title="Volver al inicio" style="position:absolute;top:24px;left:28px;display:inline-flex;align-items:center;gap:6px;background:rgba(14,165,160,.08);border:1.5px solid rgba(14,165,160,.25);color:var(--teal);border-radius:10px;padding:7px 14px;font-size:.75rem;font-weight:700;text-decoration:none;transition:all .22s" onmouseover="this.style.background='rgba(14,165,160,.15)'" onmouseout="this.style.background='rgba(14,165,160,.08)'">
+    <i class="bi bi-arrow-left-short" style="font-size:1rem"></i> Inicio
+  </a>
+
+  <div class="right-inner">
+    <!-- Progress steps -->
+    <div class="reg-steps">
+      <div class="step active">
+        <div class="step-dot">1</div>
+        <div class="step-label">Datos</div>
+      </div>
+      <div class="step-line"></div>
+      <div class="step">
+        <div class="step-dot">2</div>
+        <div class="step-label">Verificar</div>
+      </div>
+      <div class="step-line"></div>
+      <div class="step">
+        <div class="step-dot"><i class="bi bi-check" style="font-size:.7rem"></i></div>
+        <div class="step-label">Listo</div>
+      </div>
+    </div>
+
+    <div class="form-header">
+      <h2>Crear cuenta</h2>
+      <p>Ingresa tus datos. Te enviaremos un código de verificación por correo.</p>
+    </div>
+
+    {% if es_primer_usuario %}
+    <div class="first-user-banner">
+      <div class="first-user-banner-inner">
+        <span style="font-size:1.4rem;flex-shrink:0">👑</span>
+        <div>
+          <div class="first-user-banner-title">¡Eres el primer usuario!</div>
+          <div class="first-user-banner-body">
+            Tu cuenta tendrá <strong>acceso completo de Administrador</strong> — podrás gestionar usuarios, configurar el sistema y acceder a todas las funciones sin restricciones.
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    {% if messages %}
+      {% for message in messages %}
+        <div class="error-msg"><i class="bi bi-x-octagon-fill"></i><div>{{ message }}</div></div>
+      {% endfor %}
+    {% endif %}
+
+    <form method="post" id="reg-form" novalidate>
+      {% csrf_token %}
+
+      <div class="form-group">
+        <label class="form-label"><i class="bi bi-person"></i> Nombre de usuario</label>
+        <div class="input-wrap">
+          <i class="bi bi-person-fill input-icon"></i>
+          <input type="text" name="username" id="f-username" class="form-control" placeholder="ej. maria_gomez" autocomplete="username" required value="{{ request.POST.username }}">
+          <span class="input-status" id="st-username"></span>
+        </div>
+        <div class="hint"><i class="bi bi-info-circle" style="font-size:.7rem"></i> Solo letras, números y guion bajo. Sin espacios.</div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label"><i class="bi bi-envelope"></i> Correo electrónico</label>
+        <div class="input-wrap">
+          <i class="bi bi-envelope-fill input-icon"></i>
+          <input type="email" name="email" id="f-email" class="form-control" placeholder="tu@correo.com" autocomplete="email" required value="{{ request.POST.email }}">
+          <span class="input-status" id="st-email"></span>
+        </div>
+        <div class="hint"><i class="bi bi-send" style="font-size:.7rem"></i> Aquí recibirás el código de verificación.</div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label"><i class="bi bi-lock"></i> Contraseña</label>
+        <div class="input-wrap">
+          <i class="bi bi-lock-fill input-icon"></i>
+          <input type="password" name="password" id="pwd1" class="form-control" placeholder="Mínimo 8 caracteres" required oninput="checkPwd()">
+          <button type="button" class="toggle-pwd" onclick="togglePwd('pwd1','icon1')"><i class="bi bi-eye" id="icon1"></i></button>
+        </div>
+        <div class="pwd-strength">
+          <div class="pwd-bar-wrap"><div class="pwd-bar" id="pwd-bar"></div></div>
+          <div class="pwd-hint" id="pwd-hint"></div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label"><i class="bi bi-lock-fill"></i> Confirmar contraseña</label>
+        <div class="input-wrap">
+          <i class="bi bi-lock-fill input-icon"></i>
+          <input type="password" name="password2" id="pwd2" class="form-control" placeholder="Repite la contraseña" required oninput="checkMatch()">
+          <button type="button" class="toggle-pwd" onclick="togglePwd('pwd2','icon2')"><i class="bi bi-eye" id="icon2"></i></button>
+        </div>
+        <div class="hint" id="match-hint"></div>
+      </div>
+
+      <button type="submit" class="btn-submit">
+        <i class="bi bi-send-fill"></i> Enviar código de verificación
+      </button>
+    </form>
+
+    <div class="login-link">
+      ¿Ya tienes cuenta? <a href="/login/">Ingresar</a>
+    </div>
+  </div>
+</div>
+
+<script>
+function togglePwd(id, iconId){
+  const i=document.getElementById(id), ic=document.getElementById(iconId);
+  if(i.type==='password'){i.type='text';ic.className='bi bi-eye-slash'}
+  else{i.type='password';ic.className='bi bi-eye'}
+}
+
+function checkPwd(){
+  const val = document.getElementById('pwd1').value;
+  const bar = document.getElementById('pwd-bar');
+  const hint = document.getElementById('pwd-hint');
+  if(!val){ bar.style.width='0'; hint.textContent=''; return; }
+  let score=0, msg='', col='';
+  if(val.length>=8) score++;
+  if(/[A-Z]/.test(val)) score++;
+  if(/[0-9]/.test(val)) score++;
+  if(/[^A-Za-z0-9]/.test(val)) score++;
+  const levels=[
+    {w:'20%',col:'#ef4444',t:'Muy débil'},
+    {w:'40%',col:'#f59e0b',t:'Débil'},
+    {w:'65%',col:'#84cc16',t:'Moderada'},
+    {w:'85%',col:'#22c55e',t:'Fuerte'},
+    {w:'100%',col:'#0ea5a0',t:'Muy fuerte'},
+  ];
+  const l = levels[Math.min(score, 4)];
+  bar.style.width=l.w; bar.style.background=l.col;
+  hint.textContent=l.t; hint.style.color=l.col;
+  checkMatch();
+}
+
+function checkMatch(){
+  const p1=document.getElementById('pwd1').value;
+  const p2=document.getElementById('pwd2').value;
+  const hint=document.getElementById('match-hint');
+  if(!p2){ hint.innerHTML=''; return; }
+  if(p1===p2){
+    hint.innerHTML='<i class="bi bi-check-circle-fill" style="color:#22c55e"></i> Las contraseñas coinciden';
+    hint.style.color='#16a34a';
+    document.getElementById('pwd2').classList.remove('invalid'); document.getElementById('pwd2').classList.add('valid');
+  } else {
+    hint.innerHTML='<i class="bi bi-x-circle-fill" style="color:#ef4444"></i> Las contraseñas no coinciden';
+    hint.style.color='#dc2626';
+    document.getElementById('pwd2').classList.remove('valid'); document.getElementById('pwd2').classList.add('invalid');
+  }
+}
+
+// Live username validation
+document.getElementById('f-username').addEventListener('input', function(){
+  const valid = /^[a-zA-Z0-9_]+$/.test(this.value) && this.value.length >= 3;
+  const st = document.getElementById('st-username');
+  if(this.value.length === 0){ this.classList.remove('valid','invalid'); st.style.opacity=0; return; }
+  if(valid){ this.classList.add('valid'); this.classList.remove('invalid'); st.innerHTML='<i class="bi bi-check-circle-fill" style="color:#22c55e"></i>'; st.style.opacity=1; }
+  else{ this.classList.add('invalid'); this.classList.remove('valid'); st.innerHTML='<i class="bi bi-x-circle-fill" style="color:#ef4444"></i>'; st.style.opacity=1; }
+});
+
+// Live email validation
+document.getElementById('f-email').addEventListener('input', function(){
+  const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.value);
+  const st = document.getElementById('st-email');
+  if(this.value.length === 0){ this.classList.remove('valid','invalid'); st.style.opacity=0; return; }
+  if(valid){ this.classList.add('valid'); this.classList.remove('invalid'); st.innerHTML='<i class="bi bi-check-circle-fill" style="color:#22c55e"></i>'; st.style.opacity=1; }
+  else{ this.classList.add('invalid'); this.classList.remove('valid'); st.innerHTML='<i class="bi bi-x-circle-fill" style="color:#ef4444"></i>'; st.style.opacity=1; }
+});
+</script>
+</body>
+</html>

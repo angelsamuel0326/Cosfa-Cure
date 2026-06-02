@@ -1,0 +1,109 @@
+{% extends 'enfermeria/base.html' %}
+{% block title %}{% if editar %}Editar{% else %}Nuevo{% endif %} Seguimiento — COSFA CURE{% endblock %}
+{% block page_title %}{% if editar %}Editar{% else %}Nuevo{% endif %} Seguimiento{% endblock %}
+{% block content %}
+<div class="card" style="max-width:580px;margin:0 auto">
+  <div class="card-head">
+    <div class="card-head-title"><i class="bi bi-calendar-plus-fill"></i> Programar Seguimiento</div>
+  </div>
+  <div style="padding:22px">
+    <form method="post">{% csrf_token %}
+      <div style="display:flex;flex-direction:column;gap:14px">
+
+        <div>
+          <label class="form-label">Estudiante *</label>
+          {{ form.estudiante }}
+        </div>
+
+        <div>
+          <label class="form-label">Tipo de seguimiento *</label>
+          {{ form.tipo }}
+        </div>
+
+        <!-- Rango de fechas -->
+        <div style="background:#f0f9ff;border:1.5px solid #bae6fd;border-radius:12px;padding:14px">
+          <div style="font-size:.75rem;font-weight:700;color:#0369a1;margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px">
+            <i class="bi bi-calendar-range-fill"></i> Periodo del Seguimiento
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div>
+              <label class="form-label" style="color:#0369a1">Fecha inicio *</label>
+              {{ form.fecha }}
+            </div>
+            <div>
+              <label class="form-label" style="color:#0369a1">
+                Fecha fin
+                <span style="font-size:.68rem;font-weight:400;color:#64748b">(opcional)</span>
+              </label>
+              {{ form.fecha_fin }}
+            </div>
+          </div>
+          <div style="font-size:.72rem;color:#64748b;margin-top:8px">
+            <i class="bi bi-info-circle"></i>
+            Define la fecha fin si el seguimiento cubre un rango de días (ej. recuperación, tratamiento prolongado).
+          </div>
+        </div>
+
+        <div>
+          <label class="form-label">Descripción *</label>
+          {{ form.descripcion }}
+        </div>
+
+        <div style="display:flex;align-items:center;gap:8px;padding:10px;background:var(--teal-pale);border-radius:9px">
+          {{ form.completado }}
+          <label style="font-size:0.82rem;font-weight:600;cursor:pointer">Marcar como ya completado</label>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:20px">
+        <button type="submit" class="btn btn-primary"><i class="bi bi-calendar-check"></i> Guardar</button>
+        <a href="{% url 'calendario_seguimientos' %}" class="btn btn-outline">Cancelar</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ══ Tom Select: búsqueda rápida de estudiante ══ -->
+<link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+<style>
+.ts-wrapper.single .ts-control{
+  border:1.5px solid var(--border,#e2e8f0) !important;border-radius:10px !important;
+  padding:9px 14px !important;font-size:.85rem !important;font-family:inherit !important;
+  background:#fff !important;box-shadow:none !important;min-height:42px !important;
+}
+.ts-wrapper.single.focus .ts-control,.ts-wrapper.single:focus-within .ts-control{
+  border-color:#0d9488 !important;box-shadow:0 0 0 3px rgba(13,148,136,.13) !important;
+}
+.ts-dropdown{border-radius:12px !important;border:1.5px solid #e2e8f0 !important;
+  box-shadow:0 8px 30px rgba(0,0,0,.13) !important;font-family:inherit !important;overflow:hidden;margin-top:4px !important;}
+.ts-dropdown .option{padding:9px 14px !important;font-size:.84rem !important;border-bottom:1px solid rgba(0,0,0,.04);cursor:pointer;}
+.ts-dropdown .option:hover,.ts-dropdown .option.active{background:#f0fdfa !important;color:#1e3a5f !important;}
+.ts-dropdown .cosfa-grado{
+  display:inline-block;background:#dbeafe;color:#1d4ed8;border-radius:5px;
+  padding:1px 7px;font-size:.71rem;font-weight:700;margin-left:7px;vertical-align:middle;
+}
+.ts-dropdown-content{max-height:260px !important;}
+</style>
+<script>
+(function(){
+  var sel = document.getElementById('id_estudiante');
+  if(!sel || sel.dataset.tsLoaded) return;
+  sel.dataset.tsLoaded = '1';
+  new TomSelect(sel, {
+    placeholder: '🔍 Escribe nombre o grado para filtrar…',
+    maxOptions: 300,
+    render: {
+      option: function(data, escape){
+        var text = data.text || '';
+        var m = text.match(/^(.+?)\s*[-–]\s*(.+)$/);
+        var nombre = escape(m ? m[1].trim() : text);
+        var grado  = m ? '<span class="cosfa-grado">'+escape(m[2].trim())+'</span>' : '';
+        return '<div style="display:flex;align-items:center">'+nombre+grado+'</div>';
+      },
+      item: function(data, escape){ return '<div>'+escape(data.text)+'</div>'; }
+    }
+  });
+})();
+</script>
+{% endblock %}

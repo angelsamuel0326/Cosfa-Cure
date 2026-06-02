@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Reporte Estadístico — COSFA CURE</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Segoe UI',Arial,sans-serif;font-size:11px;color:#1e2a3a;background:#fff;padding:24px}
+  .header{display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid #3aafa9;padding-bottom:12px;margin-bottom:18px}
+  .header-left h1{font-size:18px;font-weight:800;color:#1e4a5a;letter-spacing:-.5px}
+  .header-left p{font-size:10px;color:#64748b;margin-top:3px}
+  .header-right{text-align:right;font-size:10px;color:#64748b}
+  .filtros-badge{display:inline-block;background:#eef5fd;border:1px solid #b3d4f5;border-radius:4px;padding:2px 8px;font-size:9px;color:#3a6fa8;margin:2px}
+  .kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px}
+  .kpi{background:linear-gradient(135deg,#eef5fd,#ddeeff);border-radius:10px;padding:14px;text-align:center;border:1px solid #b3d4f5}
+  .kpi-val{font-size:26px;font-weight:800;color:#3aafa9}
+  .kpi-lbl{font-size:9px;color:#64748b;margin-top:4px;font-weight:600;text-transform:uppercase}
+  .section-title{font-size:11px;font-weight:700;color:#1e4a5a;text-transform:uppercase;letter-spacing:.5px;border-left:3px solid #3aafa9;padding-left:8px;margin:14px 0 8px}
+  table{width:100%;border-collapse:collapse;margin-bottom:14px}
+  th{background:#3aafa9;color:white;padding:6px 10px;text-align:left;font-size:9px;font-weight:700;text-transform:uppercase}
+  td{padding:5px 10px;border-bottom:1px solid #e8f4f3;font-size:10px}
+  tr:nth-child(even) td{background:#f4fffe}
+  .bar-wrap{display:flex;align-items:center;gap:6px}
+  .bar{height:10px;background:#3aafa9;border-radius:3px;min-width:4px}
+  .footer{margin-top:20px;border-top:1px solid #e2e8f0;padding-top:8px;text-align:center;font-size:9px;color:#94a3b8}
+  @media print{body{padding:0} @page{margin:18mm 14mm}}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-left">
+    <h1>📊 Reporte Estadístico — COSFA CURE</h1>
+    <p>Sistema de Enfermería Escolar · Generado el {{ fecha_impresion|date:"d/m/Y" }}</p>
+    <div style="margin-top:6px">
+      {% if fecha_desde %}<span class="filtros-badge">Desde: {{ fecha_desde }}</span>{% endif %}
+      {% if fecha_hasta %}<span class="filtros-badge">Hasta: {{ fecha_hasta }}</span>{% endif %}
+      {% if grado_f %}<span class="filtros-badge">Grado: {{ grado_f }}</span>{% endif %}
+      {% if motivo_f %}<span class="filtros-badge">Motivo: {{ motivo_f }}</span>{% endif %}
+      {% if not fecha_desde and not fecha_hasta and not grado_f and not motivo_f %}<span class="filtros-badge">Todos los registros</span>{% endif %}
+    </div>
+  </div>
+  <div class="header-right">
+    <strong>COSFA CURE</strong><br>Enfermería Escolar
+  </div>
+</div>
+
+<!-- KPIs -->
+<div class="kpi-grid">
+  <div class="kpi"><div class="kpi-val">{{ total_consultas }}</div><div class="kpi-lbl">Consultas totales</div></div>
+  <div class="kpi"><div class="kpi-val">{{ total_remisiones }}</div><div class="kpi-lbl">Remisiones</div></div>
+  <div class="kpi"><div class="kpi-val">{{ total_estudiantes }}</div><div class="kpi-lbl">Estudiantes registrados</div></div>
+</div>
+
+<!-- Por motivo -->
+<div class="section-title">Consultas por Motivo</div>
+<table>
+  <thead><tr><th>Motivo</th><th>Total</th><th style="width:40%">Proporción</th></tr></thead>
+  <tbody>
+    {% for item in por_motivo %}
+    <tr>
+      <td>{{ item.label }}</td>
+      <td><strong>{{ item.total }}</strong></td>
+      <td>
+        <div class="bar-wrap">
+          {% if total_consultas > 0 %}
+          <div class="bar" style="width:{% widthratio item.total total_consultas 180 %}px"></div>
+          {% endif %}
+          <span style="font-size:9px;color:#64748b">{% if total_consultas > 0 %}{% widthratio item.total total_consultas 100 %}%{% else %}0%{% endif %}</span>
+        </div>
+      </td>
+    </tr>
+    {% empty %}<tr><td colspan="3" style="text-align:center;color:#94a3b8">Sin datos</td></tr>{% endfor %}
+  </tbody>
+</table>
+
+<!-- Por grado -->
+<div class="section-title">Consultas por Grado</div>
+<table>
+  <thead><tr><th>Grado</th><th>Total</th><th style="width:40%">Proporción</th></tr></thead>
+  <tbody>
+    {% for item in por_grado %}
+    <tr>
+      <td>{{ item.estudiante__grado }}</td>
+      <td><strong>{{ item.total }}</strong></td>
+      <td>
+        <div class="bar-wrap">
+          {% if total_consultas > 0 %}
+          <div class="bar" style="width:{% widthratio item.total total_consultas 180 %}px;background:#52b788"></div>
+          {% endif %}
+          <span style="font-size:9px;color:#64748b">{% if total_consultas > 0 %}{% widthratio item.total total_consultas 100 %}%{% else %}0%{% endif %}</span>
+        </div>
+      </td>
+    </tr>
+    {% empty %}<tr><td colspan="3" style="text-align:center;color:#94a3b8">Sin datos</td></tr>{% endfor %}
+  </tbody>
+</table>
+
+<!-- Por mes -->
+<div class="section-title">Evolución Mensual (últimos 6 meses)</div>
+<table>
+  <thead><tr><th>Mes</th><th>Consultas</th></tr></thead>
+  <tbody>
+    {% for item in por_mes %}<tr>
+      <td>{{ item.mes }}</td>
+      <td><strong>{{ item.total }}</strong></td>
+    </tr>{% endfor %}
+  </tbody>
+</table>
+
+<!-- Estudiantes frecuentes -->
+{% if frecuentes %}
+<div class="section-title">Estudiantes con Visitas Frecuentes (4+ en 30 días)</div>
+<table>
+  <thead><tr><th>Estudiante</th><th>Grado</th><th>Visitas</th></tr></thead>
+  <tbody>
+    {% for e in frecuentes %}<tr>
+      <td>{{ e.estudiante__nombre }}</td>
+      <td>{{ e.estudiante__grado }}</td>
+      <td><strong>{{ e.visitas }}</strong></td>
+    </tr>{% endfor %}
+  </tbody>
+</table>
+{% endif %}
+
+<div class="footer">COSFA CURE — Sistema de Enfermería Escolar · Documento generado el {{ fecha_impresion|date:"d/m/Y" }} · Uso interno</div>
+<script>window.onload = function(){ window.print(); }</script>
+</body>
+</html>

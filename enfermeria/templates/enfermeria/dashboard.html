@@ -1,0 +1,521 @@
+{% extends 'enfermeria/base.html' %}
+{% block title %}Inicio — COSFA CURE{% endblock %}
+{% block page_title %}Panel Principal{% endblock %}
+{% block content %}
+<style>
+.tbl-dash thead tr {
+  background: linear-gradient(135deg, #0f2444 0%, #0e7490 100%) !important;
+}
+.tbl-dash thead th {
+  background: transparent !important;
+  color: white !important;
+  font-family: 'Sora', sans-serif;
+  font-size: .65rem; font-weight: 700;
+  letter-spacing: .08em; text-transform: uppercase;
+  padding: 12px 16px; border: none !important;
+}
+.tbl-dash tbody tr {
+  transition: all .2s cubic-bezier(.4,0,.2,1);
+  border-bottom: 1px solid rgba(14,165,160,.08);
+  animation: rowSlideD .32s ease both;
+}
+.tbl-dash tbody tr:nth-child(even) { background: rgba(14,165,160,.025); }
+.tbl-dash tbody tr:hover {
+  background: rgba(14,165,160,.06) !important;
+  box-shadow: inset 3px 0 0 var(--teal);
+  cursor: pointer;
+}
+@keyframes rowSlideD {
+  from { opacity:0; transform:translateY(-5px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+.tbl-dash tbody tr:nth-child(1){animation-delay:.03s}
+.tbl-dash tbody tr:nth-child(2){animation-delay:.07s}
+.tbl-dash tbody tr:nth-child(3){animation-delay:.11s}
+.tbl-dash tbody tr:nth-child(n+4){animation-delay:.15s}
+.tbl-dash tbody td {
+  padding: 12px 16px; vertical-align: middle;
+  border: none !important; font-size: .82rem; color: var(--text);
+}
+</style>
+
+<!-- Welcome Banner -->
+<div class="welcome-banner" style="animation:fadeInUp .45s ease">
+  <div>
+    <div style="font-size:.72rem;color:rgba(255,255,255,.55);font-weight:500;margin-bottom:4px;text-transform:uppercase;letter-spacing:.8px">{{ saludo }},</div>
+    <div style="font-family:'Sora',sans-serif;font-size:1.3rem;font-weight:800;color:white;letter-spacing:-.3px;margin-bottom:6px">{{ nombre_usuario }}</div>
+    <div style="font-size:.82rem;color:rgba(255,255,255,.65)">Hoy hay <strong style="color:#5eead4">{{ alertas_msg }}</strong> en el sistema.</div>
+  </div>
+  <div style="font-size:3.5rem;opacity:.2;animation:float 4s ease-in-out infinite">👩‍⚕️</div>
+</div>
+
+<!-- Stat Cards -->
+<div class="stats-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px">
+  <div class="stat-card sc-navy" style="animation-delay:.05s">
+    <div class="s-label">Total Estudiantes</div>
+    <div class="s-value">{{ total_estudiantes }}</div>
+    <div class="s-sub">Registrados en el sistema</div>
+    <i class="bi bi-people-fill s-icon"></i>
+  </div>
+  <div class="stat-card sc-teal" style="animation-delay:.12s">
+    <div class="s-label">Consultas hoy</div>
+    <div class="s-value">{{ consultas_hoy }}</div>
+    <div class="s-sub">Atendidas en el día</div>
+    <i class="bi bi-clipboard2-pulse-fill s-icon"></i>
+  </div>
+  <div class="stat-card sc-purple" style="animation-delay:.19s">
+    <div class="s-label">Medicamentos</div>
+    <div class="s-value">{{ total_medicamentos }}</div>
+    <div class="s-sub">En inventario activo</div>
+    <i class="bi bi-capsule-pill s-icon"></i>
+  </div>
+  <div class="stat-card sc-orange" style="animation-delay:.26s">
+    <div class="s-label">Remisiones pend.</div>
+    <div class="s-value">{{ remisiones_pendientes }}</div>
+    <div class="s-sub">Pendientes de cierre</div>
+    <i class="bi bi-hospital-fill s-icon"></i>
+  </div>
+</div>
+
+<!-- Alertas -->
+{% if vencidos %}
+<div class="alert alert-danger" style="margin-bottom:12px;border-radius:14px">
+  <i class="bi bi-exclamation-triangle-fill"></i>
+  <div><strong>{{ vencidos|length }} medicamento(s) VENCIDO(S)</strong> — Retíralos del inventario inmediatamente.</div>
+</div>
+{% endif %}
+{% if proximos_vencer %}
+<div class="alert alert-warning" style="margin-bottom:12px;border-radius:14px">
+  <i class="bi bi-clock-fill"></i>
+  <div><strong>{{ proximos_vencer|length }} medicamento(s)</strong> próximos a vencer en los próximos 30 días.</div>
+</div>
+{% endif %}
+
+{% if alertas_patron %}
+<!-- IA: Alertas de Patrones de Salud -->
+<div style="margin-bottom:18px;animation:fadeInUp .5s ease .1s both">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+    <div style="display:flex;align-items:center;gap:7px">
+      <span style="font-size:1.1rem">🧠</span>
+      <span style="font-family:'Sora',sans-serif;font-size:.82rem;font-weight:800;color:var(--navy);text-transform:uppercase;letter-spacing:.05em">Análisis de Patrones · IA Preventiva</span>
+    </div>
+    <div style="flex:1;height:1px;background:linear-gradient(90deg,var(--teal-dim),transparent)"></div>
+    <span style="font-size:.65rem;color:var(--text-muted);font-weight:500">Últimos 21 días</span>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px">
+    {% for alerta in alertas_patron %}
+    <a href="{% url 'historial_estudiante' alerta.estudiante_pk %}" style="display:block;text-decoration:none;
+      background:{% if alerta.urgente %}linear-gradient(135deg,rgba(239,68,68,.06),rgba(239,68,68,.02)){% else %}linear-gradient(135deg,rgba(245,158,11,.06),rgba(245,158,11,.02)){% endif %};
+      border:1px solid {% if alerta.urgente %}rgba(239,68,68,.25){% else %}rgba(245,158,11,.25){% endif %};
+      border-left:4px solid {% if alerta.urgente %}#ef4444{% else %}#f59e0b{% endif %};
+      border-radius:0 14px 14px 0;padding:13px 15px;transition:all .2s;color:inherit"
+      onmouseover="this.style.transform='translateX(3px)';this.style.boxShadow='0 4px 16px rgba(0,0,0,.08)'"
+      onmouseout="this.style.transform='';this.style.boxShadow=''">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+            <span style="font-size:.75rem">{% if alerta.urgente %}🔴{% else %}⚠️{% endif %}</span>
+            <span style="font-weight:800;font-size:.82rem;color:var(--navy);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ alerta.estudiante }}</span>
+            <span class="badge {% if alerta.urgente %}badge-red{% else %}badge-orange{% endif %}" style="font-size:.6rem;flex-shrink:0">{{ alerta.grado }}</span>
+          </div>
+          <div style="font-size:.76rem;color:{% if alerta.urgente %}#dc2626{% else %}#b45309{% endif %};font-weight:600;margin-bottom:5px">
+            {{ alerta.veces }}× {{ alerta.motivo }} en {{ alerta.periodo_texto }}
+          </div>
+          <div style="font-size:.7rem;color:var(--text-muted);line-height:1.5">{{ alerta.recomendacion }}</div>
+        </div>
+        <i class="bi bi-chevron-right" style="color:var(--text-muted);font-size:.75rem;flex-shrink:0;margin-top:3px"></i>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<!-- Content Grid -->
+<div class="dash-bottom-grid" style="display:grid;grid-template-columns:1fr 290px;gap:16px">
+
+  <!-- Left column -->
+  <div style="display:flex;flex-direction:column;gap:16px">
+
+    <!-- Gráfica: Consultas últimos 7 días -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-head-title"><i class="bi bi-bar-chart-fill" style="color:var(--teal)"></i> Consultas — Últimos 7 días</div>
+        <span style="font-size:.72rem;color:var(--text-muted);font-weight:500">Actividad reciente</span>
+      </div>
+      <div style="padding:18px 20px 12px">
+        <div style="display:flex;align-items:flex-end;gap:10px;height:120px;width:100%">
+          {% for d in consultas_semana %}
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;height:100%;position:relative">
+            <div style="flex:1;width:100%;display:flex;align-items:flex-end">
+              <div class="chart-bar" style="
+                width:100%;
+                height:{% if d.max > 0 %}{{ d.pct }}%{% else %}4px{% endif %};
+                min-height:4px;
+                background:{% if d.hoy %}linear-gradient(180deg,var(--teal-light),var(--teal)){% else %}linear-gradient(180deg,#93c5fd,#3b82f6){% endif %};
+                border-radius:6px 6px 2px 2px;
+                position:relative;
+                cursor:default;
+                transition:filter .2s;
+              " title="{{ d.count }} consulta{{ d.count|pluralize }} — {{ d.label }}" onmouseover="this.style.filter='brightness(1.15)'" onmouseout="this.style.filter=''">
+                {% if d.count > 0 %}
+                <div style="position:absolute;top:-20px;left:50%;transform:translateX(-50%);font-size:.64rem;font-weight:700;color:var(--text);white-space:nowrap">{{ d.count }}</div>
+                {% endif %}
+              </div>
+            </div>
+            <div style="font-size:.6rem;font-weight:{% if d.hoy %}700{% else %}500{% endif %};color:{% if d.hoy %}var(--teal){% else %}var(--text-muted){% endif %}">{{ d.dia }}</div>
+          </div>
+          {% empty %}
+          {% for i in "1234567" %}
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;height:100%">
+            <div style="flex:1;width:100%;display:flex;align-items:flex-end">
+              <div class="chart-bar" style="width:100%;height:4px;min-height:4px;background:var(--border);border-radius:6px 6px 2px 2px"></div>
+            </div>
+            <div style="font-size:.6rem;color:var(--text-muted)">—</div>
+          </div>
+          {% endfor %}
+          {% endfor %}
+        </div>
+        <div style="margin-top:10px;font-size:.68rem;color:var(--text-muted);text-align:right">
+          <span style="display:inline-block;width:10px;height:10px;background:linear-gradient(180deg,var(--teal-light),var(--teal));border-radius:2px;vertical-align:middle;margin-right:4px"></span>Hoy
+          <span style="display:inline-block;width:10px;height:10px;background:linear-gradient(180deg,#93c5fd,#3b82f6);border-radius:2px;vertical-align:middle;margin:0 4px 0 10px"></span>Días anteriores
+        </div>
+      </div>
+    </div>
+
+    <!-- Consultas recientes -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-head-title"><i class="bi bi-clock-history"></i> Consultas Recientes</div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          {% if usuario_es_admin %}
+          <a href="{% url 'nueva_consulta' %}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg"></i> Nueva consulta</a>
+          <a href="{% url 'nueva_remision' %}" class="btn btn-navy btn-sm"><i class="bi bi-hospital"></i> Nueva remisión</a>
+          {% endif %}
+        </div>
+      </div>
+      <div class="table-wrap">
+        {% if consultas_recientes %}
+        <table class="tbl-dash">
+          <thead>
+            <tr><th>Estudiante</th><th>Motivo</th><th>Hora</th><th>Estado</th><th></th></tr>
+          </thead>
+          <tbody>
+            {% for c in consultas_recientes %}
+            <tr>
+              <td>
+                <div style="font-weight:600;font-size:.83rem">{{ c.estudiante.nombre }}</div>
+                <div style="color:var(--text-muted);font-size:.7rem">{{ c.estudiante.grado }}</div>
+              </td>
+              <td style="color:var(--text-mid)">{{ c.get_motivo_display }}</td>
+              <td style="color:var(--text-muted);font-size:.75rem">{{ c.fecha_hora|date:"d/m H:i" }}</td>
+              <td>
+                {% if c.estado == 'remitido' %}<span class="badge badge-red">Remitido</span>
+                {% elif c.estado == 'atendido' %}<span class="badge badge-green">Atendido</span>
+                {% elif c.estado == 'acudiente' %}<span class="badge badge-orange">Acudiente</span>
+                {% else %}<span class="badge badge-gray">{{ c.get_estado_display }}</span>{% endif %}
+              </td>
+              <td><a href="{% url 'detalle_consulta' c.pk %}" class="btn btn-outline btn-xs"><i class="bi bi-eye"></i></a></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <div style="text-align:center;padding:36px;color:var(--text-muted)">
+          <i class="bi bi-clipboard2" style="font-size:2.2rem;opacity:.3;display:block;margin-bottom:10px"></i>
+          <p style="font-size:.82rem">Sin consultas registradas aún</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Actividad reciente -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-head-title"><i class="bi bi-activity"></i> Actividad Reciente</div>
+        <a href="{% url 'historial_cambios' %}" class="btn btn-outline btn-xs">Ver todo</a>
+      </div>
+      <div class="table-wrap" id="actividad-lista">
+        {% if historial_reciente %}
+        <table class="tbl-dash">
+          <thead>
+            <tr><th></th><th>Descripción</th><th>Usuario</th><th>Hora</th><th>Estado</th></tr>
+          </thead>
+          <tbody>
+            {% for h in historial_reciente %}
+            <tr class="act-item">
+              <td style="width:36px">
+                <div style="width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.72rem;
+                  background:{% if h.accion == 'crear' %}var(--success-bg){% elif h.accion == 'editar' %}var(--info-bg){% else %}var(--danger-bg){% endif %}">
+                  {% if h.accion == 'crear' %}➕{% elif h.accion == 'editar' %}✏️{% else %}🗑{% endif %}
+                </div>
+              </td>
+              <td style="font-size:.81rem;font-weight:600;max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ h.descripcion }}</td>
+              <td style="font-size:.75rem;color:var(--text-muted)">{{ h.usuario }}</td>
+              <td style="font-size:.73rem;color:var(--text-muted);white-space:nowrap">{{ h.fecha|date:"d/m H:i" }}</td>
+              <td><span class="badge {% if h.accion == 'crear' %}badge-green{% elif h.accion == 'editar' %}badge-blue{% else %}badge-red{% endif %}">{{ h.get_accion_display }}</span></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <div style="text-align:center;padding:28px;color:var(--text-muted)">
+          <i class="bi bi-activity" style="font-size:2rem;opacity:.3;display:block;margin-bottom:8px"></i>
+          <p style="font-size:.82rem">Sin actividad aún</p>
+        </div>
+        {% endif %}
+      </div>
+      <div id="pag-actividad" style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-top:1px solid var(--border,#e2e8f0);flex-wrap:wrap;gap:8px">
+        <span id="pag-actividad-info" style="font-size:.78rem;color:#64748b"></span>
+        <div style="display:flex;gap:6px" id="pag-actividad-btns"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right column -->
+  <div style="display:flex;flex-direction:column;gap:14px">
+
+    <!-- Alertas médicas -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-head-title"><i class="bi bi-exclamation-circle-fill" style="color:var(--danger)"></i> Alertas Médicas</div>
+      </div>
+      <div style="padding:10px">
+        {% for e in alertas_medicas %}
+        <div style="padding:10px 12px;border-left:3px solid var(--danger);background:linear-gradient(90deg,rgba(239,68,68,.1),rgba(239,68,68,.03));border-radius:0 10px 10px 0;margin-bottom:7px;transition:all .2s;cursor:default" onmouseover="this.style.borderLeftWidth='5px'" onmouseout="this.style.borderLeftWidth='3px'">
+          <div style="font-weight:700;font-size:.79rem;color:var(--text)">{{ e.nombre }} — {{ e.grado }}</div>
+          {% if e.alergias %}<div style="font-size:.7rem;color:var(--danger);margin-top:2px">⚠️ {{ e.alergias|truncatechars:45 }}</div>{% endif %}
+          {% if e.condiciones_medicas %}<div style="font-size:.7rem;color:var(--warning);margin-top:1px">🏥 {{ e.condiciones_medicas|truncatechars:45 }}</div>{% endif %}
+        </div>
+        {% empty %}
+        <div style="text-align:center;padding:18px;color:var(--text-muted);font-size:.78rem">
+          <i class="bi bi-shield-check" style="font-size:1.8rem;opacity:.3;display:block;margin-bottom:8px"></i>
+          Sin alertas activas
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Seguimientos HOY -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-head-title"><i class="bi bi-calendar-check-fill" style="color:var(--teal)"></i> Seguimientos de hoy</div>
+        {% if seguimientos_hoy %}<span class="badge badge-teal">{{ seguimientos_hoy|length }}</span>{% endif %}
+      </div>
+      <div style="padding:10px">
+        {% for s in seguimientos_hoy %}
+        <a href="{% url 'detalle_seguimiento' s.pk %}" style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--teal-pale);border:1px solid var(--teal-dim);border-radius:10px;margin-bottom:6px;text-decoration:none;color:inherit;transition:all .2s" onmouseover="this.style.background='var(--teal-dim)'" onmouseout="this.style.background='var(--teal-pale)'">
+          <div>
+            <div style="font-weight:700;font-size:.79rem;color:var(--navy)">{{ s.estudiante.nombre }}</div>
+            <div style="font-size:.7rem;color:var(--teal)">{{ s.get_tipo_display }} · {{ s.estudiante.grado }}</div>
+          </div>
+          <i class="bi bi-chevron-right" style="color:var(--teal);font-size:.8rem"></i>
+        </a>
+        {% empty %}
+        <div style="text-align:center;padding:18px 10px">
+          <i class="bi bi-calendar2-check" style="font-size:1.6rem;color:var(--teal);opacity:.4;display:block;margin-bottom:6px"></i>
+          <p style="font-size:.78rem;color:var(--text-muted)">Sin seguimientos para hoy</p>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Seguimientos esta semana -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-head-title"><i class="bi bi-calendar2-check-fill"></i> Seguimientos esta semana</div>
+      </div>
+      <div style="padding:10px">
+        {% for s in seguimientos_prox %}
+        <div style="padding:9px 11px;background:var(--teal-pale);border:1px solid var(--teal-dim);border-radius:10px;margin-bottom:6px;transition:all .2s" onmouseover="this.style.background='var(--teal-dim)'" onmouseout="this.style.background='var(--teal-pale)'">
+          <div style="font-weight:700;font-size:.77rem;color:var(--navy)">{{ s.estudiante.nombre }}</div>
+          <div style="font-size:.68rem;color:var(--teal)">{{ s.get_tipo_display }} · {{ s.fecha|date:"d/m/Y" }}</div>
+        </div>
+        {% empty %}
+        <p style="text-align:center;color:var(--text-muted);padding:14px;font-size:.78rem">Sin seguimientos esta semana</p>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Visitas frecuentes -->
+    {% if estudiantes_frecuentes %}
+    <div class="card">
+      <div class="card-head">
+        <div class="card-head-title"><i class="bi bi-exclamation-triangle-fill" style="color:var(--warning)"></i> Visitas Frecuentes</div>
+      </div>
+      <div style="padding:8px 10px;display:flex;flex-direction:column;gap:5px">
+        {% for est in estudiantes_frecuentes %}
+        <a href="{% url 'historial_estudiante' est.pk %}" style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:var(--bg);border:1px solid var(--border-soft);border-radius:10px;text-decoration:none;color:inherit;transition:all .2s" onmouseover="this.style.background='var(--teal-pale)';this.style.borderColor='var(--teal-dim)'" onmouseout="this.style.background='var(--bg)';this.style.borderColor='var(--border-soft)'">
+          <span style="font-size:.79rem;font-weight:600">{{ est.nombre }}</span>
+          <div style="display:flex;gap:4px;align-items:center">
+            <span class="badge badge-teal" style="font-size:.62rem">{{ est.grado }}</span>
+            <span class="badge badge-orange" style="font-size:.62rem">{{ est.consultas.count }}×</span>
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Accesos rápidos -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-head-title"><i class="bi bi-lightning-fill" style="color:var(--accent)"></i> Accesos Rápidos</div>
+      </div>
+      <div style="padding:12px;display:flex;flex-direction:column;gap:7px">
+        <a href="{% url 'nueva_consulta' %}" class="btn btn-primary" style="justify-content:center"><i class="bi bi-plus-circle"></i> Nueva Consulta</a>
+        <a href="{% url 'nueva_remision' %}" class="btn btn-navy" style="justify-content:center"><i class="bi bi-hospital"></i> Nueva Remisión</a>
+        <a href="{% url 'nuevo_estudiante' %}" class="btn btn-outline" style="justify-content:center"><i class="bi bi-person-plus"></i> Nuevo Estudiante</a>
+        <a href="{% url 'reportes' %}" class="btn btn-outline" style="justify-content:center"><i class="bi bi-bar-chart"></i> Ver Reportes</a>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+/* ── COSFA CURE: Sincronización offline (IndexedDB) ── */
+(function() {
+  // Avisar al SW cuando vuelve la conexión para que sincronice la cola
+  function notificarSWOnline() {
+    if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({ type: 'COSFA_ONLINE' });
+    }
+  }
+
+  window.addEventListener('online', () => {
+    notificarSWOnline();
+    mostrarToastSync('online');
+  });
+
+  window.addEventListener('offline', () => {
+    mostrarToastSync('offline');
+  });
+
+  // Escuchar mensajes del SW (consultas sincronizadas)
+  if (navigator.serviceWorker) {
+    navigator.serviceWorker.addEventListener('message', e => {
+      if (e.data && e.data.type === 'COSFA_SYNC_OK') {
+        mostrarToastSync('synced');
+      }
+    });
+    // Si ya hay conexión al cargar, sincronizar pendientes
+    if (navigator.onLine) notificarSWOnline();
+  }
+
+  // Contar pendientes en IndexedDB y mostrar badge
+  async function contarPendientes() {
+    try {
+      const db = await new Promise((res, rej) => {
+        const r = indexedDB.open('cosfacure-offline', 1);
+        r.onsuccess = e => res(e.target.result);
+        r.onerror   = e => rej(e.target.error);
+        r.onupgradeneeded = e => {
+          e.target.result.createObjectStore('consultas_pendientes', {keyPath:'id',autoIncrement:true});
+        };
+      });
+      const tx    = db.transaction('consultas_pendientes', 'readonly');
+      const store = tx.objectStore('consultas_pendientes');
+      const count = await new Promise((res, rej) => {
+        const r = store.count();
+        r.onsuccess = e => res(e.target.result);
+        r.onerror   = e => rej(e.target.error);
+      });
+      if (count > 0) {
+        mostrarBadgeOffline(count);
+      }
+    } catch {}
+  }
+  contarPendientes();
+
+  function mostrarBadgeOffline(n) {
+    const existing = document.getElementById('cosfa-offline-badge');
+    if (existing) { existing.textContent = n + ' consulta' + (n>1?'s':'') + ' pendiente' + (n>1?'s':'') + ' de sincronizar'; return; }
+    const badge = document.createElement('div');
+    badge.id = 'cosfa-offline-badge';
+    badge.innerHTML = `<i class="bi bi-cloud-upload"></i> ${n} consulta${n>1?'s':''} guardada${n>1?'s':''} sin internet — se sincronizará${n>1?'n':''} al reconectar`;
+    Object.assign(badge.style, {
+      position:'fixed', bottom:'20px', left:'50%', transform:'translateX(-50%)',
+      background:'linear-gradient(135deg,#b45309,#92400e)',
+      color:'#fff', padding:'10px 20px', borderRadius:'50px',
+      fontSize:'.8rem', fontWeight:'600', zIndex:'9999',
+      boxShadow:'0 4px 20px rgba(0,0,0,.3)', display:'flex', alignItems:'center', gap:'8px',
+      animation:'fadeInUp .3s ease'
+    });
+    document.body.appendChild(badge);
+  }
+
+  function mostrarToastSync(tipo) {
+    const msg = {
+      online:  { txt: '✅ Conexión restaurada — sincronizando consultas...', bg: '#0ea5a0' },
+      offline: { txt: '📴 Sin conexión — las consultas se guardan localmente',  bg: '#f59e0b' },
+      synced:  { txt: '✅ Consulta offline sincronizada con el servidor',        bg: '#10b981' },
+    }[tipo];
+    if (!msg) return;
+    const t = document.createElement('div');
+    t.textContent = msg.txt;
+    Object.assign(t.style, {
+      position:'fixed', bottom:'20px', right:'20px',
+      background: msg.bg, color:'#fff',
+      padding:'12px 20px', borderRadius:'12px',
+      fontSize:'.8rem', fontWeight:'600', zIndex:'9999',
+      boxShadow:'0 4px 20px rgba(0,0,0,.25)', maxWidth:'340px',
+      animation:'fadeInUp .3s ease'
+    });
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 4500);
+  }
+})();
+</script>
+
+<!-- ══ Paginación Actividad Reciente (5 por página) ══ -->
+<style>
+.cosfa-pag-btn{display:inline-flex;align-items:center;justify-content:center;min-width:32px;height:32px;padding:0 10px;border-radius:8px;border:1.5px solid #e2e8f0;background:#fff;color:#475569;font-size:.8rem;font-weight:600;cursor:pointer;transition:all .18s;font-family:inherit;}
+.cosfa-pag-btn:hover{background:#f0fdfa;border-color:#0d9488;color:#0d9488;}
+.cosfa-pag-btn.active{background:linear-gradient(135deg,#0d9488,#0f766e);border-color:#0d9488;color:#fff;box-shadow:0 2px 8px rgba(13,148,136,.25);}
+.cosfa-pag-btn:disabled{opacity:.4;cursor:default;pointer-events:none;}
+</style>
+<script>
+(function(){
+  document.addEventListener('DOMContentLoaded', function(){
+    var lista = document.getElementById('actividad-lista');
+    if(!lista) return;
+    var items = Array.from(lista.querySelectorAll('tr.act-item'));
+    var POR_PAG = 5;
+    if(items.length <= POR_PAG){
+      var p = document.getElementById('pag-actividad');
+      if(p) p.style.display = 'none';
+      return;
+    }
+    var totalPags = Math.ceil(items.length / POR_PAG);
+    var paginaActual = 1;
+    function render(){
+      var inicio = (paginaActual-1)*POR_PAG, fin = inicio+POR_PAG;
+      items.forEach(function(el,i){ el.style.display=(i>=inicio&&i<fin)?'':'none'; });
+      var info = document.getElementById('pag-actividad-info');
+      if(info) info.textContent='Mostrando '+(inicio+1)+'–'+Math.min(fin,items.length)+' de '+items.length;
+      var btns = document.getElementById('pag-actividad-btns');
+      btns.innerHTML='';
+      var prev=document.createElement('button'); prev.className='cosfa-pag-btn'; prev.innerHTML='&#8249;'; prev.title='Anterior';
+      if(paginaActual===1) prev.disabled=true;
+      prev.onclick=function(){ if(paginaActual>1){paginaActual--;render();} }; btns.appendChild(prev);
+      for(var p=1;p<=totalPags;p++){
+        (function(pg){ var b=document.createElement('button'); b.className='cosfa-pag-btn'+(pg===paginaActual?' active':''); b.textContent=pg;
+          b.onclick=function(){ paginaActual=pg; render(); }; btns.appendChild(b); })(p);
+      }
+      var next=document.createElement('button'); next.className='cosfa-pag-btn'; next.innerHTML='&#8250;'; next.title='Siguiente';
+      if(paginaActual===totalPags) next.disabled=true;
+      next.onclick=function(){ if(paginaActual<totalPags){paginaActual++;render();} }; btns.appendChild(next);
+    }
+    render();
+  });
+})();
+</script>
+
+{% if mostrar_admin_setup %}
+{% include "enfermeria/modal_admin_setup.html" %}
+{% endif %}
+
+{% endblock %}

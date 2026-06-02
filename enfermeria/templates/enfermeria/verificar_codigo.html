@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Verificar código — COSFA CURE</title>
+<link rel="icon" type="image/x-icon" href="/static/icons/favicon.ico">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+<style>
+:root{
+  --navy:#0f2444;--navy-mid:#1a3a6e;--teal:#0ea5a0;--teal-light:#14c9c3;
+  --border:#dde6f0;--text:#0f2444;--muted:#7a93b4;
+  --error-bg:#fef2f2;--error-border:#fecaca;--error-left:#ef4444;--error-text:#991b1b;
+  --success-bg:#f0fdf4;--success-border:#bbf7d0;--success-left:#22c55e;--success-text:#15803d;
+  --gold:#f59e0b;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:'DM Sans',sans-serif;min-height:100vh;
+  display:flex;background:#f0f4f8;
+}
+/* ─── LEFT PANEL ─── */
+.left-panel{
+  flex:1;background:linear-gradient(150deg,#0a1628 0%,#0f2444 45%,#0d4a45 100%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:60px 50px;position:relative;overflow:hidden;
+}
+.left-panel::before{
+  content:'';position:absolute;inset:0;
+  background-image:radial-gradient(circle,rgba(14,165,160,.15) 1.5px,transparent 1.5px);
+  background-size:28px 28px;
+}
+.orb{position:absolute;border-radius:50%;filter:blur(90px);pointer-events:none;z-index:0}
+.orb1{width:380px;height:380px;background:radial-gradient(circle,rgba(14,165,160,.22),transparent 70%);top:-80px;right:-80px;animation:floatOrb 11s ease-in-out infinite}
+.orb2{width:280px;height:280px;background:radial-gradient(circle,rgba(26,58,110,.5),transparent 70%);bottom:-60px;left:-40px;animation:floatOrb 14s ease-in-out infinite reverse}
+@keyframes floatOrb{0%,100%{transform:translate(0,0)}33%{transform:translate(25px,-18px)}66%{transform:translate(-18px,22px)}}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(32px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse-ring{0%,100%{transform:scale(1);opacity:.6}50%{transform:scale(1.08);opacity:1}}
+@keyframes slideIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+.brand-section{position:relative;z-index:2;text-align:center}
+.logo-ring{position:relative;display:inline-block;margin-bottom:24px}
+.logo-ring::before{content:'';position:absolute;inset:-8px;border-radius:50%;border:2px solid rgba(14,165,160,.4);animation:pulse-ring 3s ease-in-out infinite}
+.logo-img{width:130px;height:130px;border-radius:50%;object-fit:cover;border:4px solid rgba(255,255,255,.15);box-shadow:0 20px 60px rgba(0,0,0,.4);background:#1a6a5a}
+.brand-name{font-family:'Sora',sans-serif;font-size:2rem;font-weight:800;letter-spacing:-1px;margin-bottom:6px;background:linear-gradient(135deg,#fff 0%,var(--teal-light) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.brand-sub{font-size:.82rem;color:rgba(255,255,255,.5);line-height:1.6;max-width:260px;margin:0 auto}
+/* ─── RIGHT PANEL ─── */
+.right-panel{
+  width:480px;min-height:100vh;background:white;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:0;position:relative;box-shadow:-20px 0 60px rgba(0,0,0,.15);
+  overflow-y:auto;
+}
+.right-inner{
+  width:100%;padding:48px 44px;
+  display:flex;flex-direction:column;align-items:center;
+}
+.form-header{width:100%;margin-bottom:24px;animation:fadeInUp .5s cubic-bezier(.22,1,.36,1)}
+.form-header h2{font-family:'Sora',sans-serif;font-size:1.5rem;font-weight:800;color:var(--navy);letter-spacing:-.5px;margin-bottom:6px}
+.form-header p{font-size:.82rem;color:var(--muted);line-height:1.6}
+.email-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(14,165,160,.1);color:var(--teal);border-radius:20px;padding:5px 14px;font-size:.8rem;font-weight:700;margin-top:8px}
+.form-body{width:100%;animation:fadeInUp .6s cubic-bezier(.22,1,.36,1) .08s both}
+/* OTP inputs */
+.code-wrap{display:flex;gap:9px;justify-content:center;margin-bottom:22px}
+.code-input{
+  width:58px;height:64px;border:2px solid var(--border);border-radius:14px;
+  font-family:'Sora',sans-serif;font-size:1.7rem;font-weight:700;color:var(--navy);
+  text-align:center;outline:none;transition:all .22s;background:#f8fbff;
+}
+.code-input:focus{border-color:var(--teal);background:white;box-shadow:0 0 0 4px rgba(14,165,160,.12)}
+.code-input.filled{border-color:var(--teal);background:#f0fdf9}
+/* Buttons */
+.btn-submit{
+  width:100%;padding:13px;background:linear-gradient(135deg,#0ea5a0,#0d8c88);color:white;border:none;border-radius:14px;
+  font-family:'Sora',sans-serif;font-size:.92rem;font-weight:700;cursor:pointer;letter-spacing:.3px;
+  box-shadow:0 8px 24px rgba(14,165,160,.35);transition:all .22s;display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.btn-submit:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 12px 32px rgba(14,165,160,.45)}
+.btn-submit:disabled{opacity:.5;cursor:not-allowed}
+/* Alerts */
+.alert-msg{padding:12px 14px;border-radius:12px;font-size:.84rem;font-weight:600;margin-bottom:18px;display:flex;align-items:flex-start;gap:10px;animation:slideIn .3s ease}
+.alert-error{background:var(--error-bg);border:1px solid var(--error-border);border-left:4px solid var(--error-left);color:var(--error-text)}
+.alert-success{background:var(--success-bg);border:1px solid var(--success-border);border-left:4px solid var(--success-left);color:var(--success-text)}
+.alert-msg i{font-size:1rem;flex-shrink:0;margin-top:1px}
+/* Timer */
+.resend-zone{text-align:center;margin-top:18px;font-size:.82rem;color:var(--muted)}
+.timer-bar-wrap{background:#f1f5f9;border-radius:50px;height:5px;margin:10px 0 14px;overflow:hidden}
+.timer-bar{height:100%;border-radius:50px;background:linear-gradient(90deg,var(--teal),var(--navy-mid));transition:width 1s linear}
+.resend-btn{background:none;border:none;color:var(--teal);font-weight:700;font-size:.82rem;cursor:pointer;text-decoration:underline;padding:0;font-family:'DM Sans',sans-serif}
+.resend-btn:disabled{color:var(--muted);cursor:not-allowed;text-decoration:none}
+.spin{animation:spin .8s linear infinite}
+/* Corner badge */
+.corner-badge{position:absolute;top:24px;right:28px;display:flex;align-items:center;gap:6px;font-size:.68rem;color:var(--muted)}
+.online-dot{width:7px;height:7px;border-radius:50%;background:#22c55e;box-shadow:0 0 0 2px rgba(34,197,94,.2);animation:pulse-ring 2s ease-in-out infinite}
+
+/* ─── MODAL ADMIN SETUP — estilos en modal_admin_setup.html ─── */
+
+@media(max-width:768px){
+  .left-panel{display:none}
+  .right-panel{width:100%;min-height:100vh}
+  .right-inner{padding:32px 20px}
+  .code-input{width:46px;height:54px;font-size:1.4rem}
+  .code-wrap{gap:7px}
+}
+@media(max-width:400px){
+  .code-input{width:40px;height:50px;font-size:1.25rem}
+  .code-wrap{gap:5px}
+}
+</style>
+</head>
+<body>
+<div class="left-panel">
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+  <div class="brand-section">
+    <div class="logo-ring">
+      <img class="logo-img" src="/static/icons/icon-192.png" alt="Logo COSFA" onerror="this.style.background='#1a6a5a'">
+    </div>
+    <div class="brand-name">COSFA CURE</div>
+    <p class="brand-sub">Verifica tu identidad con el código enviado a tu correo.</p>
+  </div>
+</div>
+
+<div class="right-panel">
+  <div class="corner-badge"><div class="online-dot"></div> Sistema en línea</div>
+  <div class="right-inner">
+    <div class="form-header">
+      <h2>Verificar código</h2>
+      <p>Ingresa el código de 6 dígitos enviado a:</p>
+      <div class="email-badge"><i class="bi bi-envelope-fill"></i> {{ email }}</div>
+      <p style="margin-top:10px;font-size:.75rem;color:var(--muted)">Revisa también tu carpeta de spam. El código expira en <strong>10 minutos</strong>.</p>
+    </div>
+
+    <div class="form-body">
+      <div id="django-messages">
+        {% if messages %}
+          {% for message in messages %}
+            <div class="alert-msg {% if 'exitosamente' in message.tags or message.level == 25 %}alert-success{% else %}alert-error{% endif %}">
+              <i class="bi {% if 'exitosamente' in message.tags or message.level == 25 %}bi-check-circle-fill{% else %}bi-x-octagon-fill{% endif %}"></i>
+              <div>{{ message }}</div>
+            </div>
+          {% endfor %}
+        {% endif %}
+      </div>
+
+      <div id="flash-msg" style="display:none"></div>
+
+      <form method="post" id="verify-form">
+        {% csrf_token %}
+        <input type="hidden" name="codigo" id="codigo-hidden">
+
+        <div class="code-wrap">
+          <input type="text" class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="one-time-code">
+          <input type="text" class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]">
+          <input type="text" class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]">
+          <input type="text" class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]">
+          <input type="text" class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]">
+          <input type="text" class="code-input" maxlength="1" inputmode="numeric" pattern="[0-9]">
+        </div>
+
+        <button type="submit" class="btn-submit" id="submit-btn" disabled>
+          <i class="bi bi-check-circle-fill"></i> Verificar y crear cuenta
+        </button>
+      </form>
+
+      <div class="resend-zone">
+        <div id="timer-text">El código expira en <strong id="countdown">10:00</strong></div>
+        <div class="timer-bar-wrap"><div class="timer-bar" id="timer-bar" style="width:100%"></div></div>
+        <div id="resend-area">
+          ¿No llegó el correo?
+          <button class="resend-btn" id="resend-btn" onclick="reenviarCodigo()" disabled>
+            Reenviar código (espera <span id="resend-wait">60</span>s)
+          </button>
+        </div>
+        <div style="margin-top:10px;font-size:.75rem">
+          ¿Quieres cambiar el correo? <a href="{% url 'registro_usuario' %}" style="color:var(--teal);font-weight:700;text-decoration:none">Volver al registro</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const inputs = document.querySelectorAll('.code-input');
+  const hidden = document.getElementById('codigo-hidden');
+  const btn    = document.getElementById('submit-btn');
+
+  function update(){
+    const val = Array.from(inputs).map(i=>i.value).join('');
+    hidden.value = val;
+    btn.disabled = val.length < 6;
+    inputs.forEach(i => i.classList.toggle('filled', !!i.value));
+  }
+  inputs.forEach((inp,idx) => {
+    inp.addEventListener('input', function(){
+      this.value = this.value.replace(/[^0-9]/g,'').slice(-1);
+      update();
+      if(this.value && idx < inputs.length-1) inputs[idx+1].focus();
+    });
+    inp.addEventListener('keydown', function(e){
+      if(e.key==='Backspace' && !this.value && idx > 0) inputs[idx-1].focus();
+    });
+    inp.addEventListener('paste', function(e){
+      e.preventDefault();
+      const text = (e.clipboardData||window.clipboardData).getData('text').replace(/\D/g,'').slice(0,6);
+      text.split('').forEach((ch,i)=>{ if(inputs[i]) inputs[i].value=ch; });
+      update();
+      inputs[Math.min(text.length, inputs.length-1)].focus();
+    });
+  });
+  inputs[0].focus();
+
+  const TOTAL = 600;
+  let remaining = TOTAL, resendCooldown = 60;
+  const countdownEl = document.getElementById('countdown');
+  const timerBar    = document.getElementById('timer-bar');
+  const resendBtn   = document.getElementById('resend-btn');
+  const timerText   = document.getElementById('timer-text');
+  let resendWaitEl  = document.getElementById('resend-wait');
+
+  function fmt(s){ const m=Math.floor(s/60),sec=s%60; return `${m}:${sec.toString().padStart(2,'0')}`; }
+
+  const tick = setInterval(()=>{
+    remaining--;
+    resendCooldown = Math.max(0, resendCooldown-1);
+    countdownEl.textContent = fmt(remaining);
+    timerBar.style.width = ((remaining/TOTAL)*100)+'%';
+    if(remaining < 60){ timerBar.style.background='#ef4444'; }
+    else if(remaining < 180){ timerBar.style.background='#f59e0b'; }
+    if(resendCooldown > 0){
+      resendWaitEl = document.getElementById('resend-wait');
+      if(resendWaitEl) resendWaitEl.textContent = resendCooldown;
+    } else {
+      resendBtn.disabled = false;
+      resendBtn.textContent = 'Reenviar código';
+    }
+    if(remaining <= 0){
+      clearInterval(tick);
+      countdownEl.textContent = '0:00';
+      timerBar.style.width = '0%';
+      timerText.innerHTML = '<strong style="color:#ef4444">⚠️ Código expirado.</strong>';
+      btn.disabled = true;
+      document.getElementById('resend-area').innerHTML =
+        'Código expirado. <a href="/registro/" style="color:var(--teal);font-weight:700;text-decoration:none">Regístrate de nuevo</a>';
+    }
+  }, 1000);
+
+  window.reenviarCodigo = function(){
+    const flashEl = document.getElementById('flash-msg');
+    resendBtn.disabled = true;
+    resendBtn.innerHTML = '<i class="bi bi-arrow-repeat" style="animation:spin .8s linear infinite;display:inline-block"></i> Enviando...';
+
+    fetch("{% url 'reenviar_codigo' %}", {
+      method:'POST',
+      headers:{'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value, 'Content-Type':'application/json'},
+    })
+    .then(r=>r.json())
+    .then(data=>{
+      if(data.ok){
+        flashEl.className='alert-msg alert-success';
+        flashEl.innerHTML='<i class="bi bi-check-circle-fill"></i><div>'+data.msg+'</div>';
+        remaining = TOTAL; resendCooldown = 60;
+        resendBtn.innerHTML = 'Reenviar código (espera <span id="resend-wait">60</span>s)';
+        timerBar.style.background = 'linear-gradient(90deg,var(--teal),var(--navy-mid))';
+        timerText.innerHTML = 'El código expira en <strong id="countdown">10:00</strong>';
+        inputs.forEach(i=>{i.value=''; i.classList.remove('filled');}); inputs[0].focus(); update();
+      } else {
+        flashEl.className='alert-msg alert-error';
+        flashEl.innerHTML='<i class="bi bi-x-octagon-fill"></i><div>'+data.error+'</div>';
+        const match = data.error.match(/(\d+)s/);
+        resendCooldown = match ? parseInt(match[1]) : 60;
+      }
+      flashEl.style.display='flex';
+      setTimeout(()=>{ flashEl.style.display='none'; }, 6000);
+    })
+    .catch(()=>{
+      flashEl.className='alert-msg alert-error';
+      flashEl.innerHTML='<i class="bi bi-wifi-off"></i><div>Error de red. Intenta de nuevo.</div>';
+      flashEl.style.display='flex'; resendCooldown = 10;
+    });
+  };
+})();
+</script>
+
+</body>
+</html>

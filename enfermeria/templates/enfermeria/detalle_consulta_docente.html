@@ -1,0 +1,319 @@
+{% extends 'enfermeria/base.html' %}
+{% block title %}Consulta Docente #{{ consulta.pk }} — COSFA CURE{% endblock %}
+{% block page_title %}Detalle Consulta Docente{% endblock %}
+{% block content %}
+
+<style>
+@keyframes slideUp { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:none} }
+@keyframes pulse2  { 0%,100%{transform:scale(1)} 50%{transform:scale(1.06)} }
+
+.dc-wrap { max-width:720px; margin:0 auto; display:flex; flex-direction:column; gap:16px; }
+
+/* Hero — mismo que estudiante pero gradiente morado */
+.dc-hero {
+  background:linear-gradient(135deg,#0f2444 0%,#5b21b6 100%);
+  border-radius:20px; padding:22px 24px;
+  display:flex; align-items:center; gap:18px;
+  position:relative; overflow:hidden;
+  animation:slideUp .4s ease;
+}
+.dc-hero::before {
+  content:''; position:absolute; inset:0;
+  background:radial-gradient(circle at 80% 50%,rgba(255,255,255,.06) 0%,transparent 60%);
+}
+.dc-hero-av-ph { width:62px;height:62px;border-radius:50%;background:rgba(255,255,255,.18);border:3px solid rgba(255,255,255,.35);display:flex;align-items:center;justify-content:center;font-size:1.6rem;flex-shrink:0; }
+.dc-hero-info { flex:1;min-width:0;position:relative; }
+.dc-hero-name { font-size:1.15rem;font-weight:800;color:white;margin-bottom:5px; }
+.dc-hero-meta { display:flex;gap:7px;align-items:center;flex-wrap:wrap; }
+.dc-hero-actions { display:flex;gap:8px;align-items:center;flex-wrap:wrap;position:relative; }
+
+.badge-pill { display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border-radius:20px;font-size:.72rem;font-weight:700; }
+.pill-green  { background:#dcfce7;color:#166534;border:1px solid #86efac; }
+.pill-blue   { background:#dbeafe;color:#1e40af;border:1px solid #93c5fd; }
+.pill-purple { background:#ede9fe;color:#5b21b6;border:1px solid #c4b5fd; }
+.pill-red    { background:#fee2e2;color:#991b1b;border:1px solid #fca5a5; }
+.pill-orange { background:#ffedd5;color:#9a3412;border:1px solid #fdba74; }
+.pill-white  { background:rgba(255,255,255,.18);color:white;border:1px solid rgba(255,255,255,.3); }
+
+/* Action bar — idéntica a estudiante, una sola fila */
+.action-bar {
+  position:sticky;top:0;z-index:50;
+  background:rgba(255,255,255,.94);backdrop-filter:blur(12px);
+  border-bottom:1px solid #e8eef6;
+  padding:10px 0;margin-bottom:4px;
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  flex-wrap:nowrap;
+}
+.action-bar-right { display:flex;gap:7px;align-items:center;flex-wrap:nowrap; }
+.btn-action { display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:10px;font-size:.81rem;font-weight:700;cursor:pointer;transition:all .2s;text-decoration:none;border:none;white-space:nowrap; }
+.btn-edit   { background:white;border:1.5px solid #e2e8f0 !important;color:#374151; }
+.btn-back   { background:white;border:1.5px solid #e2e8f0 !important;color:#374151; }
+.btn-delete { background:white;border:1.5px solid #fca5a5 !important;color:#dc2626; }
+.btn-action:hover { transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.15); }
+
+.dc-id-badge {
+  display:inline-flex;align-items:center;gap:8px;
+  background:linear-gradient(135deg,#0f2444,#5b21b6);
+  color:white;padding:6px 14px;border-radius:12px;
+  font-size:.9rem;font-weight:800;letter-spacing:.3px;
+}
+.dc-id-num { font-size:1.15rem;font-weight:900;color:#c4b5fd; }
+
+/* Sections — idénticas a estudiante */
+.dc-section { background:white;border-radius:16px;border:1px solid #e8eef6;box-shadow:0 2px 12px rgba(0,0,0,.05);overflow:hidden;animation:slideUp .4s ease both; }
+.dc-section-head { padding:13px 18px 10px;border-bottom:1px solid #f1f5fb;display:flex;align-items:center;gap:10px; }
+.dc-section-icon { width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0; }
+.dc-section-title { font-size:.82rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#374151; }
+.dc-section-body { padding:16px 18px; }
+
+/* Vitals — idénticos */
+.vitals-grid { display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:10px; }
+.vital-card { background:linear-gradient(135deg,#f8faff,#eef4ff);border:1px solid #dbeafe;border-radius:13px;padding:12px 10px;text-align:center;transition:all .2s;cursor:default;position:relative;overflow:hidden; }
+.vital-card:hover { transform:translateY(-3px);box-shadow:0 8px 20px rgba(91,33,182,.15);border-color:#c4b5fd; }
+.vital-card::after { content:'';position:absolute;bottom:0;left:0;right:0;height:3px;border-radius:0 0 13px 13px; }
+.vital-card.temp::after { background:linear-gradient(90deg,#ef4444,#f97316); }
+.vital-card.pres::after { background:linear-gradient(90deg,#8b5cf6,#6366f1); }
+.vital-card.card::after { background:linear-gradient(90deg,#ec4899,#f43f5e); }
+.vital-card.resp::after { background:linear-gradient(90deg,#14b8a6,#06b6d4); }
+.vital-card.peso::after { background:linear-gradient(90deg,#f59e0b,#eab308); }
+.vital-card.tall::after { background:linear-gradient(90deg,#22c55e,#16a34a); }
+.vital-label { font-size:.65rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:#6b7280;margin-bottom:4px; }
+.vital-value { font-size:1.3rem;font-weight:900;color:#0f2444;line-height:1; }
+.vital-unit  { font-size:.63rem;color:#9ca3af;margin-top:2px; }
+.vital-card.temp.fever .vital-value { color:#dc2626;animation:pulse2 1.5s infinite; }
+
+/* Med chip — idéntico */
+.med-chip { display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,#d1fae5,#ecfdf5);border:1px solid #6ee7b7;border-radius:12px;padding:11px 14px;transition:all .2s; }
+.med-chip:hover { transform:translateX(4px);border-color:#34d399; }
+.med-name   { font-weight:700;font-size:.88rem;color:#065f46; }
+.med-detail { font-size:.76rem;color:#047857; }
+
+/* Info grid */
+.info-2col { display:grid;grid-template-columns:1fr 1fr;gap:12px; }
+.info-label { font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#9ca3af;margin-bottom:3px; }
+
+@media(max-width:500px) { .vitals-grid{grid-template-columns:repeat(3,1fr)} .dc-hero{flex-wrap:wrap} .info-2col{grid-template-columns:1fr} }
+</style>
+
+<!-- Modal eliminar -->
+<div id="modal-eliminar" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center">
+  <div style="background:white;border-radius:16px;padding:28px;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+      <span style="background:#fef2f2;border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0">🗑️</span>
+      <div>
+        <div style="font-weight:800;color:#b91c1c;font-size:.95rem">¿Eliminar esta consulta?</div>
+        <div style="font-size:.78rem;color:#64748b">Esta acción no se puede deshacer.</div>
+      </div>
+    </div>
+    <form method="post" action="{% url 'eliminar_consulta_docente' consulta.pk %}">
+      {% csrf_token %}
+      <div style="display:flex;gap:8px;margin-top:4px">
+        <button type="submit" style="flex:1;padding:11px;background:#dc2626;color:white;border:none;border-radius:10px;font-weight:700;font-size:.86rem;cursor:pointer"><i class="bi bi-trash-fill"></i> Sí, eliminar</button>
+        <button type="button" onclick="cerrarModal()" style="flex:1;padding:11px;background:#f1f5f9;color:#374151;border:1.5px solid #e2e8f0;border-radius:10px;font-weight:700;font-size:.86rem;cursor:pointer">Cancelar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="dc-wrap">
+
+  <!-- Barra acción sticky -->
+  <div class="action-bar">
+    <div style="display:flex;align-items:center;gap:10px">
+      <div class="dc-id-badge">
+        <i class="bi bi-person-badge-fill"></i>
+        Consulta Docente &nbsp;<span class="dc-id-num">#{{ consulta.pk }}</span>
+      </div>
+    </div>
+    <div class="action-bar-right">
+      <a href="{% url 'editar_consulta_docente' consulta.pk %}" class="btn-action btn-edit"><i class="bi bi-pencil"></i> Editar</a>
+      <button type="button" class="btn-action btn-delete" onclick="abrirModal()"><i class="bi bi-trash"></i> Eliminar</button>
+      <a href="{% url 'lista_consultas_docentes' %}" class="btn-action btn-back"><i class="bi bi-arrow-left"></i> Volver</a>
+    </div>
+  </div>
+
+  <!-- Hero -->
+  <div class="dc-hero">
+    <div class="dc-hero-av-ph"><i class="bi bi-person-badge-fill" style="color:rgba(255,255,255,.8)"></i></div>
+    <div class="dc-hero-info">
+      <div class="dc-hero-name">{{ consulta.nombre_completo }}</div>
+      <div class="dc-hero-meta">
+        <span class="badge-pill pill-purple" style="background:rgba(196,181,253,.25);color:#e9d5ff;border-color:rgba(196,181,253,.3)">{{ consulta.area_grado }}</span>
+        <span style="color:rgba(255,255,255,.55);font-size:.72rem"><i class="bi bi-calendar3"></i> {{ consulta.fecha_hora|date:"d/m/Y" }}</span>
+        {% if consulta.hora_atencion %}
+        <span style="color:rgba(255,255,255,.7);font-size:.72rem;background:rgba(255,255,255,.12);padding:2px 8px;border-radius:8px;border:1px solid rgba(255,255,255,.2)"><i class="bi bi-clock-fill"></i> Atención: {{ consulta.hora_atencion|time:"H:i" }}</span>
+        {% endif %}
+      </div>
+    </div>
+    <div class="dc-hero-actions">
+      {% if consulta.estado == 'remitido_hospital' %}<span class="badge-pill pill-red"><i class="bi bi-hospital"></i> Remitido hospital</span>
+      {% elif consulta.estado == 'remitido_casa' %}<span class="badge-pill pill-orange"><i class="bi bi-house"></i> A casa</span>
+      {% elif consulta.estado == 'regreso_clase' %}<span class="badge-pill pill-green"><i class="bi bi-mortarboard"></i> Regreso a clase</span>
+      {% elif consulta.estado == 'atendido' %}<span class="badge-pill pill-green"><i class="bi bi-check-circle"></i> Atendido</span>
+      {% endif %}
+      <span class="badge-pill pill-white"><i class="bi bi-person-badge-fill"></i> Docente</span>
+    </div>
+  </div>
+
+  <!-- Datos del docente -->
+  <div class="dc-section" style="animation-delay:.1s">
+    <div class="dc-section-head">
+      <div class="dc-section-icon" style="background:linear-gradient(135deg,#ede9fe,#ddd6fe)"><i class="bi bi-person-badge-fill" style="color:#7c3aed"></i></div>
+      <span class="dc-section-title">Datos del Docente</span>
+    </div>
+    <div class="dc-section-body">
+      <div class="info-2col">
+        <div style="grid-column:1/-1">
+          <div class="info-label">Área / Grado que atiende</div>
+          <div style="margin-top:4px;background:linear-gradient(135deg,#ede9fe,#f5f3ff);border-radius:10px;padding:10px 14px;font-size:.92rem;font-weight:700;color:#5b21b6;border-left:3px solid #7c3aed">{{ consulta.area_grado }}</div>
+        </div>
+        <div>
+          <div class="info-label">Cédula</div>
+          <div style="font-weight:600;font-size:.88rem;color:#1e293b;margin-top:2px">{{ consulta.cedula }}</div>
+        </div>
+        <div>
+          <div class="info-label">Tipo</div>
+          <div style="font-weight:600;font-size:.88rem;color:#1e293b;margin-top:2px">{{ consulta.tipo }}</div>
+        </div>
+        {% if consulta.eps %}
+        <div>
+          <div class="info-label">EPS</div>
+          <div style="font-weight:600;font-size:.88rem;color:#1e293b;margin-top:2px">{{ consulta.eps }}</div>
+        </div>
+        {% endif %}
+        {% if consulta.edad %}
+        <div>
+          <div class="info-label">Edad</div>
+          <div style="font-weight:600;font-size:.88rem;color:#1e293b;margin-top:2px">{{ consulta.edad }} años</div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Signos vitales -->
+  {% if consulta.temperatura or consulta.presion_arterial or consulta.frecuencia_cardiaca or consulta.frecuencia_respiratoria or consulta.peso or consulta.talla %}
+  <div class="dc-section" style="animation-delay:.13s">
+    <div class="dc-section-head">
+      <div class="dc-section-icon" style="background:linear-gradient(135deg,#fee2e2,#fecaca)"><i class="bi bi-heart-pulse-fill" style="color:#dc2626"></i></div>
+      <span class="dc-section-title">Signos Vitales</span>
+      {% if consulta.temperatura and consulta.temperatura >= 38 %}
+      <span style="margin-left:auto;background:#fee2e2;color:#dc2626;font-size:.7rem;font-weight:700;padding:3px 10px;border-radius:20px;border:1px solid #fca5a5"><i class="bi bi-thermometer-high"></i> Temperatura elevada</span>
+      {% endif %}
+    </div>
+    <div class="dc-section-body">
+      <div class="vitals-grid">
+        {% if consulta.temperatura %}
+        <div class="vital-card temp {% if consulta.temperatura >= 38 %}fever{% endif %}">
+          <i class="bi bi-thermometer-half" style="font-size:.95rem;display:block;margin-bottom:4px;color:#ef4444"></i>
+          <div class="vital-label">Temperatura</div>
+          <div class="vital-value">{{ consulta.temperatura }}</div>
+          <div class="vital-unit">°C</div>
+        </div>{% endif %}
+        {% if consulta.presion_arterial %}
+        <div class="vital-card pres">
+          <i class="bi bi-activity" style="font-size:.95rem;display:block;margin-bottom:4px;color:#8b5cf6"></i>
+          <div class="vital-label">Presión</div>
+          <div class="vital-value" style="font-size:1rem">{{ consulta.presion_arterial }}</div>
+          <div class="vital-unit">mmHg</div>
+        </div>{% endif %}
+        {% if consulta.frecuencia_cardiaca %}
+        <div class="vital-card card">
+          <i class="bi bi-heart-fill" style="font-size:.95rem;display:block;margin-bottom:4px;color:#ec4899"></i>
+          <div class="vital-label">F. Cardíaca</div>
+          <div class="vital-value">{{ consulta.frecuencia_cardiaca }}</div>
+          <div class="vital-unit">lpm</div>
+        </div>{% endif %}
+        {% if consulta.frecuencia_respiratoria %}
+        <div class="vital-card resp">
+          <i class="bi bi-wind" style="font-size:.95rem;display:block;margin-bottom:4px;color:#14b8a6"></i>
+          <div class="vital-label">F. Resp.</div>
+          <div class="vital-value">{{ consulta.frecuencia_respiratoria }}</div>
+          <div class="vital-unit">rpm</div>
+        </div>{% endif %}
+        {% if consulta.peso %}
+        <div class="vital-card peso">
+          <i class="bi bi-speedometer2" style="font-size:.95rem;display:block;margin-bottom:4px;color:#f59e0b"></i>
+          <div class="vital-label">Peso</div>
+          <div class="vital-value">{{ consulta.peso }}</div>
+          <div class="vital-unit">kg</div>
+        </div>{% endif %}
+        {% if consulta.talla %}
+        <div class="vital-card tall">
+          <i class="bi bi-arrows-vertical" style="font-size:.95rem;display:block;margin-bottom:4px;color:#22c55e"></i>
+          <div class="vital-label">Talla</div>
+          <div class="vital-value">{{ consulta.talla }}</div>
+          <div class="vital-unit">cm</div>
+        </div>{% endif %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Motivo clínico -->
+  <div class="dc-section" style="animation-delay:.16s">
+    <div class="dc-section-head">
+      <div class="dc-section-icon" style="background:linear-gradient(135deg,#dbeafe,#bfdbfe)"><i class="bi bi-stethoscope" style="color:#1d4ed8"></i></div>
+      <span class="dc-section-title">Motivo Clínico</span>
+    </div>
+    <div class="dc-section-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div>
+          <div class="info-label">Motivo</div>
+          <div style="font-weight:600;margin-top:3px;font-size:.88rem;color:#1e293b">{{ consulta.get_motivo_display }}</div>
+        </div>
+        <div>
+          <div class="info-label">Estado</div>
+          <div style="margin-top:3px">
+            {% if consulta.estado == 'remitido_hospital' %}<span style="background:#fee2e2;color:#991b1b;padding:4px 10px;border-radius:20px;font-size:.75rem;font-weight:700">🚑 Remitido hospital</span>
+            {% elif consulta.estado == 'remitido_casa' %}<span style="background:#fef3c7;color:#92400e;padding:4px 10px;border-radius:20px;font-size:.75rem;font-weight:700">🏠 A casa</span>
+            {% elif consulta.estado == 'regreso_clase' %}<span style="background:#dbeafe;color:#1e40af;padding:4px 10px;border-radius:20px;font-size:.75rem;font-weight:700">📚 Regreso a clase</span>
+            {% elif consulta.estado == 'atendido' %}<span style="background:#d1fae5;color:#065f46;padding:4px 10px;border-radius:20px;font-size:.75rem;font-weight:700">✅ Atendido</span>
+            {% endif %}
+          </div>
+        </div>
+        <div style="grid-column:1/-1">
+          <div class="info-label" style="margin-bottom:5px">Descripción de síntomas</div>
+          <div style="background:#f8fafc;border-radius:10px;padding:11px 14px;font-size:.855rem;line-height:1.65;border-left:3px solid #93c5fd;color:#1e293b">{{ consulta.descripcion_sintomas|default:"No registrado" }}</div>
+        </div>
+        <div style="grid-column:1/-1">
+          <div class="info-label" style="margin-bottom:5px">Tratamiento aplicado</div>
+          <div style="background:#f8fafc;border-radius:10px;padding:11px 14px;font-size:.855rem;line-height:1.65;border-left:3px solid #6ee7b7;color:#1e293b">{{ consulta.tratamiento|default:"No registrado" }}</div>
+        </div>
+        {% if consulta.observaciones %}
+        <div style="grid-column:1/-1">
+          <div class="info-label" style="margin-bottom:5px">Observaciones</div>
+          <div style="background:#fffbeb;border-radius:10px;padding:11px 14px;font-size:.855rem;line-height:1.65;border-left:3px solid #fbbf24;color:#1e293b">{{ consulta.observaciones }}</div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Medicamentos / Insumos -->
+  {% if consulta.medicamento_suministrado %}
+  <div class="dc-section" style="animation-delay:.2s">
+    <div class="dc-section-head">
+      <div class="dc-section-icon" style="background:linear-gradient(135deg,#d1fae5,#a7f3d0)"><i class="bi bi-capsule-pill" style="color:#065f46"></i></div>
+      <span class="dc-section-title">Insumos Suministrados</span>
+    </div>
+    <div class="dc-section-body" style="display:flex;flex-direction:column;gap:8px">
+      <div class="med-chip">
+        <i class="bi bi-capsule-pill" style="font-size:1.2rem;color:#059669"></i>
+        <div>
+          <div class="med-name">{{ consulta.medicamento_suministrado }}</div>
+          {% if consulta.dosis %}<div class="med-detail">{{ consulta.dosis }}{% if consulta.cantidad_usada %} · {{ consulta.cantidad_usada }} unidad(es){% endif %}</div>{% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+
+<script>
+function abrirModal(){ document.getElementById('modal-eliminar').style.display='flex'; }
+function cerrarModal(){ document.getElementById('modal-eliminar').style.display='none'; }
+document.getElementById('modal-eliminar').addEventListener('click',function(e){ if(e.target===this) cerrarModal(); });
+</script>
+{% endblock %}

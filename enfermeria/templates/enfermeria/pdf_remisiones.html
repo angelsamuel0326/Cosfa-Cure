@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Registro de Remisiones — COSFA CURE</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'Segoe UI',Arial,sans-serif;font-size:10px;color:#1e2a3a;background:#fff;padding:22px}
+  .header{display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid #e8954a;padding-bottom:10px;margin-bottom:16px}
+  .header-left h1{font-size:16px;font-weight:800;color:#1e4a5a}
+  .header-left p{font-size:9px;color:#64748b;margin-top:2px}
+  .header-right{text-align:right;font-size:9px;color:#64748b}
+  table{width:100%;border-collapse:collapse}
+  th{background:#e8954a;color:white;padding:5px 8px;text-align:left;font-size:8.5px;font-weight:700;text-transform:uppercase}
+  td{padding:4px 8px;border-bottom:1px solid #fef3c7;font-size:9px;vertical-align:top}
+  tr:nth-child(even) td{background:#fffbf5}
+  .badge{display:inline-block;padding:1px 6px;border-radius:4px;font-size:8px;font-weight:700}
+  .badge-ok{background:#d1fae5;color:#065f46}
+  .badge-proc{background:#dbeafe;color:#1d4ed8}
+  .badge-pend{background:#fef3c7;color:#92400e}
+  .footer{margin-top:16px;border-top:1px solid #e2e8f0;padding-top:6px;text-align:center;font-size:8.5px;color:#94a3b8}
+  @media print{body{padding:0} @page{margin:14mm 12mm;size:landscape}}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-left">
+    <h1>🏥 Registro de Remisiones — COSFA CURE</h1>
+    <p>Sistema de Enfermería Escolar · Generado el {{ fecha_impresion|date:"d/m/Y" }}</p>
+  </div>
+  <div class="header-right">
+    <strong>COSFA CURE</strong><br>Total: {{ remisiones|length }} remisión{{ remisiones|length|pluralize:",es" }}
+  </div>
+</div>
+<table>
+  <thead>
+    <tr>
+      <th style="width:10%">Fecha</th>
+      <th style="width:18%">Estudiante</th>
+      <th style="width:6%">Grado</th>
+      <th style="width:20%">Motivo</th>
+      <th style="width:16%">Hospital / Clínica</th>
+      <th style="width:10%">EPS</th>
+      <th style="width:10%">Acompañante</th>
+      <th style="width:6%">Hora</th>
+      <th style="width:8%">Estado</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for r in remisiones %}<tr>
+      <td>{{ r.fecha_hora|date:"d/m/Y" }}</td>
+      <td><strong>{{ r.estudiante.nombre }}</strong><br><span style="color:#64748b">Doc: {{ r.estudiante.numero_documento }}</span></td>
+      <td style="text-align:center">{{ r.estudiante.grado }}</td>
+      <td style="font-size:8.5px">{{ r.motivo|truncatechars:90 }}</td>
+      <td><strong>{{ r.hospital_destino }}</strong></td>
+      <td>{{ r.eps|default:"—" }}</td>
+      <td>{{ r.acompanante }}</td>
+      <td>{{ r.hora_salida|time:"g:i A" }}</td>
+      <td>
+        {% if r.estado == 'resuelto' %}<span class="badge badge-ok">Resuelto</span>
+        {% elif r.estado == 'en_proceso' %}<span class="badge badge-proc">En proceso</span>
+        {% else %}<span class="badge badge-pend">Pendiente</span>{% endif %}
+      </td>
+    </tr>{% empty %}
+    <tr><td colspan="9" style="text-align:center;color:#94a3b8;padding:20px">Sin remisiones registradas</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+<div class="footer">COSFA CURE — Registro de Remisiones · {{ fecha_impresion|date:"d/m/Y" }} · Uso interno</div>
+<script>window.onload = function(){ window.print(); }</script>
+</body>
+</html>
