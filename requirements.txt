@@ -1,4 +1,4 @@
-# COSFA CURE v17 — Dependencias
+# COSFA CURE — Dependencias
 # Instalar con: pip install -r requirements.txt
 
 # Framework principal
@@ -25,3 +25,5 @@ python-dotenv>=1.0
 #   0 7 * * * python manage.py alerta_vencimientos
 #   0 3 * * * python manage.py limpiar_otp
 python-decouple>=3.8
+gunicorn
+whitenoise
