@@ -184,15 +184,15 @@ def registro_usuario(request):
                 message=f'Tu código de verificación es: {codigo}\nVigencia: 10 minutos.',
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[email],
-                fail_silently=False,
+                fail_silently=True,
             )
-        except Exception as e:
-            messages.error(request, f'No se pudo enviar el correo: {e}')
+             request.session['registro_email'] = email
+             messages.success(request, f'Código enviado a {email}')
+             return redirect('verificar_codigo')
+             except Exception as e:
+             messages.error(request, f'No se pudo enviar el correo: {e}')
             return render(request, 'enfermeria/registro.html')
 
-        request.session['registro_email'] = email
-        messages.success(request, f'Código enviado a {email}')
-        return redirect('verificar_codigo')
 
     es_primer = User.objects.count() == 0
     return render(request, 'enfermeria/registro.html', {'es_primer_usuario': es_primer})
