@@ -177,21 +177,26 @@ def registro_usuario(request):
         CodigoVerificacion.objects.filter(email=email).delete()
         CodigoVerificacion.objects.create(email=email, username=username, password=hashed, codigo=codigo)
 
-        # Enviar correo
-        try:
-            send_mail(
-                subject='COSFA CURE – Código de verificación',
-                message=f'Tu código de verificación es: {codigo}\nVigencia: 10 minutos.',
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[email],
-                fail_silently=True,
-            )
-            request.session['registro_email'] = email
-            messages.success(request, f'Código enviado a {email}')
-            return redirect('verificar_codigo')
-        except Exception as e:
-            messages.error(request, f'No se pudo enviar el correo: {e}')
-            return render(request, 'enfermeria/registro.html')
+        # Enviar correo en hilo separado para no bloquear el servidor
+        import threading
+        def enviar_correo():
+            try:
+                send_mail(
+                    subject='COSFA CURE – Código de verificación',
+                    message=f'Tu código de verificación es: {codigo}\nVigencia: 10 minutos.',
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[email],
+                    fail_silently=True,
+                )
+            except Exception:
+                pass
+
+        t = threading.Thread(target=enviar_correo, daemon=True)
+        t.start()
+
+        request.session['registro_email'] = email
+        messages.success(request, f'Código enviado a {email}')
+        return redirect('verificar_codigo')
 
 
     es_primer = User.objects.count() == 0
