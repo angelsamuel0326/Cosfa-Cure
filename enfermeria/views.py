@@ -178,7 +178,7 @@ def registro_usuario(request):
         CodigoVerificacion.objects.create(email=email, username=username, password=hashed, codigo=codigo)
 
         # Enviar correo
-       try:
+        try:
             send_mail(
                 subject='COSFA CURE – Código de verificación',
                 message=f'Tu código de verificación es: {codigo}\nVigencia: 10 minutos.',
