@@ -178,19 +178,19 @@ def registro_usuario(request):
         CodigoVerificacion.objects.create(email=email, username=username, password=hashed, codigo=codigo)
 
         # Enviar correo
-        try:
+       try:
             send_mail(
-                subject='COSFA CURE — Código de verificación',
+                subject='COSFA CURE – Código de verificación',
                 message=f'Tu código de verificación es: {codigo}\nVigencia: 10 minutos.',
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[email],
                 fail_silently=True,
             )
-             request.session['registro_email'] = email
-             messages.success(request, f'Código enviado a {email}')
-             return redirect('verificar_codigo')
-             except Exception as e:
-             messages.error(request, f'No se pudo enviar el correo: {e}')
+            request.session['registro_email'] = email
+            messages.success(request, f'Código enviado a {email}')
+            return redirect('verificar_codigo')
+        except Exception as e:
+            messages.error(request, f'No se pudo enviar el correo: {e}')
             return render(request, 'enfermeria/registro.html')
 
 
