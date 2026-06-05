@@ -5950,7 +5950,7 @@ def exportar_reporte_excel(request):
     ])) or 'Sin filtros — período completo'
 
     _title_row(ws1, 1, 4, 'COSFA CURE — Reporte Estadístico', filtro_txt)
-    ws1.cell(row=2, column=4, value=f'Generado: {hoy.strftime("%d/%m/%Y")}').font = Font(size=7, italic=True, color='999999')
+    ws1.cell(row=2, column=1, value=f'Generado: {hoy.strftime("%d/%m/%Y")}').font = Font(size=7, italic=True, color='999999')
 
     # KPIs
     total_consultas   = qs.count()
