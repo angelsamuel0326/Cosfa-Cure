@@ -145,7 +145,7 @@
        target="_blank" class="btn btn-outline btn-sm" style="border-color:#e05c5c;color:#e05c5c">
       <i class="bi bi-file-earmark-pdf-fill"></i> Descargar PDF
     </a>
-    {Exportar Excel estadístico completo #}
+  
     <a href="{% url 'exportar_reporte_excel' %}?tipo={{ tipo|default:'estudiantes' }}&fecha_desde={{ fecha_desde }}&fecha_hasta={{ fecha_hasta }}&grado={{ grado_f }}&motivo={{ motivo_f }}"
        class="btn btn-outline btn-sm" style="border-color:#1a7a4a;color:#1a7a4a">
       <i class="bi bi-file-earmark-excel-fill"></i> Exportar Excel
