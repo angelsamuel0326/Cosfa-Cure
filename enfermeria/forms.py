@@ -96,6 +96,10 @@ class EstudianteForm(forms.ModelForm):
 
 
 class ConsultaForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['estudiante'].queryset = Estudiante.objects.filter(estado_academico='activo').order_by('grado','nombre')
+
     class Meta:
         model  = Consulta
         fields = ['estudiante','hora_atencion','motivo','descripcion_sintomas','tratamiento',
@@ -132,6 +136,10 @@ class ConsultaForm(forms.ModelForm):
 
 
 class RemisionForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['estudiante'].queryset = Estudiante.objects.filter(estado_academico='activo').order_by('grado','nombre')
+
     class Meta:
         model  = Remision
         fields = ['estudiante','eps','numero_eps','numero_contacto_eps','hora_salida','hora_llegada',
@@ -176,6 +184,10 @@ class RemisionForm(forms.ModelForm):
 
 
 class SeguimientoForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['estudiante'].queryset = Estudiante.objects.filter(estado_academico='activo').order_by('grado','nombre')
+
     class Meta:
         model  = Seguimiento
         fields = ['estudiante','tipo','fecha','fecha_fin','descripcion','completado']

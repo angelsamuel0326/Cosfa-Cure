@@ -730,7 +730,7 @@ def busqueda_global(request):
     q = request.GET.get('q', '').strip()
     resultados = {'estudiantes': [], 'consultas': [], 'medicamentos': []}
     if q:
-        resultados['estudiantes'] = Estudiante.objects.filter(
+        resultados['estudiantes'] = Estudiante.objects.filter(estado_academico='activo').filter(
             Q(nombre__icontains=q) | Q(numero_documento__icontains=q) | Q(grado__icontains=q))[:8]
         resultados['consultas'] = Consulta.objects.select_related('estudiante').filter(
             Q(estudiante__nombre__icontains=q) | Q(motivo__icontains=q) | Q(descripcion_sintomas__icontains=q))[:8]
@@ -831,7 +831,7 @@ def dashboard(request):
         'proximos_vencer':    proximos_vencer,
         'vencidos':           vencidos,
         'consultas_recientes':Consulta.objects.select_related('estudiante').order_by('-fecha_hora')[:6],
-        'alertas_medicas':    Estudiante.objects.filter(Q(alergias__gt='') | Q(condiciones_medicas__gt=''))[:4],
+        'alertas_medicas':    Estudiante.objects.filter(estado_academico='activo').filter(Q(alergias__gt='') | Q(condiciones_medicas__gt=''))[:4],
         'seguimientos_prox':  seguimientos_prox,
         'seguimientos_hoy':   seguimientos_hoy,
         'remisiones_pendientes': Remision.objects.filter(estado='pendiente').count(),
@@ -1109,21 +1109,6 @@ def eliminar_estudiante(request, pk):
         messages.success(request, f'Estudiante {nom} eliminado.')
         return redirect('lista_estudiantes')
     return render(request, 'enfermeria/confirmar_eliminar.html', {'objeto':est})
-
-
-@admin_required
-def cambiar_estado_estudiante(request, pk):
-    est = get_object_or_404(Estudiante, pk=pk)
-    if request.method == 'POST':
-        nuevo_estado = request.POST.get('estado_academico')
-        if nuevo_estado in dict(Estudiante.ESTADO_ACADEMICO_CHOICES):
-            estado_anterior = est.get_estado_academico_display()
-            est.estado_academico = nuevo_estado
-            est.save()
-            _log(request, 'editar', 'Estudiante', f'Estado cambiado de {estado_anterior} a {est.get_estado_academico_display()}: {est.nombre}')
-            messages.success(request, f'✅ Estado de {est.nombre} actualizado a {est.get_estado_academico_display()}.')
-        return redirect('lista_estudiantes')
-    return render(request, 'enfermeria/cambiar_estado_estudiante.html', {'estudiante': est})
 
 
 @login_required
