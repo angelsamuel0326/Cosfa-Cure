@@ -17,6 +17,7 @@ urlpatterns = [
     path('estudiantes/<int:pk>/editar/', views.editar_estudiante, name='editar_estudiante'),
     path('estudiantes/<int:pk>/historial/', views.historial_estudiante, name='historial_estudiante'),
     path('estudiantes/<int:pk>/eliminar/', views.eliminar_estudiante, name='eliminar_estudiante'),
+    path('estudiantes/<int:pk>/estado/', views.cambiar_estado_estudiante, name='cambiar_estado_estudiante'),
     path('estudiantes/<int:pk>/carnet/', views.carnet_pdf, name='carnet_pdf'),
     path('estudiantes/<int:pk>/pdf/', views.pdf_historial_estudiante, name='pdf_historial_estudiante'),
 

@@ -1,0 +1,51 @@
+{% extends 'enfermeria/base.html' %}
+{% block content %}
+<div style="max-width:480px;margin:40px auto;background:white;border-radius:16px;padding:32px;box-shadow:0 4px 20px rgba(0,0,0,.08)">
+
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px">
+    <div style="width:44px;height:44px;background:linear-gradient(135deg,#f59e0b,#d97706);border-radius:12px;display:flex;align-items:center;justify-content:center">
+      <i class="bi bi-arrow-repeat" style="color:white;font-size:1.2rem"></i>
+    </div>
+    <div>
+      <h2 style="font-size:1.1rem;font-weight:700;margin:0;color:#1e293b">Cambiar estado académico</h2>
+      <p style="color:#64748b;font-size:.85rem;margin:2px 0 0">{{ estudiante.nombre }}</p>
+    </div>
+  </div>
+
+  <div style="background:#f8fafc;border-radius:10px;padding:12px 16px;margin-bottom:20px;display:flex;gap:16px;font-size:.85rem">
+    <span><strong>Grado:</strong> {{ estudiante.grado }}</span>
+    <span><strong>Documento:</strong> {{ estudiante.numero_documento }}</span>
+  </div>
+
+  <form method="post">
+    {% csrf_token %}
+    <div style="margin-bottom:24px">
+      <label style="display:block;font-size:.75rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">
+        <i class="bi bi-tag"></i> Estado académico
+      </label>
+      <select name="estado_academico" style="width:100%;padding:12px 16px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:.95rem;color:#1e293b;background:white;outline:none">
+        {% for val, lbl in estudiante.ESTADO_ACADEMICO_CHOICES %}
+          <option value="{{ val }}" {% if estudiante.estado_academico == val %}selected{% endif %}>
+            {% if val == 'activo' %}✅{% elif val == 'graduado' %}🎓{% elif val == 'retirado' %}❌{% elif val == 'trasladado' %}🔄{% endif %}
+            {{ lbl }}
+          </option>
+        {% endfor %}
+      </select>
+      <p style="font-size:.78rem;color:#94a3b8;margin-top:8px">
+        <i class="bi bi-info-circle"></i>
+        Los estudiantes inactivos (Graduado, Retirado, Trasladado) no aparecen en la lista principal pero conservan todo su historial médico.
+      </p>
+    </div>
+
+    <div style="display:flex;gap:12px">
+      <button type="submit" style="flex:1;padding:12px;background:linear-gradient(135deg,#f59e0b,#d97706);color:white;border:none;border-radius:10px;font-weight:700;cursor:pointer;font-size:.9rem">
+        <i class="bi bi-check-lg"></i> Guardar cambio
+      </button>
+      <a href="{% url 'lista_estudiantes' %}" style="flex:1;padding:12px;border:1.5px solid #e2e8f0;border-radius:10px;text-align:center;color:#64748b;text-decoration:none;font-weight:600;font-size:.9rem;display:flex;align-items:center;justify-content:center;gap:6px">
+        <i class="bi bi-x-lg"></i> Cancelar
+      </a>
+    </div>
+  </form>
+
+</div>
+{% endblock %}
