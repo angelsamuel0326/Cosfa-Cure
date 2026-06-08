@@ -256,10 +256,7 @@
         <td onclick="event.stopPropagation()">
           <div class="stu-actions">
             <a href="{% url 'historial_estudiante' e.pk %}" class="stu-act stu-act-view" title="Ver historial"><i class="bi bi-clipboard2-pulse"></i></a>
-            {% if usuario_es_admin %}<a href="{% url 'nueva_consulta_estudiante' e.pk %}" class="stu-act stu-act-add" title="Nueva consulta"><i class="bi bi-plus-lg"></i></a>{% endif %}
-                {% if usuario_es_admin %}<a href="{% url 'editar_estudiante' e.pk %}" class="stu-act stu-act-edit" title="Editar estudiante"><i class="bi bi-pencil"></i></a>{% endif %}
-                {% if usuario_es_admin %}<a href="{% url 'cambiar_estado_estudiante' e.pk %}" class="stu-act" style="background:#f59e0b;color:white" title="Cambiar estado (Graduado / Retirado / Trasladado)"><i class="bi bi-arrow-repeat"></i></a>{% endif %}
-                {% if request.user.is_superuser %}<a href="{% url 'eliminar_estudiante' e.pk %}" class="stu-act" style="background:#ef4444;color:white" title="Eliminar permanentemente" onclick="return confirm('⚠️ ¿Eliminar a {{ e.nombre }} permanentemente?\n\nEsta acción no se puede deshacer y borrará todo su historial médico.')"><i class="bi bi-trash"></i></a>{% endif %}
+          {% if usuario_es_admin %}<a href="{% url 'editar_estudiante' e.pk %}" class="stu-act stu-act-edit" title="Editar estudiante"><i class="bi bi-pencil"></i></a>{% endif %}
             {% if usuario_es_admin %}<a href="{% url 'cambiar_estado_estudiante' e.pk %}" class="stu-act" style="background:#f59e0b;color:white" title="Cambiar estado"><i class="bi bi-arrow-repeat"></i></a>{% endif %}
             {% if request.user.is_superuser %}<a href="{% url 'eliminar_estudiante' e.pk %}" class="stu-act" style="background:#ef4444;color:white" title="Eliminar permanentemente" onclick="return confirm('¿Eliminar a {{ e.nombre }} permanentemente? Esta acción no se puede deshacer.')"><i class="bi bi-trash"></i></a>{% endif %}
           </div>
