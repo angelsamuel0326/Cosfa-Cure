@@ -315,9 +315,16 @@ document.getElementById('pwd-input').addEventListener('keydown',function(e){
 (function(){
   const uf=document.getElementById('username-field'),cb=document.getElementById('remember-me'),KEY='cosfa_remember_user';
   const saved=localStorage.getItem(KEY);
-  if(saved){uf.value=saved;cb.checked=true}
+  if(saved){uf.value=saved;cb.checked=true;}
+  cb.addEventListener('change',function(){
+    if(cb.checked&&uf.value.trim()) localStorage.setItem(KEY,uf.value.trim());
+    else localStorage.removeItem(KEY);
+  });
+  uf.addEventListener('input',function(){
+    if(cb.checked&&uf.value.trim()) localStorage.setItem(KEY,uf.value.trim());
+  });
   document.getElementById('login-form').addEventListener('submit',function(){
-    if(cb.checked&&uf.value.trim())localStorage.setItem(KEY,uf.value.trim());
+    if(cb.checked&&uf.value.trim()) localStorage.setItem(KEY,uf.value.trim());
     else localStorage.removeItem(KEY);
   });
 })();
