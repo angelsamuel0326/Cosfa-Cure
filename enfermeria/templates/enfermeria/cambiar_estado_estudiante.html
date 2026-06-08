@@ -1,51 +1,124 @@
 {% extends 'enfermeria/base.html' %}
+{% block title %}Cambiar estado — {{ estudiante.nombre }}{% endblock %}
+{% block page_title %}Estado Académico{% endblock %}
 {% block content %}
-<div style="max-width:480px;margin:40px auto;background:white;border-radius:16px;padding:32px;box-shadow:0 4px 20px rgba(0,0,0,.08)">
 
-  <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px">
-    <div style="width:44px;height:44px;background:linear-gradient(135deg,#f59e0b,#d97706);border-radius:12px;display:flex;align-items:center;justify-content:center">
-      <i class="bi bi-arrow-repeat" style="color:white;font-size:1.2rem"></i>
+<style>
+@keyframes bounceIn{0%{opacity:0;transform:scale(.85)}70%{transform:scale(1.03)}100%{opacity:1;transform:scale(1)}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.estado-option{display:flex;align-items:center;gap:14px;padding:14px 18px;border:2px solid #e2e8f0;border-radius:12px;cursor:pointer;transition:all .2s;background:white;margin-bottom:10px}
+.estado-option:hover{border-color:var(--teal);background:rgba(14,165,160,.04);transform:translateX(3px)}
+.estado-option input[type=radio]{display:none}
+.estado-option.selected{border-color:var(--teal);background:rgba(14,165,160,.07);box-shadow:0 0 0 3px rgba(14,165,160,.12)}
+.estado-option.sel-graduado.selected{border-color:#7c3aed;background:rgba(124,58,237,.06);box-shadow:0 0 0 3px rgba(124,58,237,.1)}
+.estado-option.sel-retirado.selected{border-color:#ef4444;background:rgba(239,68,68,.06);box-shadow:0 0 0 3px rgba(239,68,68,.1)}
+.estado-option.sel-trasladado.selected{border-color:#f59e0b;background:rgba(245,158,11,.06);box-shadow:0 0 0 3px rgba(245,158,11,.1)}
+.estado-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0}
+.estado-check{margin-left:auto;width:22px;height:22px;border-radius:50%;border:2px solid #e2e8f0;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0}
+.estado-option.selected .estado-check{background:var(--teal);border-color:var(--teal);color:white}
+.estado-option.sel-graduado.selected .estado-check{background:#7c3aed;border-color:#7c3aed}
+.estado-option.sel-retirado.selected .estado-check{background:#ef4444;border-color:#ef4444}
+.estado-option.sel-trasladado.selected .estado-check{background:#f59e0b;border-color:#f59e0b}
+</style>
+
+<div style="display:flex;align-items:center;justify-content:center;min-height:60vh">
+  <div class="card" style="max-width:520px;width:100%;animation:bounceIn .4s cubic-bezier(.34,1.56,.64,1)">
+
+    <div class="card-head" style="background:linear-gradient(135deg,#fef3c7,#fff)">
+      <div class="card-head-title" style="color:#b45309">
+        <i class="bi bi-arrow-repeat"></i> Cambiar estado académico
+      </div>
     </div>
-    <div>
-      <h2 style="font-size:1.1rem;font-weight:700;margin:0;color:#1e293b">Cambiar estado académico</h2>
-      <p style="color:#64748b;font-size:.85rem;margin:2px 0 0">{{ estudiante.nombre }}</p>
+
+    <div style="padding:28px">
+
+      {{/* Info del estudiante */}}
+      <div style="display:flex;align-items:center;gap:14px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:14px 18px;margin-bottom:24px">
+        <div style="width:46px;height:46px;border-radius:12px;background:linear-gradient(135deg,var(--teal),#0d8c88);display:flex;align-items:center;justify-content:center;font-size:1.3rem;color:white;flex-shrink:0;animation:float 3s ease-in-out infinite">
+          👤
+        </div>
+        <div>
+          <div style="font-weight:800;font-size:1rem;color:var(--navy)">{{ estudiante.nombre }}</div>
+          <div style="font-size:.78rem;color:#64748b;margin-top:2px">
+            <span style="background:#e0f2fe;color:#0369a1;padding:2px 8px;border-radius:6px;font-weight:700;margin-right:6px">Grado {{ estudiante.grado }}</span>
+            <span style="color:#94a3b8">Doc: {{ estudiante.numero_documento }}</span>
+          </div>
+        </div>
+        <div style="margin-left:auto;text-align:right">
+          <div style="font-size:.68rem;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px">Estado actual</div>
+          <div style="font-weight:700;font-size:.85rem;color:var(--teal)">{{ estudiante.get_estado_academico_display }}</div>
+        </div>
+      </div>
+
+      <div style="font-size:.72rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px">
+        <i class="bi bi-tag"></i> Selecciona el nuevo estado
+      </div>
+
+      <form method="post" id="estado-form">
+        {% csrf_token %}
+        <input type="hidden" name="estado_academico" id="estado-hidden" value="{{ estudiante.estado_academico }}">
+
+        <div class="estado-option {% if estudiante.estado_academico == 'activo' %}selected{% endif %}" onclick="seleccionar(this,'activo')">
+          <div class="estado-icon" style="background:rgba(14,165,160,.12);color:var(--teal)">✅</div>
+          <div>
+            <div style="font-weight:700;font-size:.9rem;color:var(--navy)">Activo</div>
+            <div style="font-size:.75rem;color:#64748b">Aparece en la lista principal y en las consultas</div>
+          </div>
+          <div class="estado-check"><i class="bi bi-check-lg" style="font-size:.7rem"></i></div>
+        </div>
+
+        <div class="estado-option sel-graduado {% if estudiante.estado_academico == 'graduado' %}selected{% endif %}" onclick="seleccionar(this,'graduado')">
+          <div class="estado-icon" style="background:rgba(124,58,237,.1);color:#7c3aed">🎓</div>
+          <div>
+            <div style="font-weight:700;font-size:.9rem;color:var(--navy)">Graduado</div>
+            <div style="font-size:.75rem;color:#64748b">Inactivo — historial médico conservado</div>
+          </div>
+          <div class="estado-check"><i class="bi bi-check-lg" style="font-size:.7rem"></i></div>
+        </div>
+
+        <div class="estado-option sel-retirado {% if estudiante.estado_academico == 'retirado' %}selected{% endif %}" onclick="seleccionar(this,'retirado')">
+          <div class="estado-icon" style="background:rgba(239,68,68,.1);color:#ef4444">❌</div>
+          <div>
+            <div style="font-weight:700;font-size:.9rem;color:var(--navy)">Retirado</div>
+            <div style="font-size:.75rem;color:#64748b">Inactivo — dejó la institución</div>
+          </div>
+          <div class="estado-check"><i class="bi bi-check-lg" style="font-size:.7rem"></i></div>
+        </div>
+
+        <div class="estado-option sel-trasladado {% if estudiante.estado_academico == 'trasladado' %}selected{% endif %}" onclick="seleccionar(this,'trasladado')">
+          <div class="estado-icon" style="background:rgba(245,158,11,.1);color:#f59e0b">🔄</div>
+          <div>
+            <div style="font-weight:700;font-size:.9rem;color:var(--navy)">Trasladado</div>
+            <div style="font-size:.75rem;color:#64748b">Inactivo — se trasladó a otra institución</div>
+          </div>
+          <div class="estado-check"><i class="bi bi-check-lg" style="font-size:.7rem"></i></div>
+        </div>
+
+        <div class="alert" style="background:#fefce8;border-color:#fde68a;color:#92400e;margin-top:16px;margin-bottom:20px">
+          <i class="bi bi-info-circle-fill"></i>
+          Los estudiantes inactivos no aparecen en la lista diaria pero conservan todo su historial médico, consultas y remisiones.
+        </div>
+
+        <div style="display:flex;gap:10px">
+          <button type="submit" class="btn btn-primary" style="flex:1;background:linear-gradient(135deg,#f59e0b,#d97706);border:none;box-shadow:0 4px 14px rgba(245,158,11,.35)">
+            <i class="bi bi-check-lg"></i> Guardar cambio
+          </button>
+          <a href="{% url 'lista_estudiantes' %}" class="btn btn-outline" style="flex:0;min-width:110px">
+            <i class="bi bi-arrow-left"></i> Cancelar
+          </a>
+        </div>
+      </form>
+
     </div>
   </div>
-
-  <div style="background:#f8fafc;border-radius:10px;padding:12px 16px;margin-bottom:20px;display:flex;gap:16px;font-size:.85rem">
-    <span><strong>Grado:</strong> {{ estudiante.grado }}</span>
-    <span><strong>Documento:</strong> {{ estudiante.numero_documento }}</span>
-  </div>
-
-  <form method="post">
-    {% csrf_token %}
-    <div style="margin-bottom:24px">
-      <label style="display:block;font-size:.75rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">
-        <i class="bi bi-tag"></i> Estado académico
-      </label>
-      <select name="estado_academico" style="width:100%;padding:12px 16px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:.95rem;color:#1e293b;background:white;outline:none">
-        {% for val, lbl in estudiante.ESTADO_ACADEMICO_CHOICES %}
-          <option value="{{ val }}" {% if estudiante.estado_academico == val %}selected{% endif %}>
-            {% if val == 'activo' %}✅{% elif val == 'graduado' %}🎓{% elif val == 'retirado' %}❌{% elif val == 'trasladado' %}🔄{% endif %}
-            {{ lbl }}
-          </option>
-        {% endfor %}
-      </select>
-      <p style="font-size:.78rem;color:#94a3b8;margin-top:8px">
-        <i class="bi bi-info-circle"></i>
-        Los estudiantes inactivos (Graduado, Retirado, Trasladado) no aparecen en la lista principal pero conservan todo su historial médico.
-      </p>
-    </div>
-
-    <div style="display:flex;gap:12px">
-      <button type="submit" style="flex:1;padding:12px;background:linear-gradient(135deg,#f59e0b,#d97706);color:white;border:none;border-radius:10px;font-weight:700;cursor:pointer;font-size:.9rem">
-        <i class="bi bi-check-lg"></i> Guardar cambio
-      </button>
-      <a href="{% url 'lista_estudiantes' %}" style="flex:1;padding:12px;border:1.5px solid #e2e8f0;border-radius:10px;text-align:center;color:#64748b;text-decoration:none;font-weight:600;font-size:.9rem;display:flex;align-items:center;justify-content:center;gap:6px">
-        <i class="bi bi-x-lg"></i> Cancelar
-      </a>
-    </div>
-  </form>
-
 </div>
+
+<script>
+function seleccionar(el, valor) {
+  document.querySelectorAll('.estado-option').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('estado-hidden').value = valor;
+}
+</script>
+
 {% endblock %}
