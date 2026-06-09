@@ -1111,6 +1111,21 @@ def eliminar_estudiante(request, pk):
     return render(request, 'enfermeria/confirmar_eliminar.html', {'objeto':est})
 
 
+@admin_required
+def cambiar_estado_estudiante(request, pk):
+    est = get_object_or_404(Estudiante, pk=pk)
+    if request.method == 'POST':
+        nuevo_estado = request.POST.get('estado_academico')
+        if nuevo_estado in dict(Estudiante.ESTADO_ACADEMICO_CHOICES):
+            estado_anterior = est.get_estado_academico_display()
+            est.estado_academico = nuevo_estado
+            est.save()
+            _log(request, 'editar', 'Estudiante', f'Estado cambiado de {estado_anterior} a {est.get_estado_academico_display()}: {est.nombre}')
+            messages.success(request, f'✅ Estado de {est.nombre} actualizado a {est.get_estado_academico_display()}.')
+        return redirect('lista_estudiantes')
+    return render(request, 'enfermeria/cambiar_estado_estudiante.html', {'estudiante': est})
+
+
 @login_required
 def carnet_pdf(request, pk):
     return render(request, 'enfermeria/carnet_pdf.html', {'estudiante': get_object_or_404(Estudiante, pk=pk)})
