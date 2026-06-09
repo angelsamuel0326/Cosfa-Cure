@@ -95,6 +95,7 @@ urlpatterns = [
     path('remisiones/<int:pk>/consentimiento/', views.consentimiento_remision, name='consentimiento_remision'),
     path('remisiones/<int:pk>/consentimiento/guardar/', views.guardar_consentimiento_remision, name='guardar_consentimiento_remision'),
     path('remisiones/<int:pk>/estado/', views.cambiar_estado_remision, name='cambiar_estado_remision'),
+    path('estudiantes/<int:pk>/cambiar-estado/', views.cambiar_estado_estudiante, name='cambiar_estado_estudiante'),
     path('remisiones/<int:pk>/detalle/', views.detalle_remision, name='detalle_remision'),
 
     # ── PDF exports ───────────────────────────────────────────────────────────
