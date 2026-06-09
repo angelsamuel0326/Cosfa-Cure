@@ -173,7 +173,7 @@
     <div style="display:flex;gap:6px">
       {% if usuario_es_admin %}<a href="{% url 'nuevo_estudiante' %}" class="btn btn-primary btn-sm"><i class="bi bi-person-plus"></i> Nuevo</a>{% endif %}
       <!-- Botones PDF / Exportar / Importar -->
-      <a href="{% url 'pdf_reportes' %}" target="_blank"
+      <a href="{% url 'pdf_lista_estudiantes' %}" target="_blank"
          class="btn btn-sm" style="background:linear-gradient(135deg,#ef4444,#dc2626);color:white;border:none">
         <i class="bi bi-file-earmark-pdf-fill"></i> PDF
       </a>

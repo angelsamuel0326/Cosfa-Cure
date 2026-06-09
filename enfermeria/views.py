@@ -2383,6 +2383,35 @@ def pdf_historial_estudiante(request, pk):
 
 
 @login_required
+def pdf_lista_estudiantes(request):
+    """PDF del listado completo de estudiantes."""
+    estado   = request.GET.get('estado', 'activo')
+    grado_f  = request.GET.get('grado', '')
+    qs = Estudiante.objects.all().order_by('grado', 'nombre')
+    if estado:
+        qs = qs.filter(estado_academico=estado)
+    if grado_f:
+        qs = qs.filter(grado=grado_f)
+    return render(request, 'enfermeria/pdf_lista_estudiantes.html', {
+        'estudiantes':     qs,
+        'total':           qs.count(),
+        'estado':          estado,
+        'fecha_impresion': datetime.date.today(),
+    })
+
+
+@login_required
+def pdf_lista_docentes(request):
+    """PDF del listado completo de docentes."""
+    qs = Docente.objects.all().order_by('nombre')
+    return render(request, 'enfermeria/pdf_lista_docentes.html', {
+        'docentes':        qs,
+        'total':           qs.count(),
+        'fecha_impresion': datetime.date.today(),
+    })
+
+
+@login_required
 def pdf_remisiones(request):
     """PDF del listado completo de remisiones."""
     return render(request, 'enfermeria/pdf_remisiones.html', {
