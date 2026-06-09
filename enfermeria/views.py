@@ -1111,21 +1111,6 @@ def eliminar_estudiante(request, pk):
     return render(request, 'enfermeria/confirmar_eliminar.html', {'objeto':est})
 
 
-@admin_required
-def cambiar_estado_estudiante(request, pk):
-    est = get_object_or_404(Estudiante, pk=pk)
-    if request.method == 'POST':
-        nuevo_estado = request.POST.get('estado_academico')
-        if nuevo_estado in dict(Estudiante.ESTADO_ACADEMICO_CHOICES):
-            estado_anterior = est.get_estado_academico_display()
-            est.estado_academico = nuevo_estado
-            est.save()
-            _log(request, 'editar', 'Estudiante', f'Estado cambiado de {estado_anterior} a {est.get_estado_academico_display()}: {est.nombre}')
-            messages.success(request, f'✅ Estado de {est.nombre} actualizado a {est.get_estado_academico_display()}.')
-        return redirect('lista_estudiantes')
-    return render(request, 'enfermeria/cambiar_estado_estudiante.html', {'estudiante': est})
-
-
 @login_required
 def carnet_pdf(request, pk):
     return render(request, 'enfermeria/carnet_pdf.html', {'estudiante': get_object_or_404(Estudiante, pk=pk)})
@@ -1992,10 +1977,18 @@ def nuevo_medicamento(request):
 
 @login_required
 def detalle_medicamento(request, pk):
+    from django.core.paginator import Paginator
     med         = get_object_or_404(Medicamento, pk=pk)
-    usos        = med.usos_consulta.select_related('consulta', 'consulta__estudiante').order_by('-consulta__fecha_hora')
-    movimientos = med.movimientos.order_by('-fecha')
-    total_usado = usos.aggregate(total=Sum('cantidad'))['total'] or 0
+    usos_qs     = med.usos_consulta.select_related('consulta', 'consulta__estudiante').order_by('-consulta__fecha_hora')
+    movs_qs     = med.movimientos.order_by('-fecha')
+    total_usado = usos_qs.aggregate(total=Sum('cantidad'))['total'] or 0
+
+    usos_page = request.GET.get('usos_page', 1)
+    movs_page = request.GET.get('movs_page', 1)
+
+    usos        = Paginator(usos_qs, 4).get_page(usos_page)
+    movimientos = Paginator(movs_qs, 4).get_page(movs_page)
+
     return render(request, 'enfermeria/detalle_medicamento.html', {
         'medicamento': med,
         'usos': usos,

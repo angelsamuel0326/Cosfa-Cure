@@ -102,7 +102,7 @@
 <!-- Consultas que usaron este medicamento -->
 <div class="card" style="margin-bottom:16px">
   <div class="card-head">
-    <div class="card-head-title"><i class="bi bi-clipboard2-pulse-fill"></i> Consultas donde se usó ({{ usos|length }})</div>
+    <div class="card-head-title"><i class="bi bi-clipboard2-pulse-fill"></i> Consultas donde se usó ({{ usos.paginator.count }})</div>
   </div>
   <div class="table-wrap">
     {% if usos %}
@@ -151,13 +151,24 @@
       <p style="margin-top:8px;font-size:0.85rem">Este medicamento no ha sido usado en ninguna consulta aún.</p>
     </div>
     {% endif %}
+    {% if usos.has_other_pages %}
+    <div style="display:flex;align-items:center;justify-content:center;gap:6px;padding:14px">
+      {% if usos.has_previous %}
+        <a href="?usos_page={{ usos.previous_page_number }}&movs_page={{ request.GET.movs_page|default:1 }}" class="btn btn-outline btn-xs"><i class="bi bi-chevron-left"></i></a>
+      {% endif %}
+      <span style="font-size:.78rem;color:var(--muted)">Página {{ usos.number }} de {{ usos.paginator.num_pages }}</span>
+      {% if usos.has_next %}
+        <a href="?usos_page={{ usos.next_page_number }}&movs_page={{ request.GET.movs_page|default:1 }}" class="btn btn-outline btn-xs"><i class="bi bi-chevron-right"></i></a>
+      {% endif %}
+    </div>
+    {% endif %}
   </div>
 </div>
 
 <!-- Movimientos de inventario -->
 <div class="card">
   <div class="card-head">
-    <div class="card-head-title"><i class="bi bi-arrow-left-right"></i> Movimientos de inventario ({{ movimientos|length }})</div>
+    <div class="card-head-title"><i class="bi bi-arrow-left-right"></i> Movimientos de inventario ({{ movimientos.paginator.count }})</div>
     <a href="{% url 'registrar_movimiento' %}" class="btn btn-outline btn-sm"><i class="bi bi-plus"></i> Registrar</a>
     <a href="{% url 'pdf_movimientos' %}?medicamento={{ medicamento.pk }}" target="_blank" class="btn btn-outline btn-sm" style="border-color:#e05c5c;color:#e05c5c"><i class="bi bi-file-earmark-pdf-fill"></i> PDF</a>
   </div>
@@ -184,6 +195,17 @@
     </table>
     {% else %}
     <p style="padding:16px;text-align:center;color:var(--muted);font-size:0.82rem">Sin movimientos registrados</p>
+    {% endif %}
+    {% if movimientos.has_other_pages %}
+    <div style="display:flex;align-items:center;justify-content:center;gap:6px;padding:14px">
+      {% if movimientos.has_previous %}
+        <a href="?movs_page={{ movimientos.previous_page_number }}&usos_page={{ request.GET.usos_page|default:1 }}" class="btn btn-outline btn-xs"><i class="bi bi-chevron-left"></i></a>
+      {% endif %}
+      <span style="font-size:.78rem;color:var(--muted)">Página {{ movimientos.number }} de {{ movimientos.paginator.num_pages }}</span>
+      {% if movimientos.has_next %}
+        <a href="?movs_page={{ movimientos.next_page_number }}&usos_page={{ request.GET.usos_page|default:1 }}" class="btn btn-outline btn-xs"><i class="bi bi-chevron-right"></i></a>
+      {% endif %}
+    </div>
     {% endif %}
   </div>
 </div>
