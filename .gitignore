@@ -26,3 +26,4 @@ staticfiles/
 .idea/
 *.swp
 db.sqlite3
+cosfa_cure/admin_secret*.txt
